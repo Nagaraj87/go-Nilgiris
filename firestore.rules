@@ -4,14 +4,14 @@ service cloud.firestore {
     match /bookings/{document=**} {
       allow read, write: if true;
     }
-    match /availability/{document=**} {
-        allow read, write: if true;
-    }
     match /gallery/{document=**} {
-        allow read, write: if true;
+      allow read, write: if true;
+    }
+    match /availability/{document=**} {
+      allow read, write: if true;
     }
     match /site_config/{document=**} {
-        allow read, write: if true;
+      allow read, write: if true;
     }
   }
 }
