@@ -2,12 +2,13 @@
 'use client';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, writeBatch, doc, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { tourPackages } from './data';
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
   appId: '1:379536738400:web:019de38a8bb5025ab7db05',
-  storageBucket: 'nilgiri-explorer.firebasestorage.app',
+  storageBucket: 'nilgiri-explorer.appspot.com',
   apiKey: 'AIzaSyDAZjWPRX1pbM0CAC4QlZlH9eWBksqluE4',
   authDomain: 'nilgiri-explorer.firebaseapp.com',
   messagingSenderId: '379536738400',
@@ -18,6 +19,7 @@ if (!getApps().length) {
 }
 
 const db = getFirestore();
+const storage = getStorage();
 
 // Booking Functions
 export const saveBooking = async (bookingData: any) => {
@@ -171,3 +173,39 @@ export const getOccupiedSeats = async (packageSlug: string, date: string): Promi
     });
     return seats;
 };
+
+// Gallery Functions
+export const uploadGalleryImage = async (file: File, alt: string, packageSlug: string) => {
+    const storageRef = ref(storage, `gallery/${packageSlug}/${Date.now()}_${file.name}`);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    const docRef = await addDoc(collection(db, 'gallery'), {
+        url: downloadURL,
+        alt: alt,
+        packageSlug: packageSlug,
+        createdAt: new Date(),
+    });
+    return { id: docRef.id, url: downloadURL, alt, packageSlug };
+};
+
+export const getGalleryImages = async (packageSlug: string) => {
+    const q = query(
+        collection(db, "gallery"),
+        where("packageSlug", "==", packageSlug)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+export const deleteGalleryImage = async (docId: string, fileUrl: string) => {
+    // Delete from Storage
+    const storageRef = ref(storage, fileUrl);
+    await deleteObject(storageRef);
+
+    // Delete from Firestore
+    const docRef = doc(db, 'gallery', docId);
+    await deleteDoc(docRef);
+};
+
+    

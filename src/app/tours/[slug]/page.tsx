@@ -1,3 +1,6 @@
+
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -8,23 +11,47 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Check, Info, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getGalleryImages } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export function generateStaticParams() {
-  return tourPackages.map((pkg) => ({
-    slug: pkg.slug,
-  }));
-}
+type GalleryImage = {
+  id: string;
+  url: string;
+  alt: string;
+  packageSlug: string;
+};
 
 export default function TourPackagePage({ params }: { params: { slug: string } }) {
   const tourPackage = tourPackages.find((p) => p.slug === params.slug);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [loadingGallery, setLoadingGallery] = useState(true);
+
+  useEffect(() => {
+    if (!params.slug) return;
+    const fetchGallery = async () => {
+      setLoadingGallery(true);
+      try {
+        const images = await getGalleryImages(params.slug);
+        setGalleryImages(images as GalleryImage[]);
+      } catch (error) {
+        console.error("Failed to fetch gallery images", error);
+        // Fallback to static data if firebase fails
+        const staticPackage = tourPackages.find(p => p.slug === params.slug);
+        if (staticPackage) {
+           setGalleryImages(staticPackage.gallery.map((g, i) => ({ ...g, id: `static-${i}`, url: g.src, packageSlug: params.slug })));
+        }
+      } finally {
+        setLoadingGallery(false);
+      }
+    };
+    fetchGallery();
+  }, [params.slug]);
+
 
   if (!tourPackage) {
     notFound();
   }
-
-  const currentItinerary = tourPackage.itinerary
-    .map(item => `${item.time} - ${item.activity}: ${item.description}`)
-    .join("\n");
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-12">
@@ -63,31 +90,39 @@ export default function TourPackagePage({ params }: { params: { slug: string } }
                 </div>
             </TabsContent>
             <TabsContent value="gallery" className="mt-6">
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {tourPackage.gallery.map((image, index) => (
-                    <CarouselItem key={index}>
-                      <Card className="overflow-hidden">
-                        <CardContent className="p-0 relative aspect-video">
-                          <Image
-                            src={image.src}
-                            alt={image.alt}
-                            fill
-                            className="object-cover"
-                            data-ai-hint={image.hint}
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          />
-                          <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/50 text-white">
-                            <p className="text-sm">{image.alt}</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-2" />
-                <CarouselNext className="right-2" />
-              </Carousel>
+               {loadingGallery ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Skeleton className="w-full h-48" />
+                    <Skeleton className="w-full h-48" />
+                  </div>
+               ) : (
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {galleryImages.map((image, index) => (
+                        <CarouselItem key={image.id}>
+                          <Card className="overflow-hidden">
+                            <CardContent className="p-0 relative aspect-video">
+                              <Image
+                                src={image.url}
+                                alt={image.alt}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              />
+                              <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/50 text-white">
+                                <p className="text-sm">{image.alt}</p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {galleryImages.length > 1 && <>
+                      <CarouselPrevious className="left-2" />
+                      <CarouselNext className="right-2" />
+                    </>}
+                  </Carousel>
+               )}
             </TabsContent>
             <TabsContent value="overview" className="mt-6">
               <Accordion type="single" collapsible className="w-full">
@@ -139,3 +174,5 @@ export default function TourPackagePage({ params }: { params: { slug: string } }
     </div>
   );
 }
+
+    

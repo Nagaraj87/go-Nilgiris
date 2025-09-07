@@ -3,17 +3,22 @@
 
 import { useEffect, useState } from "react";
 import Link from 'next/link';
-import { deleteBooking, getBookings } from "@/lib/firebase";
+import { deleteBooking, getBookings, getGalleryImages, uploadGalleryImage, deleteGalleryImage } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GalleryHorizontal, Lock, Ticket, ShieldOff, ImageOff, Calendar, ArrowRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, Calendar, ArrowRight, MoreHorizontal, Pencil, Trash2, Upload, Image as ImageIcon, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { tourPackages } from "@/lib/data";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import Image from "next/image";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Booking = {
   id: string;
@@ -26,26 +31,64 @@ type Booking = {
   selectedSeats: { number: number; price: number }[];
 };
 
+type GalleryImage = {
+  id: string;
+  url: string;
+  alt: string;
+  packageSlug: string;
+};
+
+
 export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingBookings, setLoadingBookings] = useState(true);
   const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
 
+  // Gallery State
+  const [selectedPackage, setSelectedPackage] = useState<string>(tourPackages[0].slug);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [loadingGallery, setLoadingGallery] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageAlt, setImageAlt] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<GalleryImage | null>(null);
+
+
   useEffect(() => {
     const fetchBookings = async () => {
+      setLoadingBookings(true);
       try {
         const bookingsData = await getBookings();
         setBookings(bookingsData as Booking[]);
       } catch (error) {
         console.error("Failed to fetch bookings", error);
+        toast({ variant: "destructive", title: "Error", description: "Failed to fetch bookings." });
       } finally {
-        setLoading(false);
+        setLoadingBookings(false);
       }
     };
     fetchBookings();
-  }, []);
+  }, [toast]);
+
+  useEffect(() => {
+    if (!selectedPackage) return;
+    const fetchGallery = async () => {
+      setLoadingGallery(true);
+      try {
+        const images = await getGalleryImages(selectedPackage);
+        setGalleryImages(images as GalleryImage[]);
+      } catch (error) {
+        console.error("Failed to fetch gallery images", error);
+        toast({ variant: "destructive", title: "Error", description: "Failed to fetch gallery images." });
+      } finally {
+        setLoadingGallery(false);
+      }
+    }
+    fetchGallery();
+  }, [selectedPackage, toast]);
+
 
   const handleDeleteBooking = async () => {
     if (!bookingToDelete) return;
@@ -63,6 +106,44 @@ export default function AdminPage() {
   const handleEditBooking = (bookingId: string) => {
     router.push(`/admin/edit-booking/${bookingId}`);
   };
+
+  const handleImageUpload = async () => {
+    if (!imageFile || !imageAlt || !selectedPackage) {
+        toast({ variant: "destructive", title: "Error", description: "Please select an image and provide a description." });
+        return;
+    }
+    setUploading(true);
+    try {
+        const newImage = await uploadGalleryImage(imageFile, imageAlt, selectedPackage);
+        setGalleryImages([...galleryImages, newImage as GalleryImage]);
+        toast({ title: "Image Uploaded", description: "The image has been added to the gallery." });
+        setImageFile(null);
+        setImageAlt("");
+        // Reset file input
+        const fileInput = document.getElementById('gallery-upload') as HTMLInputElement;
+        if(fileInput) fileInput.value = "";
+
+    } catch (error) {
+        console.error(error);
+        toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload the image." });
+    } finally {
+        setUploading(false);
+    }
+  }
+
+  const handleDeleteImage = async () => {
+    if(!imageToDelete) return;
+    try {
+        await deleteGalleryImage(imageToDelete.id, imageToDelete.url);
+        setGalleryImages(galleryImages.filter(img => img.id !== imageToDelete.id));
+        toast({ title: "Image Deleted", description: "The image has been removed from the gallery."});
+    } catch (error) {
+        console.error(error);
+        toast({ variant: "destructive", title: "Deletion Failed", description: "Could not delete the image." });
+    } finally {
+        setImageToDelete(null);
+    }
+  }
 
 
   return (
@@ -88,7 +169,7 @@ export default function AdminPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {loading ? (
+              {loadingBookings ? (
                 <p>Loading bookings...</p>
               ) : (
                 <div className="overflow-x-auto">
@@ -171,16 +252,63 @@ export default function AdminPage() {
             </Card>
         </TabsContent>
          <TabsContent value="gallery">
-            <Card className="min-h-[400px] flex flex-col items-center justify-center text-center">
+            <Card>
                 <CardHeader>
-                    <div className="mx-auto bg-muted rounded-full p-4 w-fit">
-                        <ImageOff className="w-12 h-12 text-muted-foreground" />
-                    </div>
-                    <CardTitle className="mt-4">Gallery Management</CardTitle>
-                    <CardDescription>This feature is coming soon. You'll be able to upload and manage your tour photos here.</CardDescription>
+                    <CardTitle>Gallery Management</CardTitle>
+                    <CardDescription>Upload, view, and delete images for your tour packages.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <Button>Upload Photos</Button>
+                <CardContent className="space-y-6">
+                    <div>
+                         <Select value={selectedPackage} onValueChange={setSelectedPackage}>
+                            <SelectTrigger className="w-full md:w-1/3">
+                                <SelectValue placeholder="Select a package" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {tourPackages.map(pkg => (
+                                    <SelectItem key={pkg.slug} value={pkg.slug}>{pkg.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="p-4 border-dashed border-2 rounded-lg space-y-4">
+                        <h3 className="font-semibold text-lg">Upload New Image</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Input id="gallery-upload" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} />
+                            <Input placeholder="Image description (for accessibility)" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} />
+                        </div>
+                         <Button onClick={handleImageUpload} disabled={uploading}>
+                            {uploading ? "Uploading..." : <><Upload className="mr-2"/> Upload Image</>}
+                        </Button>
+                    </div>
+
+                    <div>
+                        <h3 className="font-semibold text-lg mb-4">Current Gallery</h3>
+                        {loadingGallery ? (
+                            <p>Loading images...</p>
+                        ) : galleryImages.length > 0 ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {galleryImages.map(image => (
+                                    <div key={image.id} className="relative group">
+                                        <Image src={image.url} alt={image.alt} width={200} height={150} className="rounded-lg object-cover aspect-[4/3]" />
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Button variant="destructive" size="icon" onClick={() => setImageToDelete(image)}>
+                                                <Trash2 />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                             <Alert>
+                                <ImageIcon className="h-4 w-4" />
+                                <AlertTitle>No Images Found</AlertTitle>
+                                <AlertDescription>
+                                  There are no images in the gallery for this tour package. Upload one to get started.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
                 </CardContent>
             </Card>
         </TabsContent>
@@ -199,6 +327,22 @@ export default function AdminPage() {
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+       <AlertDialog open={!!imageToDelete} onOpenChange={(open) => !open && setImageToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Delete this image?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. The image will be permanently deleted from the gallery.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setImageToDelete(null)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteImage} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
+    
