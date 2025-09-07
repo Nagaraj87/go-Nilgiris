@@ -44,9 +44,9 @@ export default function AvailabilityPage() {
         getAvailabilityForDate(selectedPackage, dateStr),
         getOccupiedSeatsForDate(selectedPackage, dateStr)
     ]).then(([availability, occupied]) => {
-        setBlockedSeats(availability.blockedSeats);
-        setBusCount(availability.busCount);
-        setOccupiedSeats(occupied);
+        setBlockedSeats(availability.blockedSeats || {1: []});
+        setBusCount(availability.busCount || 1);
+        setOccupiedSeats(occupied || {1: []});
     }).catch(err => {
         console.error(err);
         toast({ variant: "destructive", title: "Error", description: "Could not load availability data." });
@@ -88,16 +88,17 @@ export default function AvailabilityPage() {
     }
 
     const dateStr = format(availabilityDate, "yyyy-MM-dd");
-    const isBlocked = blockedSeats[busNumber]?.includes(seatNumber);
+    const isBlocked = (blockedSeats[busNumber] || []).includes(seatNumber);
+    const currentBusSeats = blockedSeats[busNumber] || [];
 
     try {
         if (isBlocked) {
             await unblockSeatForDate(selectedPackage, dateStr, busNumber, seatNumber);
-            setBlockedSeats(prev => ({ ...prev, [busNumber]: prev[busNumber].filter(s => s !== seatNumber) }));
+            setBlockedSeats(prev => ({ ...prev, [busNumber]: currentBusSeats.filter(s => s !== seatNumber) }));
             toast({ title: "Seat Unblocked" });
         } else {
             await blockSeatForDate(selectedPackage, dateStr, busNumber, seatNumber);
-            setBlockedSeats(prev => ({ ...prev, [busNumber]: [...(prev[busNumber] || []), seatNumber] }));
+            setBlockedSeats(prev => ({ ...prev, [busNumber]: [...currentBusSeats, seatNumber] }));
             toast({ title: "Seat Blocked" });
         }
     } catch (e) {
