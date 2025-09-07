@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { getTodaysAndTomorrowsBookings } from '@/lib/firebase';
 import type { Booking } from '@/types';
 import { Badge } from './ui/badge';
+import { ThemeToggle } from './theme-toggle';
 
 export function Header() {
   const pathname = usePathname();
@@ -75,6 +76,7 @@ export function Header() {
             </Button>
           )}
 
+          <ThemeToggle />
 
           {/* Mobile Navigation */}
           <div className="md:hidden">
