@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 type Booking = {
   id: string;
@@ -415,3 +416,4 @@ export default function AdminPage() {
     
 
     
+
