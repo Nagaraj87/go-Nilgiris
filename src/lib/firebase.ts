@@ -75,22 +75,6 @@ export const deleteBooking = async (bookingId: string) => {
 }
 
 // Availability Functions
-export const getBlockedDates = async (): Promise<string[]> => {
-    const q = query(collection(db, "blocked_dates"), where("isFullyBlocked", "==", true));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => doc.id);
-}
-
-export const blockDate = async (date: string) => {
-    const dateDocRef = doc(db, 'blocked_dates', date);
-    await setDoc(dateDocRef, { isFullyBlocked: true, date: new Date(date) }, { merge: true });
-}
-
-export const unblockDate = async (date: string) => {
-    const dateDocRef = doc(db, 'blocked_dates', date);
-    await setDoc(dateDocRef, { isFullyBlocked: false }, { merge: true });
-}
-
 export const getBlockedSeatsForDate = async (packageSlug: string, date: string): Promise<number[]> => {
     const q = query(
         collection(db, "blocked_seats"), 

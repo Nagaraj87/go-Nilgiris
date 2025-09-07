@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { blockAllSeatsForDate, blockDate, blockSeatForDate, getBlockedSeatsForDate, unblockAllSeatsForDate, unblockDate, unblockSeatForDate } from "@/lib/firebase";
+import { blockAllSeatsForDate, blockSeatForDate, getBlockedSeatsForDate, unblockAllSeatsForDate, unblockSeatForDate } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldOff, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -17,7 +17,6 @@ import { tourPackages } from "@/lib/data";
 import { SeatChart } from "@/components/seat-chart";
 
 export default function AvailabilityPage() {
-  const [blockedDates, setBlockedDates] = useState<Date[]>([]);
   const { toast } = useToast();
 
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
@@ -33,38 +32,6 @@ export default function AvailabilityPage() {
     getBlockedSeatsForDate(selectedPackage, dateStr).then(setBlockedSeats);
   }, [availabilityDate, selectedPackage]);
 
-
-  const handleBlockDate = async (date: Date) => {
-    const dateStr = format(date, "yyyy-MM-dd");
-    try {
-      await blockDate(dateStr);
-      setBlockedDates([...blockedDates, date]);
-      toast({ title: "Date Blocked", description: `Date ${format(date, "PPP")} has been blocked for all tours.` });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to block date." });
-    }
-  };
-  
-  const handleUnblockDate = async (date: Date) => {
-    const dateStr = format(date, "yyyy-MM-dd");
-    try {
-      await unblockDate(dateStr);
-      setBlockedDates(blockedDates.filter(d => d.getTime() !== date.getTime()));
-      toast({ title: "Date Unblocked", description: `Date ${format(date, "PPP")} has been unblocked.` });
-    } catch (e) {
-       toast({ variant: "destructive", title: "Error", description: "Failed to unblock date." });
-    }
-  }
-
-  const handleDateSelectForBlocking = (dates: Date[] | undefined) => {
-      if (!dates) return;
-      // This is a simplified logic. In a real app, you'd compare the new and old arrays.
-      const newDate = dates.find(d => !blockedDates.some(bd => bd.getTime() === d.getTime()));
-      const removedDate = blockedDates.find(bd => !dates.some(d => d.getTime() === bd.getTime()));
-
-      if (newDate) handleBlockDate(newDate);
-      if (removedDate) handleUnblockDate(removedDate);
-  }
 
   const handleSeatBlockToggle = async (seatNumber: number) => {
     if (!availabilityDate || !selectedPackage) return;
@@ -116,25 +83,9 @@ export default function AvailabilityPage() {
             <ShieldOff className="text-primary h-8 w-8"/>
             <h1 className="text-3xl font-bold">Manage Availability</h1>
         </div>
-        <p className="text-muted-foreground mb-8">Block dates for all tours or manage seats for specific tours.</p>
-        <div className="grid md:grid-cols-2 gap-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Block Entire Dates</CardTitle>
-                    <CardDescription>Select dates to block all new bookings, e.g., due to bad weather or holidays.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0 sm:p-6 flex justify-center">
-                  <div className="overflow-x-auto">
-                    <Calendar
-                        mode="multiple"
-                        selected={blockedDates}
-                        onSelect={handleDateSelectForBlocking}
-                        className="rounded-md border"
-                    />
-                  </div>
-                </CardContent>
-            </Card>
-            <Card>
+        <p className="text-muted-foreground mb-8">Block or unblock specific seats for a tour on a particular date.</p>
+        <div className="flex justify-center">
+            <Card className="w-full max-w-2xl">
                 <CardHeader>
                     <CardTitle>Manage Individual Seats</CardTitle>
                     <CardDescription>Manually block or unblock specific seats for a tour on a particular date.</CardDescription>

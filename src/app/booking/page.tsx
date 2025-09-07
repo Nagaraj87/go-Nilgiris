@@ -22,7 +22,7 @@ import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, User, Baby, CreditCard
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { WomanIcon } from '@/components/icons';
-import { saveBooking, getBlockedDates, getBlockedSeatsForDate, getOccupiedSeats } from '@/lib/firebase';
+import { saveBooking, getBlockedSeatsForDate, getOccupiedSeats } from '@/lib/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const passengerSchema = z.object({
@@ -53,7 +53,6 @@ function BookingFlow() {
   const [step, setStep] = useState(1);
   const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [blockedDates, setBlockedDates] = useState<Date[]>([]);
   const [adminBlockedSeats, setAdminBlockedSeats] = useState<number[]>([]);
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
   
@@ -75,12 +74,6 @@ function BookingFlow() {
   const memberCount = form.watch('memberCount');
   const passengers = form.watch('passengers');
   const bookingDate = form.watch('bookingDate');
-
-  useEffect(() => {
-    getBlockedDates().then(dates => {
-        setBlockedDates(dates.map(d => new Date(d)));
-    });
-  }, []);
 
   useEffect(() => {
     const currentCount = passengers.length;
@@ -118,16 +111,6 @@ function BookingFlow() {
   const processStep1 = async () => {
     const result = await form.trigger(['bookingDate', 'memberCount']);
     if (result) {
-        const date = form.getValues('bookingDate');
-        const isBlocked = blockedDates.some(d => format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
-        if (isBlocked) {
-            toast({
-                variant: "destructive",
-                title: "Service Unavailable",
-                description: "There is no service on the selected date. Please choose another date."
-            });
-            return;
-        }
         setStep(2);
     }
   };
@@ -193,8 +176,7 @@ function BookingFlow() {
 
   const disabledDates = (date: Date) => {
     const isPast = date < new Date(new Date().setDate(new Date().getDate() - 1));
-    const isBlocked = blockedDates.some(d => format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
-    return isPast || isBlocked;
+    return isPast;
   }
 
   return (
