@@ -2,7 +2,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense, useState, useMemo, useEffect } from 'react';
+import { Suspense, useState, useMemo, useEffect, useCallback } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,20 +11,19 @@ import type { TourPackage } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { SeatChart } from '@/components/seat-chart';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
-import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, User, Baby, CreditCard, Ticket, AlertCircle, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, CreditCard, Ticket, AlertCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
-import { WomanIcon } from '@/components/icons';
 import { saveBooking, getBlockedSeatsForDate, getOccupiedSeats, getPackagePrice } from '@/lib/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PassengerFields } from '@/components/booking/passenger-fields';
+
 
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -76,7 +75,6 @@ function BookingFlow() {
   });
 
   const memberCount = form.watch('memberCount');
-  const passengers = form.watch('passengers');
   const bookingDate = form.watch('bookingDate');
 
   useEffect(() => {
@@ -95,7 +93,7 @@ function BookingFlow() {
   }, [tourPackage.slug, tourPackage.price, toast]);
 
   useEffect(() => {
-    const currentCount = passengers.length;
+    const currentCount = fields.length;
     const targetCount = memberCount || 0;
     if (targetCount > currentCount) {
       for (let i = 0; i < targetCount - currentCount; i++) {
@@ -106,7 +104,7 @@ function BookingFlow() {
         remove(currentCount - 1 - i);
       }
     }
-  }, [memberCount, append, remove, passengers.length]);
+  }, [memberCount, append, remove, fields.length]);
 
   useEffect(() => {
       if(bookingDate) {
@@ -306,27 +304,7 @@ function BookingFlow() {
               <CardContent className="space-y-8">
                 <div className="space-y-4">
                   {fields.map((field, index) => (
-                    <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                      <Label className="font-bold">Passenger {index + 1}</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                         <FormField control={form.control} name={`passengers.${index}.name`} render={({ field }) => (
-                            <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                         )} />
-                         <FormField control={form.control} name={`passengers.${index}.age`} render={({ field }) => (
-                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                         )} />
-                         <FormField control={form.control} name={`passengers.${index}.phone`} render={({ field }) => (
-                            <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
-                         )} />
-                         <FormField control={form.control} name={`passengers.${index}.gender`} render={({ field }) => (
-                            <FormItem><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4 pt-2">
-                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="male" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><User size={16}/> Male</FormLabel></FormItem>
-                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="female" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><WomanIcon className="h-4 w-4" /> Female</FormLabel></FormItem>
-                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="child" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><Baby size={16}/> Child</FormLabel></FormItem>
-                            </RadioGroup></FormControl><FormMessage /></FormItem>
-                         )} />
-                      </div>
-                    </div>
+                    <PassengerFields key={field.id} form={form} index={index} />
                   ))}
                 </div>
                 <SeatChart 
@@ -387,3 +365,5 @@ export default function BookingPage() {
         </Suspense>
     )
 }
+
+    
