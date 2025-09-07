@@ -2,7 +2,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense, useState, useMemo, useEffect, useCallback } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,7 +21,6 @@ import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { saveBooking, getBlockedSeatsForDate, getOccupiedSeats, getPackagePrice } from '@/lib/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
 import { PassengerFields } from '@/components/booking/passenger-fields';
 
 
@@ -191,8 +190,9 @@ function BookingFlow() {
         form.setValue(`passengers.${i}.name`, firstPassenger.name, { shouldValidate: true });
         form.setValue(`passengers.${i}.age`, firstPassenger.age, { shouldValidate: true });
         form.setValue(`passengers.${i}.phone`, firstPassenger.phone, { shouldValidate: true });
+        form.setValue(`passengers.${i}.gender`, firstPassenger.gender, { shouldValidate: true });
     }
-     toast({ title: "Details Copied", description: "Name, age, and contact number have been copied to all passengers." });
+     toast({ title: "Details Copied", description: "Name, age, gender and contact number have been copied to all passengers." });
   }
 
   const steps = [
@@ -244,13 +244,12 @@ function BookingFlow() {
                 <CardDescription>Select your tour date and number of members for the "{tourPackage.name}".</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                 {loadingPrice && (
+                 {loadingPrice ? (
                     <div className="space-y-2">
                         <Skeleton className="h-6 w-1/4"/>
                         <Skeleton className="h-10 w-[240px]"/>
                     </div>
-                )}
-                {!loadingPrice && pricePerSeat && (
+                ) : pricePerSeat && (
                      <p className="text-lg font-semibold">Price per seat: <span className="text-primary">₹{pricePerSeat.toLocaleString('en-IN')}</span> onwards</p>
                 )}
                 <FormField
@@ -385,7 +384,7 @@ function BookingFlow() {
               <CardFooter className="justify-between">
                 <Button variant="outline" onClick={() => setStep(2)} disabled={isSubmitting}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
                 <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={processPayment} disabled={isSubmitting}>
-                    {isSubmitting ? "Processing..." : "Pay Now"}
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : "Pay Now"}
                     <CreditCard className="ml-2 h-4 w-4" />
                 </Button>
               </CardFooter>
@@ -399,8 +398,10 @@ function BookingFlow() {
 
 export default function BookingPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
             <BookingFlow />
         </Suspense>
     )
 }
+
+    
