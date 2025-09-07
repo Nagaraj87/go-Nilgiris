@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { DeerLogo } from '@/components/icons';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Home, Lock, Menu, ArrowLeft } from 'lucide-react';
+import { Home, Lock, Menu, ArrowLeft, Bell } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 import { NotificationBell } from './notification-bell';
 
@@ -16,6 +16,7 @@ export function Header() {
   const router = useRouter();
 
   const showBackButton = pathname !== '/';
+  const isAdminPage = pathname.startsWith('/admin');
   
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -52,7 +53,7 @@ export function Header() {
             </Button>
           </nav>
           
-          <NotificationBell />
+          {isAdminPage && <NotificationBell />}
           <ThemeToggle />
 
           {/* Mobile Navigation */}
@@ -84,6 +85,12 @@ export function Header() {
                     <Lock className="h-5 w-5" />
                     <span>Admin</span>
                   </Link>
+                  {isAdminPage && 
+                    <Link href="/admin/notifications" className="flex items-center space-x-2 text-lg font-medium">
+                      <Bell className="h-5 w-5" />
+                      <span>Notifications</span>
+                    </Link>
+                  }
                 </div>
               </SheetContent>
             </Sheet>
