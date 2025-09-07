@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight, Bell } from "lucide-react";
+import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookingsManagement } from "@/components/admin/bookings-management";
@@ -55,13 +55,13 @@ export default function AdminPage() {
                         </div>
                     </div>
                     <CardDescription>
-                        Block seats and add or remove buses for peak days.
+                        Manually block seats for maintenance or reservations.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
                      <Button asChild variant="outline" className="w-full">
                         <Link href="/admin/availability">
-                           Manage Seats & Buses <ArrowRight className="ml-2"/>
+                           Manage Seats <ArrowRight className="ml-2"/>
                         </Link>
                     </Button>
                 </CardFooter>

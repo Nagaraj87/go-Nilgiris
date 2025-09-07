@@ -95,60 +95,47 @@ const getAvailabilityDocRef = (packageSlug: string, date: string) => {
     return doc(db, "availability", availabilityDocId);
 }
 
-export const getAvailabilityForDate = async (packageSlug: string, date: string): Promise<{ blockedSeats: Record<number, number[]>, busCount: number }> => {
+export const getBlockedSeatsForDate = async (packageSlug: string, date: string): Promise<number[]> => {
     const docRef = getAvailabilityDocRef(packageSlug, date);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
         const data = docSnap.data();
-        return {
-            // Ensure blockedSeats is an object, default to {1: []} for bus 1
-            blockedSeats: data.blockedSeats && Object.keys(data.blockedSeats).length > 0 ? data.blockedSeats : { '1': [] },
-            busCount: data.busCount || 1,
-        };
+        return data.blockedSeats || [];
     }
-    // Default state if no document exists
-    return { blockedSeats: { '1': [] }, busCount: 1 };
+    return [];
 };
 
-export const updateBusCountForDate = async (packageSlug: string, date: string, count: number) => {
+
+export const blockSeatForDate = async (packageSlug: string, date: string, seatNumber: number) => {
     const docRef = getAvailabilityDocRef(packageSlug, date);
-    await setDoc(docRef, { busCount: count }, { merge: true });
+    await setDoc(docRef, { 
+        blockedSeats: arrayUnion(seatNumber),
+    }, { merge: true });
 }
 
-export const blockSeatForDate = async (packageSlug: string, date: string, busNumber: number, seatNumber: number) => {
+export const unblockSeatForDate = async (packageSlug: string, date: string, seatNumber: number) => {
     const docRef = getAvailabilityDocRef(packageSlug, date);
-    const key = `blockedSeats.${busNumber}`;
-    await updateDoc(docRef, { 
-        [key]: arrayUnion(seatNumber),
-    });
-}
-
-export const unblockSeatForDate = async (packageSlug: string, date: string, busNumber: number, seatNumber: number) => {
-    const docRef = getAvailabilityDocRef(packageSlug, date);
-    const key = `blockedSeats.${busNumber}`;
      await updateDoc(docRef, {
-        [key]: arrayRemove(seatNumber)
+        blockedSeats: arrayRemove(seatNumber)
     });
 }
 
-export const blockAllSeatsForDate = async (packageSlug: string, date: string, busNumber: number, seatsToBlock: number[]) => {
+export const blockAllSeatsForDate = async (packageSlug: string, date: string, seatsToBlock: number[]) => {
     const docRef = getAvailabilityDocRef(packageSlug, date);
-    const key = `blockedSeats.${busNumber}`;
-    await updateDoc(docRef, {
-        [key]: seatsToBlock
-    });
+    await setDoc(docRef, {
+        blockedSeats: seatsToBlock
+    }, { merge: true });
 }
 
-export const unblockAllSeatsForDate = async (packageSlug: string, date: string, busNumber: number) => {
+export const unblockAllSeatsForDate = async (packageSlug: string, date: string) => {
     const docRef = getAvailabilityDocRef(packageSlug, date);
-    const key = `blockedSeats.${busNumber}`;
     await updateDoc(docRef, {
-        [key]: []
+        blockedSeats: []
     });
 }
 
-export const getOccupiedSeatsForDate = async (packageSlug: string, date: string): Promise<Record<number, number[]>> => {
-    if (!date) return { '1': [] };
+export const getOccupiedSeatsForDate = async (packageSlug: string, date: string): Promise<number[]> => {
+    if (!date) return [];
     const q = query(
         collection(db, "bookings"),
         where("packageSlug", "==", packageSlug),
@@ -156,20 +143,16 @@ export const getOccupiedSeatsForDate = async (packageSlug: string, date: string)
     );
 
     const querySnapshot = await getDocs(q);
-    const seatsByBus: Record<number, number[]> = {};
+    const occupiedSeats: number[] = [];
 
     querySnapshot.forEach(doc => {
         const booking = doc.data();
-        const busNum = booking.busNumber || 1; 
-        if (!seatsByBus[busNum]) {
-            seatsByBus[busNum] = [];
-        }
         if (booking.selectedSeats) {
-            booking.selectedSeats.forEach((seat: { number: number }) => seatsByBus[busNum].push(seat.number));
+            booking.selectedSeats.forEach((seat: { number: number }) => occupiedSeats.push(seat.number));
         }
     });
 
-    return seatsByBus;
+    return occupiedSeats;
 };
 
 

@@ -62,7 +62,6 @@ export function BookingsTable({ bookings, onBookingDeleted, searchQuery }: Booki
                             <TableHead>Booking ID</TableHead>
                             <TableHead>Tour Package</TableHead>
                             <TableHead>Date</TableHead>
-                            <TableHead>Bus</TableHead>
                             <TableHead>Members</TableHead>
                             <TableHead>Total Amount</TableHead>
                             <TableHead>Seats</TableHead>
@@ -76,9 +75,6 @@ export function BookingsTable({ bookings, onBookingDeleted, searchQuery }: Booki
                             <TableCell className="font-medium">{booking.bookingId}</TableCell>
                             <TableCell>{booking.packageSlug}</TableCell>
                             <TableCell>{format(new Date(booking.bookingDate), "PPP")}</TableCell>
-                            <TableCell>
-                                <Badge variant="secondary">#{booking.busNumber || 1}</Badge>
-                            </TableCell>
                             <TableCell>{booking.memberCount}</TableCell>
                             <TableCell>₹{booking.totalAmount.toLocaleString('en-IN')}</TableCell>
                             <TableCell>{booking.selectedSeats.map(s => s.number).join(', ')}</TableCell>

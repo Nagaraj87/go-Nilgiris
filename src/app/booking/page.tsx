@@ -19,13 +19,11 @@ import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, CreditCard, Ticket, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
-import { saveBooking, getAvailabilityForDate, getOccupiedSeatsForDate, getPackagePrice } from '@/lib/firebase';
+import { saveBooking, getBlockedSeatsForDate, getOccupiedSeatsForDate, getPackagePrice } from '@/lib/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PassengerFields } from '@/components/booking/passenger-fields';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -59,8 +57,8 @@ function BookingFlow() {
   const [pricePerSeat, setPricePerSeat] = useState<number | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   
-  // Multi-bus state
-  const [availability, setAvailability] = useState<{ busCount: number; blockedSeats: Record<number, number[]>, occupiedSeats: Record<number, number[]> }>({ busCount: 1, blockedSeats: {1: []}, occupiedSeats: {1: []} });
+  const [blockedSeats, setBlockedSeats] = useState<number[]>([]);
+  const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
 
 
@@ -109,21 +107,17 @@ function BookingFlow() {
   useEffect(() => {
       if(bookingDate) {
         setLoadingAvailability(true);
+        setSelectedSeats([]); // Reset seats on date change
         const dateStr = format(bookingDate, "yyyy-MM-dd");
         Promise.all([
-            getAvailabilityForDate(tourPackage.slug, dateStr),
+            getBlockedSeatsForDate(tourPackage.slug, dateStr),
             getOccupiedSeatsForDate(tourPackage.slug, dateStr)
-        ]).then(([avail, occupied]) => {
-            setAvailability({
-                busCount: avail.busCount,
-                blockedSeats: avail.blockedSeats,
-                occupiedSeats: occupied
-            });
+        ]).then(([blocked, occupied]) => {
+            setBlockedSeats(blocked);
+            setOccupiedSeats(occupied);
         }).catch(err => {
             console.error(err);
             toast({ variant: "destructive", title: "Error", description: "Could not load seat availability." });
-            // Reset to default on error
-            setAvailability({ busCount: 1, blockedSeats: {1: []}, occupiedSeats: {1: []} });
         }).finally(() => {
             setLoadingAvailability(false);
         });
@@ -171,14 +165,10 @@ function BookingFlow() {
     setIsSubmitting(true);
     const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-    // This logic assumes selectedSeats has busNumber property
-    const { busNumber } = selectedSeats[0] || { busNumber: 1 };
-
     const bookingData = {
       bookingId,
       ...form.getValues(),
       selectedSeats: selectedSeats.map(s => ({ number: s.number, price: s.price })),
-      busNumber,
       totalAmount,
       bookingDate: format(form.getValues('bookingDate'), "yyyy-MM-dd"),
     };
@@ -210,7 +200,7 @@ function BookingFlow() {
      toast({ title: "Details Copied", description: "Name, age, gender and contact number have been copied to all passengers." });
   }
 
-  const handleSeatSelect = (busNumber: number, seat: any, isSelected: boolean) => {
+  const handleSeatSelect = (seat: any, isSelected: boolean) => {
     if (isSelected) {
       setSelectedSeats(prev => prev.filter(s => s.id !== seat.id));
     } else {
@@ -218,12 +208,7 @@ function BookingFlow() {
         toast({ title: "Selection limit reached", description: "You cannot select more seats than the number of members."});
         return;
       }
-      // Ensure all selected seats are for the same bus
-      if (selectedSeats.length > 0 && selectedSeats[0].busNumber !== busNumber) {
-        toast({ variant: "destructive", title: "Cannot select from multiple buses", description: "Please select seats from only one bus." });
-        return;
-      }
-      setSelectedSeats(prev => [...prev, { ...seat, busNumber }]);
+      setSelectedSeats(prev => [...prev, seat]);
     }
   };
 
@@ -231,70 +216,17 @@ function BookingFlow() {
   const steps = [
     { num: 1, title: "Booking Details" },
     { num: 2, title: "Passenger Info & Seats" },
-    { num: 3, title: "Payment" },
+    { num: "Payment" },
   ];
   
   const isDateFullyBooked = useMemo(() => {
     if (loadingAvailability) return false;
-    const totalSeats = 17;
-    for (let i = 1; i <= availability.busCount; i++) {
-      const busBlockedSeats = availability.blockedSeats[i] || [];
-      const busOccupiedSeats = availability.occupiedSeats[i] || [];
-      const availableCount = totalSeats - new Set([...busBlockedSeats, ...busOccupiedSeats]).size;
-      if (availableCount > 0) return false; // Found an available seat
-    }
-    return true; // All buses are full
-  }, [availability, loadingAvailability]);
+    const totalBooked = new Set([...occupiedSeats, ...blockedSeats]).size;
+    return totalBooked >= 17; // Total seats
+  }, [occupiedSeats, blockedSeats, loadingAvailability]);
 
   const disabledDates = (date: Date) => {
     return date < new Date(new Date().setDate(new Date().getDate() - 1));
-  }
-
-  const renderSeatSelection = () => {
-    if (loadingAvailability) {
-        return <Skeleton className="h-96 w-full"/>
-    }
-    
-    if (pricePerSeat === null) return null;
-
-    const busTabs = Array.from({ length: availability.busCount }, (_, i) => i + 1);
-    const totalSeatsPerBus = 17;
-    
-    const visibleBuses = busTabs.filter(busNum => {
-        if (busNum === 1) return true; // Always show bus 1
-        const prevBusOccupied = availability.occupiedSeats[busNum - 1] || [];
-        const prevBusBlocked = availability.blockedSeats[busNum - 1] || [];
-        const prevBusFilled = new Set([...prevBusOccupied, ...prevBusBlocked]).size >= totalSeatsPerBus;
-        return prevBusFilled;
-    });
-
-    return (
-        <Tabs defaultValue="bus-1" className="w-full">
-            {visibleBuses.length > 1 && (
-                 <TabsList className={cn("grid w-full", visibleBuses.length > 1 && "grid-cols-2", visibleBuses.length > 2 && "grid-cols-3")}>
-                    {visibleBuses.map(busNum => (
-                        <TabsTrigger key={busNum} value={`bus-${busNum}`}>Bus {busNum}</TabsTrigger>
-                    ))}
-                </TabsList>
-            )}
-
-            {visibleBuses.map(busNum => (
-                <TabsContent key={busNum} value={`bus-${busNum}`} className="mt-4">
-                     <SeatChart 
-                        totalSeats={totalSeatsPerBus} 
-                        seatsPerRow={4} 
-                        memberCount={memberCount} 
-                        selectedSeats={selectedSeats.filter(s => s.busNumber === busNum)} 
-                        onSeatSelect={(seat, isSelected) => handleSeatSelect(busNum, seat, isSelected)} 
-                        pricePerSeat={pricePerSeat}
-                        adminBlockedSeats={availability.blockedSeats[busNum] || []}
-                        occupiedSeats={availability.occupiedSeats[busNum] || []}
-                    />
-                </TabsContent>
-            ))}
-        </Tabs>
-    )
-
   }
 
   return (
@@ -430,7 +362,18 @@ function BookingFlow() {
                   ))}
                 </div>
                 
-                {renderSeatSelection()}
+                {loadingAvailability ? <Skeleton className="w-full h-96" /> : (
+                  <SeatChart 
+                    totalSeats={17} 
+                    seatsPerRow={4} 
+                    memberCount={memberCount} 
+                    selectedSeats={selectedSeats} 
+                    onSeatSelect={handleSeatSelect} 
+                    pricePerSeat={pricePerSeat}
+                    occupiedSeats={occupiedSeats}
+                    adminBlockedSeats={blockedSeats}
+                  />
+                )}
                 
                 <div className="text-right text-2xl font-bold">Total: ₹{totalAmount.toLocaleString('en-IN')}</div>
               </CardContent>
@@ -452,7 +395,7 @@ function BookingFlow() {
                 <p><strong>Package:</strong> {tourPackage.name}</p>
                 <p><strong>Date:</strong> {format(form.getValues('bookingDate'), 'PPP')}</p>
                 <p><strong>Members:</strong> {memberCount}</p>
-                <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')} on Bus {selectedSeats[0]?.busNumber || 1}</p>
+                <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
                 <div className="text-3xl font-bold text-primary">Total Amount: ₹{totalAmount.toLocaleString('en-IN')}</div>
                  <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-sm text-muted-foreground">This is a demo. Clicking "Pay Now" will simulate a successful payment and save your booking to our database.</p>
