@@ -2,11 +2,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter, notFound } from 'next/navigation';
+import { useParams, useRouter, notFound, useSearchParams } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { getBookingById, updateBooking } from '@/lib/firebase';
+import { getBookingById, updateBooking, getAdminSecretPath } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -37,17 +37,27 @@ type EditBookingFormValues = z.infer<typeof editBookingSchema>;
 export default function EditBookingPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const bookingId = params.id as string;
-  const secret = params.secret as string;
-
-  if (secret !== process.env.NEXT_PUBLIC_ADMIN_SECRET_PATH) {
-    notFound();
-  }
+  const secret = searchParams.get('secret');
 
   const [booking, setBooking] = useState<BookingType | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+   useEffect(() => {
+    const authorize = async () => {
+        const storedSecret = await getAdminSecretPath();
+        if(secret !== storedSecret) {
+            setIsAuthorized(false);
+        } else {
+            setIsAuthorized(true);
+        }
+    }
+    authorize();
+   }, [secret]);
 
   const form = useForm<EditBookingFormValues>({
     resolver: zodResolver(editBookingSchema),
@@ -62,7 +72,8 @@ export default function EditBookingPage() {
   });
 
   useEffect(() => {
-    if (!bookingId) return;
+    if (!bookingId || isAuthorized === false) return;
+
     const fetchBooking = async () => {
       setLoading(true);
       try {
@@ -81,15 +92,17 @@ export default function EditBookingPage() {
         setLoading(false);
       }
     };
-    fetchBooking();
-  }, [bookingId, router, toast, form]);
+    if (isAuthorized) {
+        fetchBooking();
+    }
+  }, [bookingId, toast, form, isAuthorized]);
 
   const onSubmit = async (data: EditBookingFormValues) => {
     setIsSubmitting(true);
     try {
       await updateBooking(bookingId, { passengers: data.passengers });
       toast({ title: 'Success', description: 'Booking updated successfully.' });
-      router.push(`/admin/${secret}`);
+      router.push(`/admin?secret=${secret}`);
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to update booking.' });
       console.error(error);
@@ -97,6 +110,18 @@ export default function EditBookingPage() {
       setIsSubmitting(false);
     }
   };
+  
+  if (isAuthorized === null) {
+     return (
+          <div className="flex justify-center items-center h-screen">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+    );
+  }
+
+  if (isAuthorized === false) {
+    notFound();
+  }
   
   if (loading) {
       return (
@@ -117,7 +142,7 @@ if (!booking) {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button onClick={() => router.push(`/admin/${secret}`)}>
+                    <Button onClick={() => router.push(`/admin?secret=${secret}`)}>
                         Back to Admin Dashboard
                     </Button>
                 </CardContent>
@@ -164,7 +189,7 @@ if (!booking) {
                   ))}
                 </div>
               <div className="flex justify-end gap-4">
-                <Button type="button" variant="outline" onClick={() => router.push(`/admin/${secret}`)}>
+                <Button type="button" variant="outline" onClick={() => router.push(`/admin?secret=${secret}`)}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>

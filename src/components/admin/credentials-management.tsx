@@ -52,7 +52,7 @@ export function CredentialsManagement() {
             toast({ title: "Secret Path Updated", description: "Your admin URL has been changed." });
             setSecretPath(newSecretPath);
             // Redirect to the new path after update
-            router.push(`/admin/${newSecretPath}`);
+            router.push(`/admin?secret=${newSecretPath}`);
         } catch (error) {
             toast({ variant: "destructive", title: "Update Failed", description: "Could not save the new secret path." });
         } finally {
@@ -86,7 +86,7 @@ export function CredentialsManagement() {
                     <ShieldAlert className="h-4 w-4" />
                     <AlertTitle>Security Warning</AlertTitle>
                     <AlertDescription>
-                       Changing this path will log you out and require you to navigate to the new URL. Bookmark the new URL carefully.
+                       Changing this path will require you to navigate to the new URL with the new secret query parameter. Bookmark the new URL carefully.
                     </AlertDescription>
                  </Alert>
                 <div>

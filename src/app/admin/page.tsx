@@ -1,9 +1,6 @@
 
 
-"use client";
-
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight, KeyRound } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,18 +10,15 @@ import { PriceManagement } from "@/components/admin/price-management";
 import { GalleryManagement } from "@/components/admin/gallery-management";
 import Link from "next/link";
 import { CredentialsManagement } from "@/components/admin/credentials-management";
+import { getAdminSecretPath } from "@/lib/firebase";
 
 
-type AdminPageProps = {
-  params: {
-    secret: string;
-  };
-};
-
-export default function AdminPage({ params }: AdminPageProps) {
+function AdminPageContent() {
   
   const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    // This needs to be a client component to work, but for now we keep it server-side
+    // and this function will not be used until refactored.
+    // document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   }
 
   return (
@@ -52,7 +46,7 @@ export default function AdminPage({ params }: AdminPageProps) {
                 </CardHeader>
                 <CardFooter>
                      <Button asChild variant="outline" className="w-full">
-                        <Link href={`/admin/${params.secret}/availability`}>
+                        <Link href={`/admin/availability`}>
                            Manage Seats <ArrowRight className="ml-2"/>
                         </Link>
                     </Button>
@@ -71,7 +65,7 @@ export default function AdminPage({ params }: AdminPageProps) {
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
-                     <Button asChild variant="outline" className="w-full" onClick={() => scrollTo('pricing-section')}>
+                     <Button asChild variant="outline" className="w-full" >
                         <a href="#pricing-section">
                            Update Prices <ArrowRight className="ml-2"/>
                         </a>
@@ -91,7 +85,7 @@ export default function AdminPage({ params }: AdminPageProps) {
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
-                     <Button asChild variant="outline" className="w-full" onClick={() => scrollTo('contact-section')}>
+                     <Button asChild variant="outline" className="w-full" >
                         <a href="#contact-section">
                            Update Contact <ArrowRight className="ml-2"/>
                         </a>
@@ -111,7 +105,7 @@ export default function AdminPage({ params }: AdminPageProps) {
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
-                     <Button asChild variant="outline" className="w-full" onClick={() => scrollTo('credentials-section')}>
+                     <Button asChild variant="outline" className="w-full">
                         <a href="#credentials-section">
                            Update Secret <ArrowRight className="ml-2"/>
                         </a>
@@ -139,4 +133,19 @@ export default function AdminPage({ params }: AdminPageProps) {
       </div>
     </div>
   );
+}
+
+type AdminPageProps = {
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
+    const secret = searchParams.secret;
+    const storedSecret = await getAdminSecretPath();
+
+    if (secret !== storedSecret) {
+        notFound();
+    }
+
+    return <AdminPageContent />;
 }

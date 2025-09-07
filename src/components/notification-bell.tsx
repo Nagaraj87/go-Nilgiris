@@ -3,17 +3,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { getTodaysAndTomorrowsBookings } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Bell, Loader2 } from 'lucide-react';
 
 export function NotificationBell() {
-    const params = useParams();
+    const searchParams = useSearchParams();
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
-    const secret = params.secret as string;
+    const secret = searchParams.get('secret');
 
     useEffect(() => {
         const fetchBookingCount = async () => {
@@ -38,7 +38,7 @@ export function NotificationBell() {
 
     return (
         <Button variant="ghost" size="icon" asChild>
-            <Link href={`/admin/${secret}/notifications`} className="relative">
+            <Link href={`/admin/notifications?secret=${secret}`} className="relative">
                 {loading ? (
                     <Loader2 className="animate-spin" />
                 ) : (

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
@@ -26,11 +26,11 @@ export function BookingsTable({ bookings, onBookingDeleted, searchQuery }: Booki
     const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
-    const params = useParams();
-    const secret = params.secret as string;
+    const searchParams = useSearchParams();
+    const secret = searchParams.get('secret');
 
     const handleEditBooking = (bookingId: string) => {
-        router.push(`/admin/${secret}/edit-booking/${bookingId}`);
+        router.push(`/admin/edit-booking/${bookingId}?secret=${secret}`);
     };
 
     const handleDeleteBooking = async () => {
