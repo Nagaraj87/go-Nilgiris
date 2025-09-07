@@ -123,7 +123,9 @@ export function SeatChart({
           <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-primary/20 border border-primary"></div>Available</div>
           <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-accent"></div>Selected</div>
           <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-muted text-muted-foreground flex items-center justify-center"><User size={12}/></div>Sold</div>
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-destructive/80 text-destructive-foreground flex items-center justify-center"><Ban size={12}/></div>Blocked</div>
+          {isBlockingMode && (
+            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-destructive/80 text-destructive-foreground flex items-center justify-center"><Ban size={12}/></div>Blocked</div>
+          )}
         </div>
       </CardContent>
     </Card>
