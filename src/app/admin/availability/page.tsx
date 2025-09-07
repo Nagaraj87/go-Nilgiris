@@ -26,7 +26,7 @@ export default function AvailabilityPage() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const tourPackage = tourPackages.find(p => p.slug === selectedPackage);
-  const totalSeats = 40; // Assuming a fixed number of seats for now
+  const totalSeats = 17; // Assuming a fixed number of seats for now
 
   useEffect(() => {
     if (!availabilityDate || !selectedPackage) return;

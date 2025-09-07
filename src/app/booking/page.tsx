@@ -204,7 +204,7 @@ function BookingFlow() {
   ];
   
   const isDateFullyBooked = useMemo(() => {
-    const totalSeats = 40;
+    const totalSeats = 17;
     const allSeats = Array.from({length: totalSeats}, (_, i) => i + 1);
     const availableSeats = allSeats.filter(s => !adminBlockedSeats.includes(s) && !occupiedSeats.includes(s));
     return availableSeats.length === 0;
@@ -348,7 +348,7 @@ function BookingFlow() {
                   ))}
                 </div>
                 <SeatChart 
-                  totalSeats={40} 
+                  totalSeats={17} 
                   seatsPerRow={4} 
                   memberCount={memberCount} 
                   selectedSeats={selectedSeats} 
