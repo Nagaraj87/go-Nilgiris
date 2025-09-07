@@ -2,8 +2,7 @@
 'use client';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, writeBatch, doc, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject, UploadTask } from "firebase/storage";
-import { tourPackages } from './data';
+import { getStorage, ref, deleteObject } from "firebase/storage";
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
@@ -175,11 +174,6 @@ export const getOccupiedSeats = async (packageSlug: string, date: string): Promi
 };
 
 // Gallery Functions
-export const uploadGalleryImage = (file: File, packageSlug: string): UploadTask => {
-    const storageRef = ref(storage, `gallery/${packageSlug}/${Date.now()}_${file.name}`);
-    return uploadBytesResumable(storageRef, file);
-};
-
 export const addGalleryImageToFirestore = async (url: string, alt: string, packageSlug: string) => {
      const docRef = await addDoc(collection(db, 'gallery'), {
         url: url,
@@ -190,7 +184,6 @@ export const addGalleryImageToFirestore = async (url: string, alt: string, packa
     return { id: docRef.id, url, alt, packageSlug };
 }
 
-
 export const getGalleryImages = async (packageSlug: string) => {
     const q = query(
         collection(db, "gallery"),
@@ -200,14 +193,8 @@ export const getGalleryImages = async (packageSlug: string) => {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
-export const deleteGalleryImage = async (docId: string, fileUrl: string) => {
-    // Delete from Storage
-    const storageRef = ref(storage, fileUrl);
-    await deleteObject(storageRef);
-
-    // Delete from Firestore
+// Deletes the Firestore document, but not the image from its source URL.
+export const deleteGalleryImageFromFirestore = async (docId: string) => {
     const docRef = doc(db, 'gallery', docId);
     await deleteDoc(docRef);
 };
-
-    

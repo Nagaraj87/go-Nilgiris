@@ -3,12 +3,11 @@
 
 import { useEffect, useState } from "react";
 import Link from 'next/link';
-import { deleteBooking, getBookings, getGalleryImages, uploadGalleryImage, addGalleryImageToFirestore, deleteGalleryImage } from "@/lib/firebase";
-import { getDownloadURL } from 'firebase/storage';
+import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GalleryHorizontal, Lock, Ticket, Calendar, ArrowRight, MoreHorizontal, Pencil, Trash2, Upload, Image as ImageIcon, AlertCircle } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, Calendar, ArrowRight, MoreHorizontal, Pencil, Trash2, Upload, Image as ImageIcon, AlertCircle, Link as LinkIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -20,7 +19,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
 
 type Booking = {
   id: string;
@@ -52,10 +50,9 @@ export default function AdminPage() {
   const [selectedPackage, setSelectedPackage] = useState<string>(tourPackages[0].slug);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isAddingImage, setIsAddingImage] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<GalleryImage | null>(null);
 
 
@@ -110,51 +107,39 @@ export default function AdminPage() {
     router.push(`/admin/edit-booking/${bookingId}`);
   };
 
-  const handleImageUpload = async () => {
-    if (!imageFile || !imageAlt || !selectedPackage) {
-        toast({ variant: "destructive", title: "Error", description: "Please select an image and provide a description." });
+  const isValidImageUrl = (url: string) => {
+    return /\.(jpg|jpeg|png|webp|avif|gif|svg)$/.test(url);
+  }
+
+  const handleAddImage = async () => {
+    if (!imageUrl || !imageAlt || !selectedPackage) {
+        toast({ variant: "destructive", title: "Error", description: "Please provide an image URL and a description." });
         return;
     }
-    setUploading(true);
-    setUploadProgress(0);
+    if (!isValidImageUrl(imageUrl)) {
+       toast({ variant: "destructive", title: "Invalid URL", description: "Please provide a valid image URL (e.g., .jpg, .png)." });
+       return;
+    }
+    setIsAddingImage(true);
 
-    const uploadTask = uploadGalleryImage(imageFile, selectedPackage);
-
-    uploadTask.on('state_changed', 
-        (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(progress);
-        }, 
-        (error) => {
-            console.error("Upload failed:", error);
-            toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload the image." });
-            setUploading(false);
-        }, 
-        async () => {
-            try {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                const newImage = await addGalleryImageToFirestore(downloadURL, imageAlt, selectedPackage);
-                setGalleryImages([...galleryImages, newImage as GalleryImage]);
-                toast({ title: "Image Uploaded", description: "The image has been added to the gallery." });
-            } catch (dbError) {
-                 console.error("Firestore error:", dbError);
-                toast({ variant: "destructive", title: "Upload Failed", description: "Could not save image details to database." });
-            } finally {
-                // Reset state
-                setUploading(false);
-                setImageFile(null);
-                setImageAlt("");
-                const fileInput = document.getElementById('gallery-upload') as HTMLInputElement;
-                if(fileInput) fileInput.value = "";
-            }
-        }
-    );
+    try {
+        const newImage = await addGalleryImageToFirestore(imageUrl, imageAlt, selectedPackage);
+        setGalleryImages([...galleryImages, newImage as GalleryImage]);
+        toast({ title: "Image Added", description: "The image has been added to the gallery." });
+        setImageUrl("");
+        setImageAlt("");
+    } catch (dbError) {
+         console.error("Firestore error:", dbError);
+        toast({ variant: "destructive", title: "Add Failed", description: "Could not save image details to database." });
+    } finally {
+        setIsAddingImage(false);
+    }
   }
 
   const handleDeleteImage = async () => {
     if(!imageToDelete) return;
     try {
-        await deleteGalleryImage(imageToDelete.id, imageToDelete.url);
+        await deleteGalleryImageFromFirestore(imageToDelete.id);
         setGalleryImages(galleryImages.filter(img => img.id !== imageToDelete.id));
         toast({ title: "Image Deleted", description: "The image has been removed from the gallery."});
     } catch (error) {
@@ -283,7 +268,7 @@ export default function AdminPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Gallery Management</CardTitle>
-                    <CardDescription>Upload, view, and delete images for your tour packages.</CardDescription>
+                    <CardDescription>Add or delete images for your tour packages using direct image URLs.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div>
@@ -300,21 +285,14 @@ export default function AdminPage() {
                     </div>
 
                     <div className="p-4 border-dashed border-2 rounded-lg space-y-4">
-                        <h3 className="font-semibold text-lg">Upload New Image</h3>
+                        <h3 className="font-semibold text-lg">Add New Image</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Input id="gallery-upload" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} disabled={uploading}/>
-                            <Input placeholder="Image description (for accessibility)" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} disabled={uploading}/>
+                            <Input placeholder="Enter Image URL" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} disabled={isAddingImage}/>
+                            <Input placeholder="Image description (for accessibility)" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} disabled={isAddingImage}/>
                         </div>
-                        {uploading ? (
-                            <div className="space-y-2">
-                                <Progress value={uploadProgress} className="w-full" />
-                                <p className="text-sm text-muted-foreground text-center">Uploading... {Math.round(uploadProgress)}%</p>
-                            </div>
-                        ) : (
-                            <Button onClick={handleImageUpload} disabled={uploading || !imageFile || !imageAlt}>
-                                <Upload className="mr-2"/> Upload Image
-                            </Button>
-                        )}
+                        <Button onClick={handleAddImage} disabled={isAddingImage || !imageUrl || !imageAlt}>
+                            <LinkIcon className="mr-2"/> Add Image
+                        </Button>
                     </div>
 
                     <div>
@@ -339,7 +317,7 @@ export default function AdminPage() {
                                 <ImageIcon className="h-4 w-4" />
                                 <AlertTitle>No Images Found</AlertTitle>
                                 <AlertDescription>
-                                  There are no images in the gallery for this tour package. Upload one to get started.
+                                  There are no images in the gallery for this tour package. Add one using the form above.
                                 </AlertDescription>
                             </Alert>
                         )}
@@ -367,7 +345,7 @@ export default function AdminPage() {
             <AlertDialogHeader>
                 <AlertDialogTitle>Delete this image?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This action cannot be undone. The image will be permanently deleted from the gallery.
+                    This action cannot be undone. The image link will be permanently deleted from the gallery. The original image will not be affected.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -379,5 +357,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
