@@ -212,13 +212,15 @@ export default function AdminPage() {
                         <CardTitle>Block Entire Dates</CardTitle>
                         <CardDescription>Select dates to block all new bookings, e.g., due to bad weather or holidays.</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex justify-center p-0 sm:p-6">
+                    <CardContent className="p-0 sm:p-6 flex justify-center">
+                      <div className="overflow-x-auto w-full">
                         <Calendar
                             mode="multiple"
                             selected={blockedDates}
                             onSelect={handleDateSelectForBlocking}
-                            className="rounded-md border sm:border-none w-full"
+                            className="rounded-md border sm:border-none inline-block"
                         />
+                      </div>
                     </CardContent>
                 </Card>
                 <Card>
