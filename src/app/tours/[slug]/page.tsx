@@ -70,17 +70,17 @@ export default function TourPackagePage({ params }: { params: { slug: string } }
                   {tourPackage.gallery.map((image, index) => (
                     <CarouselItem key={index}>
                       <Card className="overflow-hidden">
-                        <CardContent className="p-0">
+                        <CardContent className="p-0 relative aspect-video">
                           <Image
                             src={image.src}
                             alt={image.alt}
-                            width={800}
-                            height={600}
-                            className="aspect-video w-full object-cover"
+                            fill
+                            className="object-cover"
                             data-ai-hint={image.hint}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           />
-                          <div className="p-4 bg-muted/50">
-                            <p className="text-sm text-muted-foreground">{image.alt}</p>
+                          <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/50 text-white">
+                            <p className="text-sm">{image.alt}</p>
                           </div>
                         </CardContent>
                       </Card>
@@ -109,7 +109,7 @@ export default function TourPackagePage({ params }: { params: { slug: string } }
                 <Card className="shadow-lg">
                     <CardHeader>
                         <CardTitle className="font-headline text-2xl">Book Your Tour</CardTitle>
-                        <p className="text-3xl font-bold text-primary">₹{tourPackage.price} <span className="text-lg font-normal text-muted-foreground">onwards</span></p>
+                        <p className="text-3xl font-bold text-primary">₹{tourPackage.price.toLocaleString('en-IN')} <span className="text-lg font-normal text-muted-foreground">onwards</span></p>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>

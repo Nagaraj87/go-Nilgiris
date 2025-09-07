@@ -51,7 +51,7 @@ export default function Home() {
                 <CardContent className="grid gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Overall {pkg.duration} trip</p>
-                    <p className="text-3xl font-bold">₹{pkg.price} <span className="text-sm font-normal">onwards</span></p>
+                    <p className="text-3xl font-bold">₹{pkg.price.toLocaleString('en-IN')} <span className="text-sm font-normal">onwards</span></p>
                   </div>
                   <ul className="grid gap-2 text-sm">
                     {pkg.inclusions.slice(0, 2).map((item) => (
