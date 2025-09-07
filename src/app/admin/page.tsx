@@ -9,20 +9,8 @@ import { ContactManagement } from "@/components/admin/contact-management";
 import { PriceManagement } from "@/components/admin/price-management";
 import { GalleryManagement } from "@/components/admin/gallery-management";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { getTodaysAndTomorrowsBookings } from "@/lib/firebase";
-import type { Booking } from "@/types";
-import { Badge } from "@/components/ui/badge";
-
 
 export default function AdminPage() {
-  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
-
-  useEffect(() => {
-    getTodaysAndTomorrowsBookings().then(data => setUpcomingBookings(data as Booking[]));
-  }, []);
-
-
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   }
@@ -34,17 +22,6 @@ export default function AdminPage() {
             <Lock className="text-primary h-8 w-8"/>
             <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         </div>
-        <Button asChild variant="outline">
-            <Link href="/admin/notifications" className="relative">
-                <Bell className="mr-2" />
-                Notifications
-                {upcomingBookings.length > 0 && (
-                     <Badge variant="destructive" className="absolute -top-2 -right-2 px-2">
-                        {upcomingBookings.length}
-                    </Badge>
-                )}
-            </Link>
-        </Button>
       </div>
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and update your site content.</p>
 
