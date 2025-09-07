@@ -1,18 +1,30 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getTodaysAndTomorrowsBookings } from '@/lib/firebase';
 import type { Booking } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, AlertCircle, Bell, Ticket, User, Calendar as CalendarIcon, Bus, Phone } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { format } from 'date-fns';
+import { Loader2, AlertCircle, Bell } from 'lucide-react';
+import { format, isToday, isTomorrow } from 'date-fns';
 import { tourPackages } from '@/lib/data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
+type GroupedBookings = {
+  [date: string]: {
+    [packageSlug: string]: {
+      tourName: string;
+      passengers: {
+        bookingDate: string;
+        name: string;
+        phone: string;
+        age: number;
+        seats: string;
+      }[];
+    };
+  };
+};
 
 export default function NotificationsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -38,6 +50,46 @@ export default function NotificationsPage() {
     fetchBookings();
   }, []);
 
+  const groupedBookings = useMemo(() => {
+    const groups: GroupedBookings = {};
+
+    bookings.forEach((booking) => {
+      const dateKey = format(new Date(booking.bookingDate), 'yyyy-MM-dd');
+      const tourPackage = tourPackages.find(p => p.slug === booking.packageSlug);
+      if (!tourPackage) return;
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = {};
+      }
+      if (!groups[dateKey][booking.packageSlug]) {
+        groups[dateKey][booking.packageSlug] = {
+          tourName: tourPackage.name,
+          passengers: [],
+        };
+      }
+
+      const seats = booking.selectedSeats.map(s => s.number).join(', ');
+      booking.passengers.forEach(passenger => {
+        groups[dateKey][booking.packageSlug].passengers.push({
+          bookingDate: format(new Date(booking.bookingDate), 'dd MMM yyyy'),
+          name: passenger.name,
+          phone: passenger.phone,
+          age: passenger.age,
+          seats: seats,
+        });
+      });
+    });
+
+    return groups;
+  }, [bookings]);
+  
+  const getDateLabel = (dateStr: string) => {
+      const date = new Date(dateStr);
+      if(isToday(date)) return "Today's Manifest";
+      if(isTomorrow(date)) return "Tomorrow's Manifest";
+      return format(date, 'PPP');
+  }
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -57,8 +109,10 @@ export default function NotificationsPage() {
         </Alert>
       );
     }
-
-    if (bookings.length === 0) {
+    
+    const dateKeys = Object.keys(groupedBookings).sort();
+    
+    if (dateKeys.length === 0) {
       return (
         <Alert>
           <Bell className="h-4 w-4" />
@@ -68,109 +122,61 @@ export default function NotificationsPage() {
       );
     }
 
-    const todayStr = new Date().toLocaleDateString();
-    const todaysBookings = bookings.filter((b) => new Date(b.bookingDate).toLocaleDateString() === todayStr);
-    const tomorrowsBookings = bookings.filter((b) => new Date(b.bookingDate).toLocaleDateString() !== todayStr);
-
     return (
-      <div className="space-y-8">
-        {todaysBookings.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Today's Bookings</h2>
-            <div className="space-y-4">
-              {todaysBookings.map((booking) => (
-                <BookingDetailsCard key={booking.id} booking={booking} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {tomorrowsBookings.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Tomorrow's Bookings</h2>
-            <div className="space-y-4">
-              {tomorrowsBookings.map((booking) => (
-                <BookingDetailsCard key={booking.id} booking={booking} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+        <div className="space-y-8">
+            {dateKeys.map(date => (
+                <div key={date}>
+                    <h2 className="text-2xl font-bold mb-4 border-b pb-2">{getDateLabel(date)}</h2>
+                    <div className="space-y-6">
+                        {Object.keys(groupedBookings[date]).map(pkgSlug => (
+                            <Card key={pkgSlug} className="shadow-md">
+                                <CardHeader>
+                                    <CardTitle>{groupedBookings[date][pkgSlug].tourName}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Date</TableHead>
+                                                <TableHead>Name</TableHead>
+                                                <TableHead>Mobile</TableHead>
+                                                <TableHead>Age</TableHead>
+                                                <TableHead>Seats</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {groupedBookings[date][pkgSlug].passengers.map((passenger, index) => (
+                                                <TableRow key={index}>
+                                                    <TableCell>{passenger.bookingDate}</TableCell>
+                                                    <TableCell className="font-medium">{passenger.name}</TableCell>
+                                                    <TableCell>{passenger.phone}</TableCell>
+                                                    <TableCell>{passenger.age}</TableCell>
+                                                    <TableCell>{passenger.seats}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            ))}
+        </div>
     );
   };
 
   return (
-    <div className="container mx-auto max-w-4xl py-12">
+    <div className="container mx-auto max-w-6xl py-12">
       <div className="flex items-center gap-2 mb-4">
         <Bell className="text-primary h-8 w-8" />
         <h1 className="text-3xl font-bold">Upcoming Bookings</h1>
       </div>
       <p className="text-muted-foreground mb-8">
-        Here are the scheduled bookings for today and tomorrow. Use this information to make necessary arrangements.
+        Grouped passenger lists for today and tomorrow. Use these manifests to coordinate with your team.
       </p>
       {renderContent()}
     </div>
   );
 }
 
-function BookingDetailsCard({ booking }: { booking: Booking }) {
-    const tourPackage = tourPackages.find(p => p.slug === booking.packageSlug);
-
-    return (
-        <Card className="shadow-md hover:shadow-lg transition-shadow">
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle className="text-xl">Booking ID: {booking.bookingId}</CardTitle>
-                        <CardDescription>
-                            Booked on {format(new Date(booking.bookingDate), 'PPP')}
-                        </CardDescription>
-                    </div>
-                     <Badge variant="secondary" className="flex items-center gap-2">
-                        <Bus size={14}/> {tourPackage?.name || booking.packageSlug}
-                    </Badge>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                     <div className="flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4 text-muted-foreground"/>
-                        <span>Date: <span className="font-semibold">{format(new Date(booking.bookingDate), "dd MMM yyyy")}</span></span>
-                    </div>
-                     <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground"/>
-                        <span>Members: <span className="font-semibold">{booking.memberCount}</span></span>
-                    </div>
-                     <div className="flex items-center gap-2">
-                        <Ticket className="h-4 w-4 text-muted-foreground"/>
-                        <span>Seats: <span className="font-semibold">{booking.selectedSeats.map(s => s.number).join(', ')}</span></span>
-                    </div>
-                </div>
-                <Separator />
-                 <div>
-                    <h4 className="font-semibold mb-2">Passenger Details</h4>
-                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Age</TableHead>
-                                <TableHead>Gender</TableHead>
-                                <TableHead>Contact</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {booking.passengers.map((passenger, index) => (
-                                <TableRow key={index}>
-                                    <TableCell className="font-medium">{passenger.name}</TableCell>
-                                    <TableCell>{passenger.age}</TableCell>
-                                    <TableCell className="capitalize">{passenger.gender}</TableCell>
-                                    <TableCell>{passenger.phone}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
-    )
-}
