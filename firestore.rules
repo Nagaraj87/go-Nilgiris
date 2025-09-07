@@ -1,26 +1,17 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Bookings can be created by anyone, and read/updated/deleted by anyone (for admin panel)
-    match /bookings/{bookingId} {
+    match /bookings/{document=**} {
       allow read, write: if true;
     }
-
-    // Gallery images can be read by anyone, and created/deleted by anyone (for admin panel)
-    match /gallery/{imageId} {
-      allow read, write: if true;
+    match /availability/{document=**} {
+        allow read, write: if true;
     }
-
-    // Site config (hero image) can be read by anyone, and written by anyone (for admin panel)
-    match /site_config/{configId} {
-      allow read, write: if true;
+    match /gallery/{document=**} {
+        allow read, write: if true;
     }
-    
-    // Seat availability can be read and written by anyone (for booking and admin panel)
-    match /availability/{availabilityId} {
-      allow read, write: if true;
+    match /site_config/{document=**} {
+        allow read, write: if true;
     }
   }
 }
