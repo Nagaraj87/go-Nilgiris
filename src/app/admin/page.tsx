@@ -167,38 +167,40 @@ export default function AdminPage() {
               {loading ? (
                 <p>Loading bookings...</p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Booking ID</TableHead>
-                      <TableHead>Tour Package</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Members</TableHead>
-                      <TableHead>Total Amount</TableHead>
-                      <TableHead>Seats</TableHead>
-                      <TableHead>Passengers</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bookings.map((booking) => (
-                      <TableRow key={booking.id}>
-                        <TableCell className="font-medium">{booking.bookingId}</TableCell>
-                        <TableCell>{booking.packageSlug}</TableCell>
-                        <TableCell>{format(new Date(booking.bookingDate), "PPP")}</TableCell>
-                        <TableCell>{booking.memberCount}</TableCell>
-                        <TableCell>₹{booking.totalAmount.toLocaleString('en-IN')}</TableCell>
-                        <TableCell>{booking.selectedSeats.map(s => s.number).join(', ')}</TableCell>
-                        <TableCell>
-                          {booking.passengers.map((p, i) => (
-                            <div key={i} className="text-xs">
-                              {p.name} ({p.age}, {p.gender})
-                            </div>
-                          ))}
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Booking ID</TableHead>
+                        <TableHead>Tour Package</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Members</TableHead>
+                        <TableHead>Total Amount</TableHead>
+                        <TableHead>Seats</TableHead>
+                        <TableHead>Passengers</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {bookings.map((booking) => (
+                        <TableRow key={booking.id}>
+                          <TableCell className="font-medium">{booking.bookingId}</TableCell>
+                          <TableCell>{booking.packageSlug}</TableCell>
+                          <TableCell>{format(new Date(booking.bookingDate), "PPP")}</TableCell>
+                          <TableCell>{booking.memberCount}</TableCell>
+                          <TableCell>₹{booking.totalAmount.toLocaleString('en-IN')}</TableCell>
+                          <TableCell>{booking.selectedSeats.map(s => s.number).join(', ')}</TableCell>
+                          <TableCell>
+                            {booking.passengers.map((p, i) => (
+                              <div key={i} className="text-xs">
+                                {p.name} ({p.age}, {p.gender})
+                              </div>
+                            ))}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -210,12 +212,12 @@ export default function AdminPage() {
                         <CardTitle>Block Entire Dates</CardTitle>
                         <CardDescription>Select dates to block all new bookings, e.g., due to bad weather or holidays.</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex justify-center">
+                    <CardContent className="flex justify-center p-0 sm:p-6">
                         <Calendar
                             mode="multiple"
                             selected={blockedDates}
                             onSelect={handleDateSelectForBlocking}
-                            className="rounded-md border"
+                            className="rounded-md border sm:border-none"
                         />
                     </CardContent>
                 </Card>
@@ -230,7 +232,7 @@ export default function AdminPage() {
                                 <Label>Date</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button variant={"outline"} className={cn("w-full sm:w-[240px] pl-3 text-left font-normal", !availabilityDate && "text-muted-foreground")}>
+                                        <Button variant={"outline"} className={cn("w-full justify-start pl-3 text-left font-normal", !availabilityDate && "text-muted-foreground")}>
                                             {availabilityDate ? format(availabilityDate, 'PPP') : <span>Pick a date</span>}
                                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                         </Button>
@@ -243,7 +245,7 @@ export default function AdminPage() {
                              <div className="space-y-2 flex-1">
                                 <Label>Tour Package</Label>
                                 <Select value={selectedPackage} onValueChange={setSelectedPackage}>
-                                    <SelectTrigger className="w-full sm:w-[240px]">
+                                    <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select a package" />
                                     </SelectTrigger>
                                     <SelectContent>
