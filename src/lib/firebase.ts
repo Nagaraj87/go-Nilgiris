@@ -1,7 +1,7 @@
 
 'use client';
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
 import { format, addDays } from 'date-fns';
 
 const firebaseConfig = {
@@ -87,6 +87,25 @@ export const deleteBooking = async (bookingId: string) => {
         throw new Error('Could not delete booking');
     }
 }
+
+export const deleteAllBookings = async () => {
+    const bookingsCollection = collection(db, 'bookings');
+    const querySnapshot = await getDocs(bookingsCollection);
+    
+    if (querySnapshot.empty) {
+        console.log("No bookings to delete.");
+        return;
+    }
+
+    const batch = writeBatch(db);
+    querySnapshot.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+    console.log(`Successfully deleted ${querySnapshot.size} bookings.`);
+};
+
 
 // --- Availability & Bus Management ---
 
@@ -189,12 +208,12 @@ export const getPackagePrices = async (): Promise<{ slug: string, price: number 
     if (snapshot.empty) {
         // One-time seed if the collection is empty
         const { tourPackages } = await import('@/lib/data');
-        const batch = [];
+        const batch = writeBatch(db);
         for (const pkg of tourPackages) {
             const docRef = doc(db, 'packages', pkg.slug);
-            batch.push(setDoc(docRef, { price: pkg.price, slug: pkg.slug }));
+            batch.set(docRef, { price: pkg.price, slug: pkg.slug });
         }
-        await Promise.all(batch);
+        await batch.commit();
         return tourPackages.map(p => ({ slug: p.slug, price: p.price }));
     }
     return snapshot.docs.map(doc => doc.data() as { slug: string, price: number });

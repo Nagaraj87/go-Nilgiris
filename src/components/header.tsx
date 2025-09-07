@@ -6,12 +6,13 @@ import { usePathname, useRouter } from 'next/navigation';
 import { DeerLogo } from '@/components/icons';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Home, Lock, Menu, ArrowLeft, Bell } from 'lucide-react';
+import { Home, Lock, Menu, ArrowLeft, Bell, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getTodaysAndTomorrowsBookings } from '@/lib/firebase';
 import type { Booking } from '@/types';
 import { Badge } from './ui/badge';
 import { ThemeToggle } from './theme-toggle';
+import { logout } from '@/app/actions';
 
 export function Header() {
   const pathname = usePathname();
@@ -25,7 +26,11 @@ export function Header() {
     if (isAdminPage) {
       getTodaysAndTomorrowsBookings().then(data => setUpcomingBookings(data as Booking[]));
     }
-  }, [isAdminPage]);
+  }, [isAdminPage, pathname]);
+
+  const handleLogout = async () => {
+    await logout();
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -60,6 +65,14 @@ export function Header() {
                 Admin
               </Link>
             </Button>
+             {isAdminPage && (
+              <form action={handleLogout}>
+                <Button variant="ghost" type="submit">
+                    <LogOut className="mr-2 h-4 w-4"/>
+                    Logout
+                </Button>
+              </form>
+            )}
           </nav>
 
           {isAdminPage && (
@@ -107,6 +120,14 @@ export function Header() {
                     <Lock className="h-5 w-5" />
                     <span>Admin</span>
                   </Link>
+                  {isAdminPage && (
+                    <form action={handleLogout}>
+                      <button type="submit" className="flex items-center space-x-2 text-lg font-medium w-full">
+                          <LogOut className="h-5 w-5" />
+                          <span>Logout</span>
+                      </button>
+                    </form>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>

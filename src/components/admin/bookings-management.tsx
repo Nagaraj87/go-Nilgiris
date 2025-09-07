@@ -7,18 +7,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Search, Loader2 } from "lucide-react";
+import { AlertCircle, Search, Loader2, Trash } from "lucide-react";
 import { BookingsTable } from "./bookings-table";
 import type { Booking } from "@/types";
+import { Button } from "../ui/button";
+import { DeleteAllDialog } from "./delete-all-dialog";
 
 export function BookingsManagement() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
 
   useEffect(() => {
-    const fetchBookings = async () => {
+    fetchBookings();
+  }, []);
+
+  const fetchBookings = async () => {
       setLoading(true);
       setError(null);
       try {
@@ -31,11 +37,14 @@ export function BookingsManagement() {
         setLoading(false);
       }
     };
-    fetchBookings();
-  }, []);
 
   const handleDeleteBooking = (bookingId: string) => {
     setBookings(bookings.filter(b => b.id !== bookingId));
+  }
+
+  const handleAllBookingsDeleted = () => {
+    setBookings([]);
+    setIsDeleteAllOpen(false);
   }
 
   const filteredBookings = bookings.filter(booking => {
@@ -79,15 +88,25 @@ export function BookingsManagement() {
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center mb-4">
-          <CardTitle>All Bookings</CardTitle>
-          <Badge variant="secondary">{filteredBookings.length} booking(s)</Badge>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div className="flex-1">
+                <CardTitle>All Bookings</CardTitle>
+                 <CardDescription>
+                    View all tour bookings. Use the search below to filter results.
+                </CardDescription>
+            </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">{filteredBookings.length} booking(s)</Badge>
+             <Button variant="destructive" onClick={() => setIsDeleteAllOpen(true)} disabled={bookings.length === 0}>
+                <Trash className="mr-2"/>
+                Delete All
+            </Button>
+          </div>
         </div>
-        <CardDescription>
-          View all tour bookings. Use the search below to filter results.
-        </CardDescription>
+       
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
@@ -103,5 +122,11 @@ export function BookingsManagement() {
         {renderContent()}
       </CardContent>
     </Card>
+    <DeleteAllDialog 
+        isOpen={isDeleteAllOpen} 
+        onOpenChange={setIsDeleteAllOpen}
+        onSuccess={handleAllBookingsDeleted}
+    />
+    </>
   );
 }
