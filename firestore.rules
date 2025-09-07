@@ -1,11 +1,18 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read and write access to all collections and documents.
-    // This is for development purposes and should be secured before production.
-    match /{document=**} {
+
+    match /bookings/{bookingId} {
       allow read, write: if true;
     }
+
+    match /gallery/{imageId} {
+      allow read, write: if true;
+    }
+
+    match /availability/{availabilityId} {
+      allow read, write: if true;
+    }
+    
   }
 }
