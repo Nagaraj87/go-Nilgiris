@@ -58,6 +58,7 @@ function BookingFlow() {
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
   const [pricePerSeat, setPricePerSeat] = useState<number | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(true);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -267,7 +268,7 @@ function BookingFlow() {
                             </AlertDescription>
                           </Alert>
                        )}
-                      <Popover>
+                      <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button variant={"outline"} className={cn("w-[240px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
@@ -277,7 +278,16 @@ function BookingFlow() {
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                           <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={disabledDates} initialFocus />
+                           <Calendar 
+                             mode="single" 
+                             selected={field.value} 
+                             onSelect={(date) => {
+                               field.onChange(date);
+                               setIsDatePickerOpen(false);
+                             }} 
+                             disabled={disabledDates} 
+                             initialFocus 
+                           />
                         </PopoverContent>
                       </Popover>
                       <FormMessage />
@@ -291,7 +301,10 @@ function BookingFlow() {
                     <FormItem>
                       <FormLabel>Number of Members</FormLabel>
                       <FormControl>
-                        <Input type="number" min="1" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} className="w-[240px]" />
+                        <Input type="number" min="1" {...field} onChange={e => {
+                            const value = e.target.value;
+                            field.onChange(value === '' ? '' : parseInt(value, 10));
+                        }} className="w-[240px]" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -383,5 +396,7 @@ export default function BookingPage() {
         </Suspense>
     )
 }
+
+    
 
     
