@@ -79,8 +79,8 @@ export function BookingsTable({ bookings, onBookingDeleted, searchQuery }: Booki
                             <TableCell>{booking.selectedSeats.map(s => s.number).join(', ')}</TableCell>
                             <TableCell>
                                 {booking.passengers.map((p, i) => (
-                                <div key={i} className="text-xs">
-                                    {p.name} ({p.age}, {p.gender})
+                                <div key={i} className="text-xs whitespace-nowrap">
+                                    {p.name} ({p.age}, {p.gender}, {p.phone})
                                 </div>
                                 ))}
                             </TableCell>

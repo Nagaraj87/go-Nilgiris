@@ -6,7 +6,7 @@ import { getTodaysAndTomorrowsBookings } from '@/lib/firebase';
 import type { Booking } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, AlertCircle, Bell, Ticket, User, Calendar as CalendarIcon, Bus } from 'lucide-react';
+import { Loader2, AlertCircle, Bell, Ticket, User, Calendar as CalendarIcon, Bus, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
@@ -151,9 +151,10 @@ function BookingDetailsCard({ booking }: { booking: Booking }) {
                         {booking.passengers.map((passenger, index) => (
                             <li key={index} className="flex justify-between items-center p-2 bg-muted/50 rounded-md">
                                 <span className="font-medium">{passenger.name}</span>
-                                <div className="flex gap-4 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                     <span>Age: {passenger.age}</span>
                                     <span>Gender: {passenger.gender}</span>
+                                    <span className="flex items-center gap-1"><Phone size={12} /> {passenger.phone}</span>
                                 </div>
                             </li>
                         ))}

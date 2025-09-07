@@ -17,11 +17,14 @@ import { Loader2 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { WomanIcon } from '@/components/icons';
 import { User, Baby } from 'lucide-react';
+import type { Booking as BookingType } from '@/types';
+
 
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   age: z.coerce.number().min(1, 'Age must be at least 1').max(100),
   gender: z.enum(['male', 'female', 'child']),
+  phone: z.string().regex(/^[0-9]{10}$/, 'Must be a valid 10-digit phone number'),
 });
 
 const editBookingSchema = z.object({
@@ -30,17 +33,6 @@ const editBookingSchema = z.object({
 
 type EditBookingFormValues = z.infer<typeof editBookingSchema>;
 
-type Booking = {
-    id: string;
-    bookingId: string;
-    packageSlug: string;
-    bookingDate: string;
-    memberCount: number;
-    totalAmount: number;
-    passengers: { name: string; age: number; gender: string }[];
-    selectedSeats: { number: number; price: number }[];
-};
-
 
 export default function EditBookingPage() {
   const router = useRouter();
@@ -48,7 +40,7 @@ export default function EditBookingPage() {
   const { toast } = useToast();
   const bookingId = params.id as string;
 
-  const [booking, setBooking] = useState<Booking | null>(null);
+  const [booking, setBooking] = useState<BookingType | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -71,7 +63,7 @@ export default function EditBookingPage() {
       try {
         const bookingData = await getBookingById(bookingId);
         if (bookingData) {
-          setBooking(bookingData as Booking);
+          setBooking(bookingData as BookingType);
           form.reset({ passengers: bookingData.passengers });
         } else {
           toast({ variant: 'destructive', title: 'Error', description: 'Booking not found.' });
@@ -145,12 +137,15 @@ if (!booking) {
                   {fields.map((field, index) => (
                     <div key={field.id} className="p-4 border rounded-lg space-y-4">
                       <Label className="font-bold">Passenger {index + 1}</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                          <FormField control={form.control} name={`passengers.${index}.name`} render={({ field }) => (
                             <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                          )} />
                          <FormField control={form.control} name={`passengers.${index}.age`} render={({ field }) => (
                             <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                         )} />
+                         <FormField control={form.control} name={`passengers.${index}.phone`} render={({ field }) => (
+                            <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                          )} />
                          <FormField control={form.control} name={`passengers.${index}.gender`} render={({ field }) => (
                             <FormItem><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4 pt-2">

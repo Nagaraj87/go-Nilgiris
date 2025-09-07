@@ -30,6 +30,7 @@ const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   age: z.coerce.number().min(1, 'Age must be at least 1').max(100),
   gender: z.enum(['male', 'female', 'child']),
+  phone: z.string().regex(/^[0-9]{10}$/, 'Must be a valid 10-digit phone number'),
 });
 
 const bookingSchema = z.object({
@@ -65,7 +66,7 @@ function BookingFlow() {
       packageSlug: tourPackage.slug,
       bookingDate: undefined,
       memberCount: 1,
-      passengers: [{ name: '', age: 0, gender: 'male' }],
+      passengers: [{ name: '', age: 0, gender: 'male', phone: '' }],
     },
   });
 
@@ -98,7 +99,7 @@ function BookingFlow() {
     const targetCount = memberCount || 0;
     if (targetCount > currentCount) {
       for (let i = 0; i < targetCount - currentCount; i++) {
-        append({ name: '', age: 0, gender: 'male' });
+        append({ name: '', age: 0, gender: 'male', phone: '' });
       }
     } else if (targetCount < currentCount) {
       for (let i = 0; i < currentCount - targetCount; i++) {
@@ -307,12 +308,15 @@ function BookingFlow() {
                   {fields.map((field, index) => (
                     <div key={field.id} className="p-4 border rounded-lg space-y-4">
                       <Label className="font-bold">Passenger {index + 1}</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                          <FormField control={form.control} name={`passengers.${index}.name`} render={({ field }) => (
                             <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                          )} />
                          <FormField control={form.control} name={`passengers.${index}.age`} render={({ field }) => (
                             <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                         )} />
+                         <FormField control={form.control} name={`passengers.${index}.phone`} render={({ field }) => (
+                            <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                          )} />
                          <FormField control={form.control} name={`passengers.${index}.gender`} render={({ field }) => (
                             <FormItem><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4 pt-2">
@@ -383,5 +387,3 @@ export default function BookingPage() {
         </Suspense>
     )
 }
-
-    

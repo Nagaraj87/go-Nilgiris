@@ -36,7 +36,7 @@ export type Booking = {
   bookingDate: string;
   memberCount: number;
   totalAmount: number;
-  passengers: { name: string; age: number; gender: string }[];
+  passengers: { name: string; age: number; gender: string; phone: string }[];
   selectedSeats: { number: number; price: number }[];
 };
 
