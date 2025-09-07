@@ -73,7 +73,6 @@ export default function ContactPage() {
                                         <a href={`tel:+91${contactInfo.call}`}>
                                             Call Now
                                         </a>
-line>
                                     </Button>
                                 </div>
                             </>
@@ -102,5 +101,3 @@ function ContactCardSkeleton() {
         </div>
     )
 }
-
-    
