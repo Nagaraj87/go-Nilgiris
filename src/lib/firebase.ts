@@ -1,8 +1,9 @@
 
+
 'use server';
 
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format, addDays } from 'date-fns';
 import type { AdminCredentials } from '@/types';
 
@@ -194,7 +195,15 @@ export const getGalleryImages = async (packageSlug: string) => {
         where("packageSlug", "==", packageSlug)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        const createdAt = data.createdAt;
+        // Convert Timestamp to a serializable format (ISO string)
+        if (createdAt instanceof Timestamp) {
+            data.createdAt = createdAt.toDate().toISOString();
+        }
+        return { id: doc.id, ...data };
+    });
 };
 
 // Deletes the Firestore document, but not the image from its source URL.
