@@ -10,9 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Check, Info, X, Image as ImageIcon } from 'lucide-react';
+import { Check, Info, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getGalleryImages } from '@/lib/firebase';
+import { getGalleryImages, getPackagePrice } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -27,11 +27,15 @@ export default function TourPackagePage() {
   const params = useParams();
   const slug = params.slug as string;
   const tourPackage = tourPackages.find((p) => p.slug === slug);
+  
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(true);
+  const [price, setPrice] = useState<number | null>(null);
+  const [loadingPrice, setLoadingPrice] = useState(true);
 
   useEffect(() => {
     if (!slug) return;
+    
     const fetchGallery = async () => {
       setLoadingGallery(true);
       try {
@@ -39,7 +43,6 @@ export default function TourPackagePage() {
         setGalleryImages(images as GalleryImage[]);
       } catch (error) {
         console.error("Failed to fetch gallery images", error);
-        // Fallback to static data if firebase fails
         const staticPackage = tourPackages.find(p => p.slug === slug);
         if (staticPackage) {
            setGalleryImages(staticPackage.gallery.map((g, i) => ({ ...g, id: `static-${i}`, url: g.src, packageSlug: slug })));
@@ -48,7 +51,24 @@ export default function TourPackagePage() {
         setLoadingGallery(false);
       }
     };
+
+    const fetchPrice = async () => {
+      setLoadingPrice(true);
+      try {
+        const packagePrice = await getPackagePrice(slug);
+        setPrice(packagePrice);
+      } catch (error) {
+        console.error("Failed to fetch price", error);
+        // Fallback to static price
+        const staticPackage = tourPackages.find(p => p.slug === slug);
+        setPrice(staticPackage?.price || 0);
+      } finally {
+        setLoadingPrice(false);
+      }
+    }
+
     fetchGallery();
+    fetchPrice();
   }, [slug]);
 
 
@@ -150,7 +170,11 @@ export default function TourPackagePage() {
                 <Card className="shadow-lg">
                     <CardHeader>
                         <CardTitle className="font-headline text-2xl">Book Your Tour</CardTitle>
-                        <p className="text-3xl font-bold text-primary">₹{tourPackage.price.toLocaleString('en-IN')} <span className="text-lg font-normal text-muted-foreground">onwards</span></p>
+                        {loadingPrice ? (
+                           <Skeleton className="h-10 w-32 mt-1" />
+                        ) : (
+                           <p className="text-3xl font-bold text-primary">₹{price?.toLocaleString('en-IN')} <span className="text-lg font-normal text-muted-foreground">onwards</span></p>
+                        )}
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
@@ -171,8 +195,10 @@ export default function TourPackagePage() {
                                 {tourPackage.notes.map(item => <li key={item} className="flex items-start gap-2"><Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0"/>{item}</li>)}
                             </ul>
                         </div>
-                        <Button asChild size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-base font-bold">
-                            <Link href={`/booking?package=${tourPackage.slug}`}>Book Online</Link>
+                        <Button asChild size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-base font-bold" disabled={loadingPrice || price === null}>
+                            <Link href={`/booking?package=${tourPackage.slug}`}>
+                                {loadingPrice ? <Loader2 className="animate-spin" /> : "Book Online"}
+                            </Link>
                         </Button>
                     </CardContent>
                 </Card>
@@ -182,3 +208,5 @@ export default function TourPackagePage() {
     </div>
   );
 }
+
+    

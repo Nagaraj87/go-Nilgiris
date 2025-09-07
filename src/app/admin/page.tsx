@@ -3,10 +3,10 @@
 
 import { useEffect, useState } from "react";
 import Link from 'next/link';
-import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore } from "@/lib/firebase";
+import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore, getPackagePrices, updatePackagePrice } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search, Tag, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -20,6 +20,7 @@ import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 
 type Booking = {
   id: string;
@@ -39,6 +40,11 @@ type GalleryImage = {
   packageSlug: string;
 };
 
+type PackagePrice = {
+  slug: string;
+  price: number;
+}
+
 export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
@@ -57,6 +63,12 @@ export default function AdminPage() {
   const [imageAlt, setImageAlt] = useState("");
   const [isAddingImage, setIsAddingImage] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<GalleryImage | null>(null);
+
+  // Price Management State
+  const [prices, setPrices] = useState<Record<string, number>>({});
+  const [loadingPrices, setLoadingPrices] = useState(true);
+  const [updatedPrices, setUpdatedPrices] = useState<Record<string, number | string>>({});
+  const [savingPriceSlug, setSavingPriceSlug] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -91,6 +103,27 @@ export default function AdminPage() {
     }
     fetchGallery();
   }, [gallerySelectedPackage, toast]);
+
+   useEffect(() => {
+    const fetchPrices = async () => {
+      setLoadingPrices(true);
+      try {
+        const packagePrices = await getPackagePrices();
+        const pricesMap: Record<string, number> = {};
+        packagePrices.forEach(p => {
+          pricesMap[p.slug] = p.price;
+        });
+        setPrices(pricesMap);
+        setUpdatedPrices(pricesMap);
+      } catch (error) {
+        console.error("Failed to fetch prices", error);
+        toast({ variant: "destructive", title: "Error", description: "Failed to load package prices." });
+      } finally {
+        setLoadingPrices(false);
+      }
+    };
+    fetchPrices();
+  }, [toast]);
 
 
   const handleDeleteBooking = async () => {
@@ -158,6 +191,28 @@ export default function AdminPage() {
     }
   }
 
+  const handlePriceChange = (slug: string, value: string) => {
+      setUpdatedPrices(prev => ({ ...prev, [slug]: value }));
+  }
+
+  const handleSavePrice = async (slug: string) => {
+    const newPrice = Number(updatedPrices[slug]);
+    if (isNaN(newPrice) || newPrice <= 0) {
+        toast({ variant: "destructive", title: "Invalid Price", description: "Please enter a valid positive number for the price." });
+        return;
+    }
+    setSavingPriceSlug(slug);
+    try {
+        await updatePackagePrice(slug, newPrice);
+        setPrices(prev => ({ ...prev, [slug]: newPrice }));
+        toast({ title: "Price Updated", description: `Price for ${slug} has been updated.` });
+    } catch (error) {
+        toast({ variant: "destructive", title: "Update Failed", description: "Could not update the price." });
+    } finally {
+        setSavingPriceSlug(null);
+    }
+  }
+
   const filteredBookings = bookings.filter(booking => {
     const query = searchQuery.toLowerCase();
     return (
@@ -214,6 +269,26 @@ export default function AdminPage() {
                         <Link href="/admin/availability">
                            Manage Seats <ArrowRight className="ml-2"/>
                         </Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
+                 <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Price Management</CardTitle>
+                         <div className="p-2 bg-muted rounded-full">
+                            <Tag className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                    </div>
+                    <CardDescription>
+                        Update the base price for each tour package.
+                    </CardDescription>
+                </CardHeader>
+                <CardFooter>
+                     <Button asChild variant="outline" className="w-full" onClick={() => document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' })}>
+                        <a href="#pricing-section">
+                           Update Prices <ArrowRight className="ml-2"/>
+                        </a>
                     </Button>
                 </CardFooter>
             </Card>
@@ -319,7 +394,40 @@ export default function AdminPage() {
                 </CardContent>
             </Card>
        </div>
-
+        <div id="pricing-section" className="mb-12">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Package Pricing</CardTitle>
+                    <CardDescription>Set the base price for each tour package. This price will be reflected on the tour and booking pages.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingPrices ? (
+                        <Skeleton className="h-24 w-full" />
+                    ) : tourPackages.map(pkg => (
+                        <div key={pkg.slug} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg">
+                            <div className="mb-4 sm:mb-0">
+                                <Label htmlFor={`price-${pkg.slug}`} className="text-base font-semibold">{pkg.name}</Label>
+                                <p className="text-sm text-muted-foreground">Current Price: ₹{prices[pkg.slug]?.toLocaleString('en-IN') || 'Not set'}</p>
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <Input
+                                    id={`price-${pkg.slug}`}
+                                    type="number"
+                                    value={updatedPrices[pkg.slug] ?? ''}
+                                    onChange={(e) => handlePriceChange(pkg.slug, e.target.value)}
+                                    className="w-full sm:w-32"
+                                    placeholder="Enter new price"
+                                    disabled={savingPriceSlug === pkg.slug}
+                                />
+                                <Button onClick={() => handleSavePrice(pkg.slug)} disabled={savingPriceSlug === pkg.slug}>
+                                    {savingPriceSlug === pkg.slug ? <Loader2 className="animate-spin" /> : "Save"}
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+        </div>
        <div id="content-section" className="space-y-12">
              <Card>
                 <CardHeader>
@@ -417,4 +525,5 @@ export default function AdminPage() {
     </div>
   );
 
+    
     

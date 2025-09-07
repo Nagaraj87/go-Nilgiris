@@ -165,4 +165,44 @@ export const deleteGalleryImageFromFirestore = async (docId: string) => {
     await deleteDoc(docRef);
 };
 
+// Price Management Functions
+export const getPackagePrices = async (): Promise<{ slug: string, price: number }[]> => {
+    const packagesCol = collection(db, 'packages');
+    const snapshot = await getDocs(packagesCol);
+    if (snapshot.empty) {
+        // One-time seed if the collection is empty
+        const { tourPackages } = await import('@/lib/data');
+        const batch = [];
+        for (const pkg of tourPackages) {
+            const docRef = doc(db, 'packages', pkg.slug);
+            batch.push(setDoc(docRef, { price: pkg.price, slug: pkg.slug }));
+        }
+        await Promise.all(batch);
+        return tourPackages.map(p => ({ slug: p.slug, price: p.price }));
+    }
+    return snapshot.docs.map(doc => doc.data() as { slug: string, price: number });
+};
+
+export const getPackagePrice = async (slug: string): Promise<number> => {
+    const docRef = doc(db, 'packages', slug);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return docSnap.data().price;
+    }
+    // Fallback or error
+    const { tourPackages } = await import('@/lib/data');
+    const staticPackage = tourPackages.find(p => p.slug === slug);
+    if(staticPackage) {
+        // Seed this one package if it was missing
+        await setDoc(docRef, { price: staticPackage.price, slug: staticPackage.slug });
+        return staticPackage.price;
+    }
+    throw new Error(`Package price for ${slug} not found`);
+}
+
+export const updatePackagePrice = async (slug: string, price: number) => {
+    const docRef = doc(db, 'packages', slug);
+    await setDoc(docRef, { price: price }, { merge: true });
+};
+
     

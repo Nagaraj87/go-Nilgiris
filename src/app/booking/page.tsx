@@ -18,12 +18,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { SeatChart } from '@/components/seat-chart';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
-import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, User, Baby, CreditCard, Ticket, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, User, Baby, CreditCard, Ticket, AlertCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { WomanIcon } from '@/components/icons';
-import { saveBooking, getBlockedSeatsForDate, getOccupiedSeats } from '@/lib/firebase';
+import { saveBooking, getBlockedSeatsForDate, getOccupiedSeats, getPackagePrice } from '@/lib/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -55,6 +56,8 @@ function BookingFlow() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminBlockedSeats, setAdminBlockedSeats] = useState<number[]>([]);
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
+  const [pricePerSeat, setPricePerSeat] = useState<number | null>(null);
+  const [loadingPrice, setLoadingPrice] = useState(true);
   
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -74,6 +77,21 @@ function BookingFlow() {
   const memberCount = form.watch('memberCount');
   const passengers = form.watch('passengers');
   const bookingDate = form.watch('bookingDate');
+
+  useEffect(() => {
+    setLoadingPrice(true);
+    getPackagePrice(tourPackage.slug)
+        .then(price => {
+            setPricePerSeat(price);
+        })
+        .catch(() => {
+            // fallback
+            setPricePerSeat(tourPackage.price);
+            toast({variant: "destructive", title: "Error", description: "Could not fetch latest price. Using default."})
+        })
+        .finally(() => setLoadingPrice(false));
+
+  }, [tourPackage.slug, tourPackage.price, toast]);
 
   useEffect(() => {
     const currentCount = passengers.length;
@@ -111,6 +129,10 @@ function BookingFlow() {
   const processStep1 = async () => {
     const result = await form.trigger(['bookingDate', 'memberCount']);
     if (result) {
+        if(loadingPrice || pricePerSeat === null){
+            toast({variant: "destructive", title: "Price not loaded", description: "Please wait for the price to load."});
+            return;
+        }
         setStep(2);
     }
   };
@@ -210,6 +232,15 @@ function BookingFlow() {
                 <CardDescription>Select your tour date and number of members for the "{tourPackage.name}".</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                 {loadingPrice && (
+                    <div className="space-y-2">
+                        <Skeleton className="h-6 w-1/4"/>
+                        <Skeleton className="h-10 w-[240px]"/>
+                    </div>
+                )}
+                {!loadingPrice && pricePerSeat && (
+                     <p className="text-lg font-semibold">Price per seat: <span className="text-primary">₹{pricePerSeat.toLocaleString('en-IN')}</span> onwards</p>
+                )}
                 <FormField
                   control={form.control}
                   name="bookingDate"
@@ -257,12 +288,15 @@ function BookingFlow() {
                 />
               </CardContent>
               <CardFooter className="justify-end">
-                <Button onClick={processStep1}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                <Button onClick={processStep1} disabled={loadingPrice}>
+                    {loadingPrice ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </CardFooter>
             </Card>
           )}
 
-          {step === 2 && (
+          {step === 2 && pricePerSeat !== null && (
             <Card>
               <CardHeader>
                 <CardTitle>Step 2: Passenger Details & Seat Selection</CardTitle>
@@ -297,7 +331,7 @@ function BookingFlow() {
                   memberCount={memberCount} 
                   selectedSeats={selectedSeats} 
                   onSeatSelect={setSelectedSeats} 
-                  pricePerSeat={tourPackage.price}
+                  pricePerSeat={pricePerSeat}
                   adminBlockedSeats={adminBlockedSeats}
                   occupiedSeats={occupiedSeats}
                 />
@@ -349,3 +383,5 @@ export default function BookingPage() {
         </Suspense>
     )
 }
+
+    
