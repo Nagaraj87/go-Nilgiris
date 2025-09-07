@@ -23,6 +23,7 @@ import { saveBooking, getBlockedSeatsForDate, getOccupiedSeats, getPackagePrice 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PassengerFields } from '@/components/booking/passenger-fields';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Label } from '@/components/ui/label';
 
 
 const passengerSchema = z.object({
