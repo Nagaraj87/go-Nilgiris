@@ -118,11 +118,11 @@ export function Header() {
                     <Lock className="h-5 w-5" />
                     <span>Admin</span>
                   </Link>
-                  {isAdminPage && (
-                    <Button variant="ghost" onClick={handleLogout} className="flex w-full justify-start space-x-2 text-lg font-medium h-auto p-0">
-                        <LogOut className="h-5 w-5" />
-                        <span>Logout</span>
-                    </Button>
+                   {isAdminPage && (
+                     <Button variant="ghost" onClick={handleLogout} className="flex w-full justify-start items-center space-x-2 text-lg font-medium h-auto p-0">
+                         <LogOut className="h-5 w-5" />
+                         <span>Logout</span>
+                     </Button>
                   )}
                 </div>
               </SheetContent>
