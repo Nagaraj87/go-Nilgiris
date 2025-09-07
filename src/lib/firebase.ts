@@ -165,17 +165,4 @@ export const deleteGalleryImageFromFirestore = async (docId: string) => {
     await deleteDoc(docRef);
 };
 
-// Site Config Functions
-export const getHeroImage = async () => {
-    const docRef = doc(db, 'site_config', 'hero');
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        return docSnap.data();
-    }
-    return null;
-};
-
-export const updateHeroImage = async (url: string) => {
-    const docRef = doc(db, 'site_config', 'hero');
-    await setDoc(docRef, { url: url }, { merge: true });
-};
+    

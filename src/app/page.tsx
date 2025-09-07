@@ -7,41 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { tourPackages } from '@/lib/data';
 import { CheckCircle2 } from 'lucide-react';
-import { getHeroImage } from '@/lib/firebase';
-import { useEffect, useState } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
-  const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchHero() {
-      try {
-        const hero = await getHeroImage();
-        setHeroImageUrl(hero?.url || 'https://picsum.photos/1920/1080');
-      } catch (error) {
-        console.error("Failed to fetch hero image, using default.", error);
-        setHeroImageUrl('https://picsum.photos/1920/1080');
-      }
-    }
-    fetchHero();
-  }, []);
-
   return (
     <div className="flex flex-col">
       <section className="relative h-[60vh] w-full">
-        {heroImageUrl ? (
-          <Image
-            src={heroImageUrl}
-            alt="Scenic view of the Nilgiri hills"
-            fill
-            className="object-cover"
-            data-ai-hint="mountain landscape"
-            priority
-          />
-        ) : (
-          <Skeleton className="h-full w-full" />
-        )}
+        <Image
+          src="https://picsum.photos/1920/1080"
+          alt="Scenic view of the Nilgiri hills"
+          fill
+          className="object-cover"
+          data-ai-hint="mountain landscape"
+          priority
+        />
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 flex h-full flex-col items-center justify-center text-center text-white px-4">
           <h1 className="text-4xl font-headline font-bold md:text-6xl lg:text-7xl">
@@ -104,3 +82,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

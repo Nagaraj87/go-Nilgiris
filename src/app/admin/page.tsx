@@ -3,10 +3,10 @@
 
 import { useEffect, useState } from "react";
 import Link from 'next/link';
-import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore, getHeroImage, updateHeroImage } from "@/lib/firebase";
+import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search, Save } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -20,7 +20,6 @@ import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
 
 type Booking = {
   id: string;
@@ -59,12 +58,6 @@ export default function AdminPage() {
   const [isAddingImage, setIsAddingImage] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<GalleryImage | null>(null);
 
-  // Hero Image State
-  const [heroImageUrl, setHeroImageUrl] = useState("");
-  const [currentHeroImage, setCurrentHeroImage] = useState("https://picsum.photos/1920/1080");
-  const [loadingHero, setLoadingHero] = useState(true);
-  const [isSavingHero, setIsSavingHero] = useState(false);
-
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -79,23 +72,7 @@ export default function AdminPage() {
         setLoadingBookings(false);
       }
     };
-    const fetchHero = async () => {
-        setLoadingHero(true);
-        try {
-            const hero = await getHeroImage();
-            if (hero && hero.url) {
-                setCurrentHeroImage(hero.url);
-                setHeroImageUrl(hero.url);
-            }
-        } catch (error) {
-             console.error("Failed to fetch hero image", error);
-             toast({ variant: "destructive", title: "Error", description: "Could not load hero image." });
-        } finally {
-            setLoadingHero(false);
-        }
-    }
     fetchBookings();
-    fetchHero();
   }, [toast]);
 
   useEffect(() => {
@@ -181,28 +158,6 @@ export default function AdminPage() {
     }
   }
 
-  const handleSaveHeroImage = async () => {
-      if (!heroImageUrl) {
-          toast({ variant: "destructive", title: "Error", description: "Image URL cannot be empty." });
-          return;
-      }
-       if (!isValidImageUrl(heroImageUrl)) {
-           toast({ variant: "destructive", title: "Invalid URL", description: "Please provide a valid image URL." });
-           return;
-       }
-       setIsSavingHero(true);
-       try {
-           await updateHeroImage(heroImageUrl);
-           setCurrentHeroImage(heroImageUrl);
-           toast({ title: "Hero Image Updated", description: "The homepage hero image has been changed." });
-       } catch (error) {
-            console.error("Failed to update hero image:", error);
-           toast({ variant: "destructive", title: "Update Failed", description: "Could not save the new hero image." });
-       } finally {
-           setIsSavingHero(false);
-       }
-  }
-
   const filteredBookings = bookings.filter(booking => {
     const query = searchQuery.toLowerCase();
     return (
@@ -231,7 +186,7 @@ export default function AdminPage() {
                         </div>
                     </div>
                     <CardDescription>
-                       Manage gallery images and the main hero banner.
+                       Manage gallery images for your tour packages.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
@@ -366,32 +321,6 @@ export default function AdminPage() {
        </div>
 
        <div id="content-section" className="space-y-12">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Hero Image Management</CardTitle>
-                    <CardDescription>Update the main background image on the homepage. The image will have a dark overlay to ensure text is readable.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <h3 className="font-semibold mb-2">Current Hero Image</h3>
-                        {loadingHero ? (
-                            <Skeleton className="w-full aspect-video rounded-lg" />
-                        ) : (
-                            <Image src={currentHeroImage} alt="Current hero image" width={800} height={450} className="rounded-lg object-cover aspect-video" />
-                        )}
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="hero-url">New Image URL</Label>
-                        <div className="flex gap-2">
-                            <Input id="hero-url" placeholder="https://example.com/new-image.jpg" value={heroImageUrl} onChange={(e) => setHeroImageUrl(e.target.value)} disabled={isSavingHero}/>
-                            <Button onClick={handleSaveHeroImage} disabled={isSavingHero}>
-                                {isSavingHero ? <><Save className="animate-spin" /> Saving...</> : <><Save/> Save</>}
-                            </Button>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
              <Card>
                 <CardHeader>
                     <CardTitle>Gallery Management</CardTitle>
