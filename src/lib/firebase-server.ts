@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore, collection, query, where, getDocs, getDoc, doc } from 'firebase-admin/firestore';
+import { getFirestore, collection, query, where, getDocs, getDoc, doc, addDoc } from 'firebase-admin/firestore';
 
 // This is a server-only file. It is not intended to be used on the client.
 // The Firebase Admin SDK is initialized without credentials, as it will automatically
@@ -41,4 +41,16 @@ export const getOccupiedSeats = async (packageSlug: string, date: string): Promi
         }
     });
     return seats;
+};
+
+// Server-side saveBooking for use in Server Actions
+export const saveBooking = async (bookingData: any) => {
+  try {
+    const docRef = await addDoc(collection(db, 'bookings'), bookingData);
+    console.log('Document written with ID: ', docRef.id);
+    return docRef.id;
+  } catch (e) {
+    console.error('Error adding document: ', e);
+    throw new Error('Could not save booking');
+  }
 };
