@@ -1,14 +1,28 @@
+
+"use client";
+
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { DeerLogo } from '@/components/icons';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Home, Lock, Menu } from 'lucide-react';
+import { Home, Lock, Menu, ArrowLeft } from 'lucide-react';
 
 export function Header() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const showBackButton = pathname !== '/';
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
-        <div className="mr-4 flex">
+        <div className="mr-4 flex items-center">
+          {showBackButton && (
+            <Button variant="ghost" size="icon" className="mr-2" onClick={() => router.back()}>
+              <ArrowLeft />
+              <span className="sr-only">Back</span>
+            </Button>
+          )}
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <DeerLogo className="h-6 w-6 text-primary" />
             <span className="font-bold sm:inline-block">
