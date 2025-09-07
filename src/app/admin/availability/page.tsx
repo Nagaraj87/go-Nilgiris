@@ -122,13 +122,13 @@ export default function AvailabilityPage() {
                     </div>
 
                     {tourPackage && availabilityDate && (
-                       <div>
+                       <>
                             <SeatChart 
                                 totalSeats={totalSeats}
                                 seatsPerRow={4}
                                 memberCount={0}
                                 selectedSeats={[]}
-                                onSeatSelect={(seats) => handleSeatBlockToggle(seats[0].number)}
+                                onSeatSelect={(seatNumber) => handleSeatBlockToggle(seatNumber)}
                                 pricePerSeat={tourPackage.price}
                                 adminBlockedSeats={blockedSeats}
                                 isBlockingMode={true}
@@ -137,7 +137,7 @@ export default function AvailabilityPage() {
                                 <Button variant="destructive" onClick={handleBlockAll}>Block All</Button>
                                 <Button variant="secondary" onClick={handleUnblockAll}>Unblock All</Button>
                             </div>
-                       </div>
+                       </>
                     )}
                     
                 </CardContent>

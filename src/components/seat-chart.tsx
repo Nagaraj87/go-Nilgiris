@@ -22,7 +22,7 @@ type SeatChartProps = {
   seatsPerRow: number;
   memberCount: number;
   selectedSeats: Seat[];
-  onSeatSelect: (seats: Seat[]) => void;
+  onSeatSelect: (selection: any) => void;
   pricePerSeat: number;
   occupiedSeats?: number[];
   adminBlockedSeats?: number[];
@@ -65,7 +65,7 @@ export function SeatChart({
     if (status === "blocked" && !isBlockingMode) return;
 
     if (isBlockingMode) {
-        onSeatSelect([seat]);
+        onSeatSelect(seat.number);
         return;
     }
 
@@ -83,9 +83,13 @@ export function SeatChart({
   };
 
   const getSeatStatus = (seat: Seat): SeatStatus => {
-    if (selectedSeats.some(s => s.id === seat.id)) return "selected";
-    if (occupiedSeats.includes(seat.number)) return "sold";
-    if (adminBlockedSeats.includes(seat.number)) return "blocked";
+    if (isBlockingMode) {
+       if(adminBlockedSeats.includes(seat.number)) return "blocked";
+    } else {
+      if (selectedSeats.some(s => s.id === seat.id)) return "selected";
+      if (occupiedSeats.includes(seat.number)) return "sold";
+      if (adminBlockedSeats.includes(seat.number)) return "blocked";
+    }
     return seat.status;
   }
 
@@ -155,7 +159,7 @@ function SeatButton({ seat, status, onClick, isBlockingMode }: { seat: Seat, sta
         "h-10 w-10 flex flex-col items-center justify-center text-xs rounded-md",
         status === "available" && "bg-primary/20 text-primary-foreground hover:bg-primary/30",
         status === "sold" && "bg-muted text-muted-foreground",
-        status === "blocked" && "bg-destructive/20 text-destructive",
+        status === "blocked" && "bg-destructive text-destructive-foreground",
         status === "selected" && "bg-accent text-accent-foreground hover:bg-accent/90",
         !isBlockingMode && (status === "sold" || status === "blocked") && "cursor-not-allowed"
       )}
