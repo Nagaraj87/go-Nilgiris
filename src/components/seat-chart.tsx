@@ -32,13 +32,11 @@ type SeatChartProps = {
 
 const generateSeats = (totalSeats: number, pricePerSeat: number): Seat[] => {
   return Array.from({ length: totalSeats }, (_, i) => {
-    const isWindow = i % 4 === 0 || i % 4 === 3;
-    const price = pricePerSeat + (isWindow ? 50 : 0);
     return {
       id: `seat-${i + 1}`,
       number: i + 1,
       status: "available",
-      price: Math.round(price / 10) * 10,
+      price: pricePerSeat,
     }
   });
 };
