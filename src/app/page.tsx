@@ -7,8 +7,39 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { tourPackages } from '@/lib/data';
 import { CheckCircle2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getPackagePrices } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
+  const [prices, setPrices] = useState<Record<string, number>>({});
+  const [loadingPrices, setLoadingPrices] = useState(true);
+
+  useEffect(() => {
+    const fetchPrices = async () => {
+      setLoadingPrices(true);
+      try {
+        const packagePrices = await getPackagePrices();
+        const pricesMap: Record<string, number> = {};
+        packagePrices.forEach(p => {
+          pricesMap[p.slug] = p.price;
+        });
+        setPrices(pricesMap);
+      } catch (error) {
+        console.error("Failed to load prices on homepage", error);
+        // Fallback to static prices if fetch fails
+        const pricesMap: Record<string, number> = {};
+        tourPackages.forEach(p => {
+          pricesMap[p.slug] = p.price;
+        });
+        setPrices(pricesMap);
+      } finally {
+        setLoadingPrices(false);
+      }
+    };
+    fetchPrices();
+  }, []);
+
   return (
     <div className="flex flex-col">
       <section className="relative h-[60vh] w-full">
@@ -54,7 +85,11 @@ export default function Home() {
                 <CardContent className="grid gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Overall {pkg.duration} trip</p>
-                    <p className="text-3xl font-bold">₹{pkg.price.toLocaleString('en-IN')} <span className="text-sm font-normal">onwards</span></p>
+                    {loadingPrices ? (
+                      <Skeleton className="h-9 w-28 mt-1" />
+                    ) : (
+                      <p className="text-3xl font-bold">₹{(prices[pkg.slug] || pkg.price).toLocaleString('en-IN')} <span className="text-sm font-normal">onwards</span></p>
+                    )}
                   </div>
                   <ul className="grid gap-2 text-sm">
                     {pkg.inclusions.slice(0, 2).map((item) => (
@@ -82,5 +117,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
