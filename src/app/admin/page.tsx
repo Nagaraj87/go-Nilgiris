@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight, KeyRound } from "lucide-react";
+import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight, KeyRound, Bell } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookingsManagement } from "@/components/admin/bookings-management";
@@ -9,7 +9,7 @@ import { ContactManagement } from "@/components/admin/contact-management";
 import { PriceManagement } from "@/components/admin/price-management";
 import { GalleryManagement } from "@/components/admin/gallery-management";
 import Link from "next/link";
-import { logout } from "@/app/actions";
+import { CredentialsManagement } from "@/components/admin/credentials-management";
 
 
 export default function AdminPage() {
@@ -24,9 +24,6 @@ export default function AdminPage() {
             <Lock className="text-primary h-8 w-8"/>
             <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         </div>
-         <form action={logout}>
-            <Button type="submit" variant="outline">Logout</Button>
-        </form>
       </div>
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and update your site content.</p>
 
@@ -121,7 +118,7 @@ export default function AdminPage() {
           <GalleryManagement />
         </div>
         <div id="credentials-section">
-            {/* Placeholder for credentials management component */}
+            <CredentialsManagement />
         </div>
         <div id="contact-section">
           <ContactManagement />
@@ -133,4 +130,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
