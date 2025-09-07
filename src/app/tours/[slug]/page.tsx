@@ -23,6 +23,10 @@ export default function TourPackagePage({ params }: { params: { slug: string } }
     notFound();
   }
 
+  const currentItinerary = tourPackage.itinerary
+    .map(item => `${item.time} - ${item.activity}: ${item.description}`)
+    .join("\n");
+
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <div className="grid lg:grid-cols-5 gap-12">
@@ -58,7 +62,7 @@ export default function TourPackagePage({ params }: { params: { slug: string } }
                         </div>
                     ))}
                 </div>
-                <CustomizeItineraryTool tourPackage={tourPackage} />
+                <CustomizeItineraryTool currentItinerary={currentItinerary} />
             </TabsContent>
             <TabsContent value="gallery" className="mt-6">
               <Carousel className="w-full">

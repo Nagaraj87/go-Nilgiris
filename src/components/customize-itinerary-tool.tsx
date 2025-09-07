@@ -1,6 +1,5 @@
 "use client";
 
-import type { TourPackage } from "@/types";
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { customizeItineraryAction } from "@/app/actions";
@@ -11,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Wand2, Loader2, ServerCrash } from "lucide-react";
 
 type CustomizeItineraryToolProps = {
-  tourPackage: TourPackage;
+  currentItinerary: string;
 };
 
 const initialState = {
@@ -29,13 +28,9 @@ function SubmitButton() {
   );
 }
 
-export function CustomizeItineraryTool({ tourPackage }: CustomizeItineraryToolProps) {
+export function CustomizeItineraryTool({ currentItinerary }: CustomizeItineraryToolProps) {
   const [state, formAction] = useFormState(customizeItineraryAction, initialState);
   const [preferences, setPreferences] = useState("");
-
-  const currentItinerary = tourPackage.itinerary
-    .map(item => `${item.time} - ${item.activity}: ${item.description}`)
-    .join("\n");
 
   return (
     <Card className="bg-background/70 mt-8">
