@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight } from "lucide-react";
+import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight, KeyRound } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookingsManagement } from "@/components/admin/bookings-management";
@@ -9,6 +9,8 @@ import { ContactManagement } from "@/components/admin/contact-management";
 import { PriceManagement } from "@/components/admin/price-management";
 import { GalleryManagement } from "@/components/admin/gallery-management";
 import Link from "next/link";
+import { logout } from "@/app/actions";
+
 
 export default function AdminPage() {
   const scrollTo = (id: string) => {
@@ -22,10 +24,33 @@ export default function AdminPage() {
             <Lock className="text-primary h-8 w-8"/>
             <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         </div>
+         <form action={logout}>
+            <Button type="submit" variant="outline">Logout</Button>
+        </form>
       </div>
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and update your site content.</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
+                 <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Credentials</CardTitle>
+                         <div className="p-2 bg-muted rounded-full">
+                            <KeyRound className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                    </div>
+                    <CardDescription>
+                       Update admin username and password.
+                    </CardDescription>
+                </CardHeader>
+                <CardFooter>
+                     <Button asChild variant="outline" className="w-full" onClick={() => scrollTo('credentials-section')}>
+                        <a href="#credentials-section">
+                           Update Credentials <ArrowRight className="ml-2"/>
+                        </a>
+                    </Button>
+                </CardFooter>
+            </Card>
             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
                  <CardHeader>
                     <div className="flex justify-between items-center">
@@ -95,6 +120,9 @@ export default function AdminPage() {
         <div id="gallery-section">
           <GalleryManagement />
         </div>
+        <div id="credentials-section">
+            {/* Placeholder for credentials management component */}
+        </div>
         <div id="contact-section">
           <ContactManagement />
         </div>
@@ -105,3 +133,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
