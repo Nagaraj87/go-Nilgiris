@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { blockAllSeatsForDate, blockSeatForDate, getBlockedSeatsForDate, unblockAllSeatsForDate, unblockSeatForDate } from "@/lib/firebase";
+import { blockSeatForDate, getBlockedSeatsForDate, unblockSeatForDate, blockAllSeatsForDate, unblockAllSeatsForDate, getOccupiedSeats } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldOff, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -22,6 +22,7 @@ export default function AvailabilityPage() {
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
   const [selectedPackage, setSelectedPackage] = useState<string>(tourPackages[0].slug);
   const [blockedSeats, setBlockedSeats] = useState<number[]>([]);
+  const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
 
   const tourPackage = tourPackages.find(p => p.slug === selectedPackage);
   const totalSeats = 40; // Assuming a fixed number of seats for now
@@ -29,12 +30,25 @@ export default function AvailabilityPage() {
   useEffect(() => {
     if (!availabilityDate || !selectedPackage) return;
     const dateStr = format(availabilityDate, "yyyy-MM-dd");
-    getBlockedSeatsForDate(selectedPackage, dateStr).then(setBlockedSeats);
+    
+    Promise.all([
+        getBlockedSeatsForDate(selectedPackage, dateStr),
+        getOccupiedSeats(selectedPackage, dateStr)
+    ]).then(([blocked, occupied]) => {
+        setBlockedSeats(blocked);
+        setOccupiedSeats(occupied);
+    })
+
   }, [availabilityDate, selectedPackage]);
 
 
   const handleSeatBlockToggle = async (seatNumber: number) => {
     if (!availabilityDate || !selectedPackage) return;
+    if (occupiedSeats.includes(seatNumber)) {
+        toast({ variant: "destructive", title: "Cannot Block Seat", description: "This seat is already booked by a customer." });
+        return;
+    }
+
     const dateStr = format(availabilityDate, "yyyy-MM-dd");
     const isBlocked = blockedSeats.includes(seatNumber);
 
@@ -57,9 +71,10 @@ export default function AvailabilityPage() {
     if (!availabilityDate || !selectedPackage) return;
     const dateStr = format(availabilityDate, "yyyy-MM-dd");
     try {
-        await blockAllSeatsForDate(selectedPackage, dateStr, totalSeats);
-        setBlockedSeats(Array.from({length: totalSeats}, (_, i) => i + 1));
-        toast({ title: "All Seats Blocked" });
+        const availableToBlock = Array.from({length: totalSeats}, (_, i) => i + 1).filter(seat => !occupiedSeats.includes(seat));
+        await blockAllSeatsForDate(selectedPackage, dateStr, availableToBlock);
+        setBlockedSeats(Array.from(new Set([...blockedSeats, ...availableToBlock])));
+        toast({ title: "All Available Seats Blocked" });
     } catch (e) {
         toast({ variant: "destructive", title: "Error", description: "Failed to block all seats."});
     }
@@ -71,7 +86,7 @@ export default function AvailabilityPage() {
       try {
           await unblockAllSeatsForDate(selectedPackage, dateStr);
           setBlockedSeats([]);
-          toast({ title: "All Seats Unblocked" });
+          toast({ title: "All Manually Blocked Seats Unblocked" });
       } catch(e) {
           toast({ variant: "destructive", title: "Error", description: "Failed to unblock all seats." });
       }
@@ -83,7 +98,7 @@ export default function AvailabilityPage() {
             <ShieldOff className="text-primary h-8 w-8"/>
             <h1 className="text-3xl font-bold">Manage Availability</h1>
         </div>
-        <p className="text-muted-foreground mb-8">Block or unblock specific seats for a tour on a particular date.</p>
+        <p className="text-muted-foreground mb-8">Manually block seats for maintenance or reservations. Booked seats are shown as 'Sold' and cannot be blocked.</p>
         <div className="flex justify-center">
             <Card className="w-full max-w-2xl">
                 <CardHeader>
@@ -131,10 +146,11 @@ export default function AvailabilityPage() {
                                 onSeatSelect={(seatNumber) => handleSeatBlockToggle(seatNumber)}
                                 pricePerSeat={tourPackage.price}
                                 adminBlockedSeats={blockedSeats}
+                                occupiedSeats={occupiedSeats}
                                 isBlockingMode={true}
                             />
                             <div className="flex gap-2 mt-4">
-                                <Button variant="destructive" onClick={handleBlockAll}>Block All</Button>
+                                <Button variant="destructive" onClick={handleBlockAll}>Block All Available</Button>
                                 <Button variant="secondary" onClick={handleUnblockAll}>Unblock All</Button>
                             </div>
                        </>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -62,7 +63,9 @@ export function SeatChart({
 
   const handleSeatClick = (seat: Seat, status: SeatStatus) => {
     if (status === "sold" && !isBlockingMode) return;
-    if (status === "blocked" && !isBlockingMode) return;
+    
+    // In blocking mode, you can't block an already sold seat.
+    if(isBlockingMode && status === "sold") return;
 
     if (isBlockingMode) {
         onSeatSelect(seat.number);
@@ -83,11 +86,12 @@ export function SeatChart({
   };
 
   const getSeatStatus = (seat: Seat): SeatStatus => {
+    if (occupiedSeats.includes(seat.number)) return "sold";
+    
     if (isBlockingMode) {
        if(adminBlockedSeats.includes(seat.number)) return "blocked";
     } else {
       if (selectedSeats.some(s => s.id === seat.id)) return "selected";
-      if (occupiedSeats.includes(seat.number)) return "sold";
       if (adminBlockedSeats.includes(seat.number)) return "blocked";
     }
     return seat.status;
@@ -111,7 +115,7 @@ export function SeatChart({
         <CardTitle>Reservation Seat Chart</CardTitle>
         <CardDescription>
             {isBlockingMode
-                ? "Click a seat to block or unblock it."
+                ? "Click a seat to block or unblock it. Sold seats cannot be blocked."
                 : `Select seats for ${memberCount} member(s). Click on an available seat to select it.`}
         </CardDescription>
       </CardHeader>
@@ -135,8 +139,8 @@ export function SeatChart({
         <div className="flex justify-center gap-4 mt-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-primary/20 border border-primary"></div>Available</div>
           <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-accent"></div>Selected</div>
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-muted text-muted-foreground"><User size={12}/></div>Sold</div>
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-destructive/20 text-destructive"><Ban size={12}/></div>Blocked</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-muted text-muted-foreground flex items-center justify-center"><User size={12}/></div>Sold</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-destructive text-destructive-foreground flex items-center justify-center"><Ban size={12}/></div>Blocked</div>
         </div>
       </CardContent>
     </Card>
@@ -158,13 +162,13 @@ function SeatButton({ seat, status, onClick, isBlockingMode }: { seat: Seat, sta
       className={cn(
         "h-10 w-10 flex flex-col items-center justify-center text-xs rounded-md",
         status === "available" && "bg-primary/20 text-primary-foreground hover:bg-primary/30",
-        status === "sold" && "bg-muted text-muted-foreground",
+        status === "sold" && "bg-muted text-muted-foreground cursor-not-allowed",
         status === "blocked" && "bg-destructive text-destructive-foreground",
         status === "selected" && "bg-accent text-accent-foreground hover:bg-accent/90",
-        !isBlockingMode && (status === "sold" || status === "blocked") && "cursor-not-allowed"
+        !isBlockingMode && (status === "blocked") && "cursor-not-allowed"
       )}
       onClick={() => onClick(seat, status)}
-      disabled={!isBlockingMode && (status === "sold" || status === "blocked")}
+      disabled={status === "sold" || (!isBlockingMode && status === "blocked")}
       aria-label={`Seat ${seat.number}, Status: ${status}, Price: ₹${seat.price}`}
     >
       {getIcon()}

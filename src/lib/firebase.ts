@@ -2,7 +2,6 @@
 'use client';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, writeBatch, doc, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { getStorage, ref, deleteObject } from "firebase/storage";
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
@@ -18,7 +17,6 @@ if (!getApps().length) {
 }
 
 const db = getFirestore();
-const storage = getStorage();
 
 // Booking Functions
 export const saveBooking = async (bookingData: any) => {
@@ -82,8 +80,13 @@ export const getBlockedSeatsForDate = async (packageSlug: string, date: string):
         where("date", "==", date)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => doc.data().seatNumber);
+    const seatNumbers = new Set<number>();
+    querySnapshot.forEach(doc => {
+        seatNumbers.add(doc.data().seatNumber);
+    });
+    return Array.from(seatNumbers);
 }
+
 
 export const blockSeatForDate = async (packageSlug: string, date: string, seatNumber: number) => {
     await addDoc(collection(db, 'blocked_seats'), { packageSlug, date, seatNumber });
@@ -104,7 +107,7 @@ export const unblockSeatForDate = async (packageSlug: string, date: string, seat
     await batch.commit();
 }
 
-export const blockAllSeatsForDate = async (packageSlug: string, date: string, totalSeats: number) => {
+export const blockAllSeatsForDate = async (packageSlug: string, date: string, seatsToBlock: number[]) => {
     const batch = writeBatch(db);
     
     const existingBlockedSeatsQuery = query(
@@ -115,10 +118,10 @@ export const blockAllSeatsForDate = async (packageSlug: string, date: string, to
     const querySnapshot = await getDocs(existingBlockedSeatsQuery);
     const existingSeats = new Set(querySnapshot.docs.map(d => d.data().seatNumber));
 
-    for (let i = 1; i <= totalSeats; i++) {
-        if (!existingSeats.has(i)) {
+    for (const seatNumber of seatsToBlock) {
+        if (!existingSeats.has(seatNumber)) {
             const newDocRef = doc(collection(db, 'blocked_seats'));
-            batch.set(newDocRef, { packageSlug, date, seatNumber: i });
+            batch.set(newDocRef, { packageSlug, date, seatNumber });
         }
     }
     await batch.commit();
