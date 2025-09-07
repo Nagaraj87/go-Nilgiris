@@ -182,6 +182,17 @@ function BookingFlow() {
     }
   };
 
+  const handleCopyToAll = () => {
+    const firstPassenger = form.getValues('passengers.0');
+    if (!firstPassenger) return;
+
+    for(let i = 1; i < fields.length; i++) {
+        form.setValue(`passengers.${i}.name`, firstPassenger.name, { shouldValidate: true });
+        form.setValue(`passengers.${i}.phone`, firstPassenger.phone, { shouldValidate: true });
+    }
+     toast({ title: "Details Copied", description: "Name and contact number have been copied to all passengers." });
+  }
+
   const steps = [
     { num: 1, title: "Booking Details" },
     { num: 2, title: "Passenger Info & Seats" },
@@ -304,7 +315,13 @@ function BookingFlow() {
               <CardContent className="space-y-8">
                 <div className="space-y-4">
                   {fields.map((field, index) => (
-                    <PassengerFields key={field.id} form={form} index={index} />
+                    <PassengerFields 
+                        key={field.id} 
+                        form={form} 
+                        index={index} 
+                        onCopyToAll={handleCopyToAll}
+                        memberCount={memberCount}
+                    />
                   ))}
                 </div>
                 <SeatChart 
@@ -365,5 +382,3 @@ export default function BookingPage() {
         </Suspense>
     )
 }
-
-    
