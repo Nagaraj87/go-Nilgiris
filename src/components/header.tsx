@@ -18,9 +18,9 @@ export function Header() {
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
         <div className="mr-4 flex items-center">
           {showBackButton && (
-            <Button variant="ghost" size="icon" className="mr-2" onClick={() => router.back()}>
+            <Button variant="ghost" size="icon" className="mr-2" onClick={() => router.push('/')}>
               <ArrowLeft />
-              <span className="sr-only">Back</span>
+              <span className="sr-only">Back to Home</span>
             </Button>
           )}
           <Link href="/" className="mr-6 flex items-center space-x-2">

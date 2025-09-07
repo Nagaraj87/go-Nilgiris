@@ -37,10 +37,10 @@ export const getBookings = async () => {
 }
 
 // Availability Functions
-export const getBlockedDates = async (): Promise<Date[]> => {
+export const getBlockedDates = async (): Promise<string[]> => {
     const q = query(collection(db, "blocked_dates"), where("isFullyBlocked", "==", true));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => new Date(doc.id));
+    return querySnapshot.docs.map(doc => doc.id);
 }
 
 export const blockDate = async (date: string) => {
@@ -84,17 +84,7 @@ export const unblockSeatForDate = async (packageSlug: string, date: string, seat
 
 export const blockAllSeatsForDate = async (packageSlug: string, date: string, totalSeats: number) => {
     // First clear any existing individually blocked seats for this date/package
-    const q = query(
-        collection(db, "blocked_seats"), 
-        where("packageSlug", "==", packageSlug), 
-        where("date", "==", date)
-    );
-    const querySnapshot = await getDocs(q);
-    const deleteBatch = writeBatch(db);
-    querySnapshot.forEach(doc => {
-        deleteBatch.delete(doc.ref);
-    });
-    await deleteBatch.commit();
+    await unblockAllSeatsForDate(packageSlug, date);
 
     // Then block all seats
     const writeBatch = writeBatch(db);
