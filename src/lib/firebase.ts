@@ -37,6 +37,19 @@ export const getBookings = async () => {
     return bookings;
 }
 
+export const deleteBooking = async (bookingId: string) => {
+    if (!bookingId) {
+        throw new Error('Booking ID is required to delete.');
+    }
+    try {
+        const bookingDocRef = doc(db, 'bookings', bookingId);
+        await deleteDoc(bookingDocRef);
+    } catch (e) {
+        console.error('Error deleting document: ', e);
+        throw new Error('Could not delete booking');
+    }
+}
+
 // Availability Functions
 export const getBlockedDates = async (): Promise<string[]> => {
     const q = query(collection(db, "blocked_dates"), where("isFullyBlocked", "==", true));
@@ -84,14 +97,24 @@ export const unblockSeatForDate = async (packageSlug: string, date: string, seat
 }
 
 export const blockAllSeatsForDate = async (packageSlug: string, date: string, totalSeats: number) => {
-    // First clear any existing individually blocked seats for this date/package
-    await unblockAllSeatsForDate(packageSlug, date);
-
-    // Then block all seats
     const batch = writeBatch(db);
+    
+    // First, query for existing blocked seats to avoid duplicates, although unblockAll is better.
+    // For simplicity here, we assume we might be adding to existing blocks, or starting fresh.
+    // A robust solution might clear existing blocks first.
+    const existingBlockedSeatsQuery = query(
+        collection(db, "blocked_seats"), 
+        where("packageSlug", "==", packageSlug), 
+        where("date", "==", date)
+    );
+    const querySnapshot = await getDocs(existingBlockedSeatsQuery);
+    const existingSeats = new Set(querySnapshot.docs.map(d => d.data().seatNumber));
+
     for (let i = 1; i <= totalSeats; i++) {
-        const newDocRef = doc(collection(db, 'blocked_seats'));
-        batch.set(newDocRef, { packageSlug, date, seatNumber: i });
+        if (!existingSeats.has(i)) {
+            const newDocRef = doc(collection(db, 'blocked_seats'));
+            batch.set(newDocRef, { packageSlug, date, seatNumber: i });
+        }
     }
     await batch.commit();
 }

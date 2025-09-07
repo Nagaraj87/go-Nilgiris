@@ -3,13 +3,16 @@
 
 import { useEffect, useState } from "react";
 import Link from 'next/link';
-import { getBookings } from "@/lib/firebase";
+import { deleteBooking, getBookings } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GalleryHorizontal, Lock, Ticket, ShieldOff, ImageOff, Calendar, ArrowRight } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, ShieldOff, ImageOff, Calendar, ArrowRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 type Booking = {
   id: string;
@@ -25,6 +28,8 @@ type Booking = {
 export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -39,6 +44,19 @@ export default function AdminPage() {
     };
     fetchBookings();
   }, []);
+
+  const handleDeleteBooking = async () => {
+    if (!bookingToDelete) return;
+    try {
+        await deleteBooking(bookingToDelete);
+        setBookings(bookings.filter(b => b.id !== bookingToDelete));
+        toast({ title: "Booking Deleted", description: "The booking has been successfully deleted." });
+    } catch (error) {
+        toast({ variant: "destructive", title: "Error", description: "Failed to delete booking." });
+    } finally {
+        setBookingToDelete(null);
+    }
+  }
 
 
   return (
@@ -78,6 +96,7 @@ export default function AdminPage() {
                         <TableHead>Total Amount</TableHead>
                         <TableHead>Seats</TableHead>
                         <TableHead>Passengers</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -95,6 +114,26 @@ export default function AdminPage() {
                                 {p.name} ({p.age}, {p.gender})
                               </div>
                             ))}
+                          </TableCell>
+                          <TableCell className="text-right">
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Actions</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => alert("Edit feature coming soon!")}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setBookingToDelete(booking.id)} className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -140,6 +179,20 @@ export default function AdminPage() {
             </Card>
         </TabsContent>
       </Tabs>
+      <AlertDialog open={!!bookingToDelete} onOpenChange={(open) => !open && setBookingToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the booking and release the seats.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setBookingToDelete(null)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteBooking} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
