@@ -66,12 +66,10 @@ export function Header() {
               </Link>
             </Button>
              {isAdminPage && (
-              <form action={handleLogout}>
-                <Button variant="ghost" type="submit">
+                <Button variant="ghost" onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4"/>
                     Logout
                 </Button>
-              </form>
             )}
           </nav>
 
@@ -121,12 +119,10 @@ export function Header() {
                     <span>Admin</span>
                   </Link>
                   {isAdminPage && (
-                    <form action={handleLogout}>
-                      <button type="submit" className="flex items-center space-x-2 text-lg font-medium w-full">
-                          <LogOut className="h-5 w-5" />
-                          <span>Logout</span>
-                      </button>
-                    </form>
+                    <Button variant="ghost" onClick={handleLogout} className="flex w-full justify-start space-x-2 text-lg font-medium h-auto p-0">
+                        <LogOut className="h-5 w-5" />
+                        <span>Logout</span>
+                    </Button>
                   )}
                 </div>
               </SheetContent>
