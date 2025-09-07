@@ -6,10 +6,8 @@ import { getBookings } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Calendar as CalendarIcon, GalleryHorizontal, Lock, Ticket, ShieldOff, ImageOff } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, ShieldOff, ImageOff } from "lucide-react";
 import { format } from "date-fns";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,23 +43,6 @@ export default function AdminPage() {
     fetchBookings();
   }, []);
 
-  const bookingCounts = bookings.reduce((acc, booking) => {
-    acc[booking.packageSlug] = (acc[booking.packageSlug] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const chartData = Object.keys(bookingCounts).map(slug => ({
-    name: slug.replace(/-/g, ' ').replace('tour', ''),
-    bookings: bookingCounts[slug],
-  }));
-
-  const chartConfig = {
-    bookings: {
-      label: "Bookings",
-      color: "hsl(var(--primary))",
-    },
-  } satisfies ChartConfig;
-
   const handleBlockSeat = () => {
     alert("Seat blocking is a demo feature.");
   }
@@ -75,9 +56,8 @@ export default function AdminPage() {
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and analyze your business performance.</p>
       
       <Tabs defaultValue="bookings">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="bookings"><Ticket className="mr-2"/> Bookings</TabsTrigger>
-          <TabsTrigger value="analytics"><BarChart className="mr-2"/> Analytics</TabsTrigger>
           <TabsTrigger value="availability"><ShieldOff className="mr-2"/> Availability</TabsTrigger>
           <TabsTrigger value="gallery"><GalleryHorizontal className="mr-2"/> Gallery</TabsTrigger>
         </TabsList>
@@ -128,28 +108,6 @@ export default function AdminPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-        <TabsContent value="analytics">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Booking Analytics</CardTitle>
-                    <CardDescription>A summary of tour bookings.</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[400px]">
-                    <ChartContainer config={chartConfig} className="w-full h-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart accessibilityLayer data={chartData}>
-                            <CartesianGrid vertical={false} />
-                            <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
-                            <YAxis />
-                            <Tooltip content={<ChartTooltipContent />} />
-                            <Legend />
-                            <Bar dataKey="bookings" fill="var(--color-bookings)" radius={4} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
         </TabsContent>
         <TabsContent value="availability">
             <div className="grid md:grid-cols-2 gap-8">
@@ -204,7 +162,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
-
-    
