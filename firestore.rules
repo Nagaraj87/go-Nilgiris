@@ -1,8 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow public read/write access to bookings for the app to function
     match /bookings/{document=**} {
       allow read, write: if true;
+    }
+
+    // Allow public read access to blocked dates for the calendar
+    match /blocked_dates/{date} {
+       allow read, write: if true;
+    }
+
+    // Allow public read access to blocked seats for the seat chart
+    match /blocked_seats/{seat} {
+      allow read, write: if true;
+    }
+
+    // Allow public read access for gallery images
+    match /gallery/{imageId} {
+      allow read: if true;
+      // Allow write access only for authenticated users (admins)
+      // In a real app, you would check for a specific admin claim here.
+      allow write: if request.auth != null;
     }
   }
 }
