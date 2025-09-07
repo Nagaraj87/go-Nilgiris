@@ -137,6 +137,7 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent className="h-[400px]">
                     <ChartContainer config={chartConfig} className="w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%">
                         <BarChart accessibilityLayer data={chartData}>
                             <CartesianGrid vertical={false} />
                             <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
@@ -145,6 +146,7 @@ export default function AdminPage() {
                             <Legend />
                             <Bar dataKey="bookings" fill="var(--color-bookings)" radius={4} />
                         </BarChart>
+                      </ResponsiveContainer>
                     </ChartContainer>
                 </CardContent>
             </Card>
@@ -202,5 +204,7 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
 
     
