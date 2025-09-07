@@ -8,6 +8,7 @@ import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Home, Lock, Menu, ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
+import { NotificationBell } from './notification-bell';
 
 
 export function Header() {
@@ -50,7 +51,8 @@ export function Header() {
               </Link>
             </Button>
           </nav>
-
+          
+          <NotificationBell />
           <ThemeToggle />
 
           {/* Mobile Navigation */}
