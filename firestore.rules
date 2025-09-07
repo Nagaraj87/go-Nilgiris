@@ -1,29 +1,28 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read/write access to bookings for the app to function
-    match /bookings/{document=**} {
-      allow read, write: if true;
+    // Allow public read on site_config (for hero image), but no public write.
+    // Admin panel writes will be authenticated.
+    match /site_config/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Rule for admin (to be improved later)
     }
 
-    // Allow public read/write access to the availability collection
-    // This is used for admins to block/unblock seats
-    match /availability/{document=**} {
-      allow read, write: if true;
+    // Allow anyone to create bookings, but only authenticated users to manage them.
+    match /bookings/{bookingId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null; // Rule for admin
+    }
+    
+    // Allow public read for gallery images
+    match /gallery/{imageId} {
+      allow read: if true;
+      allow create, delete: if request.auth != null; // Rule for admin
     }
 
-    // --- RULES FOR GALLERY ---
-    // Allow public read access for viewing tour galleries
-    // Allow public write access for adding/deleting images until auth is added
-    match /gallery/{image} {
-      allow read, write: if true;
-    }
-
-    // --- RULES FOR SITE CONFIG ---
-    // Allow public read for anyone (so homepage can get hero image)
-    // Allow write for admins (will be secured later with auth)
-    match /site_config/{config} {
-        allow read, write: if true;
+    // Allow management of availability by admins
+    match /availability/{availabilityId} {
+        allow read, write: if request.auth != null; // Rule for admin
     }
   }
 }
