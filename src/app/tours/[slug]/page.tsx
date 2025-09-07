@@ -10,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Check, Info, X } from 'lucide-react';
+import { Check, Info, X, Image as ImageIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getGalleryImages } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type GalleryImage = {
   id: string;
@@ -97,7 +98,7 @@ export default function TourPackagePage() {
                     <Skeleton className="w-full h-48" />
                     <Skeleton className="w-full h-48" />
                   </div>
-               ) : (
+               ) : galleryImages.length > 0 ? (
                   <Carousel className="w-full">
                     <CarouselContent>
                       {galleryImages.map((image, index) => (
@@ -124,6 +125,14 @@ export default function TourPackagePage() {
                       <CarouselNext className="right-2" />
                     </>}
                   </Carousel>
+               ) : (
+                  <Alert>
+                    <ImageIcon className="h-4 w-4" />
+                    <AlertTitle>Gallery Not Available</AlertTitle>
+                    <AlertDescription>
+                      There are no images in the gallery for this tour package yet. Please check back later!
+                    </AlertDescription>
+                  </Alert>
                )}
             </TabsContent>
             <TabsContent value="overview" className="mt-6">
