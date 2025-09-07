@@ -217,7 +217,7 @@ export default function AdminPage() {
                             mode="multiple"
                             selected={blockedDates}
                             onSelect={handleDateSelectForBlocking}
-                            className="rounded-md border sm:border-none"
+                            className="rounded-md border sm:border-none w-full"
                         />
                     </CardContent>
                 </Card>
