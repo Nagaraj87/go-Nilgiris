@@ -94,10 +94,7 @@ export default function TourPackagePage() {
             </TabsContent>
             <TabsContent value="gallery" className="mt-6">
                {loadingGallery ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <Skeleton className="w-full h-48" />
-                    <Skeleton className="w-full h-48" />
-                  </div>
+                  <Skeleton className="w-full aspect-video rounded-lg" />
                ) : galleryImages.length > 0 ? (
                   <Carousel className="w-full">
                     <CarouselContent>
