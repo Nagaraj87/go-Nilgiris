@@ -1,8 +1,8 @@
 "use client";
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense, useState, useMemo } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { Suspense, useState, useMemo, useEffect } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { tourPackages } from '@/lib/data';
@@ -21,6 +21,7 @@ import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, User, Baby, CreditCard
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { WomanIcon } from '@/components/icons';
+import { saveBooking } from '@/lib/firebase';
 
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -30,7 +31,9 @@ const passengerSchema = z.object({
 
 const bookingSchema = z.object({
   packageSlug: z.string(),
-  bookingDate: z.date(),
+  bookingDate: z.date({
+    required_error: "A booking date is required.",
+  }),
   memberCount: z.coerce.number().min(1, 'At least one member is required').max(10),
   passengers: z.array(passengerSchema),
 });
@@ -47,6 +50,7 @@ function BookingFlow() {
   
   const [step, setStep] = useState(1);
   const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -66,23 +70,23 @@ function BookingFlow() {
   const memberCount = form.watch('memberCount');
   const passengers = form.watch('passengers');
 
-  // Sync passengers array with memberCount
-  useState(() => {
+  useEffect(() => {
     const currentCount = passengers.length;
-    if (memberCount > currentCount) {
-      for (let i = 0; i < memberCount - currentCount; i++) {
+    const targetCount = memberCount || 0;
+    if (targetCount > currentCount) {
+      for (let i = 0; i < targetCount - currentCount; i++) {
         append({ name: '', age: 0, gender: 'male' });
       }
-    } else if (memberCount < currentCount) {
-      for (let i = 0; i < currentCount - memberCount; i++) {
+    } else if (targetCount < currentCount) {
+      for (let i = 0; i < currentCount - targetCount; i++) {
         remove(currentCount - 1 - i);
       }
     }
-  });
+  }, [memberCount, append, remove, passengers.length]);
+
 
   const totalAmount = useMemo(() => {
     const seatTotal = selectedSeats.reduce((acc, seat) => acc + seat.price, 0);
-    // base price for members not yet seated
     const remainingMembers = memberCount - selectedSeats.length;
     const baseTotal = remainingMembers > 0 ? remainingMembers * tourPackage.price : 0;
     return seatTotal + baseTotal;
@@ -95,7 +99,14 @@ function BookingFlow() {
   
   const processStep2 = async () => {
     const result = await form.trigger('passengers');
-    if (!result) return;
+    if (!result) {
+       toast({
+        variant: "destructive",
+        title: "Passenger Details Incomplete",
+        description: "Please fill in the details for all passengers.",
+      });
+      return;
+    }
     if (selectedSeats.length !== memberCount) {
        toast({
         variant: "destructive",
@@ -107,9 +118,29 @@ function BookingFlow() {
     setStep(3);
   };
 
-  const processPayment = () => {
+  const processPayment = async () => {
+    setIsSubmitting(true);
     const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    router.push(`/booking/confirmation?bookingId=${bookingId}&package=${tourPackage.slug}`);
+    const bookingData = {
+      bookingId,
+      ...form.getValues(),
+      selectedSeats: selectedSeats.map(s => ({ number: s.number, price: s.price })),
+      totalAmount,
+      bookingDate: form.getValues('bookingDate').toISOString(),
+    };
+
+    try {
+      await saveBooking(bookingData);
+      router.push(`/booking/confirmation?bookingId=${bookingId}&package=${tourPackage.slug}`);
+    } catch (error) {
+      console.error("Failed to save booking:", error);
+      toast({
+        variant: "destructive",
+        title: "Booking Failed",
+        description: "Could not save your booking. Please try again.",
+      });
+      setIsSubmitting(false);
+    }
   };
 
   const steps = [
@@ -180,7 +211,7 @@ function BookingFlow() {
                     <FormItem>
                       <FormLabel>Number of Members</FormLabel>
                       <FormControl>
-                        <Input type="number" min="1" max="10" {...field} className="w-[240px]" />
+                        <Input type="number" min="1" max="10" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} className="w-[240px]" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -241,17 +272,20 @@ function BookingFlow() {
               <CardContent className="space-y-4">
                 <h3 className="font-bold">Booking Summary</h3>
                 <p><strong>Package:</strong> {tourPackage.name}</p>
-                <p><strong>Date:</strong> {form.getValues('bookingDate').toLocaleDateString()}</p>
+                <p><strong>Date:</strong> {format(form.getValues('bookingDate'), 'PPP')}</p>
                 <p><strong>Members:</strong> {memberCount}</p>
                 <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
                 <div className="text-3xl font-bold text-primary">Total Amount: ₹{totalAmount.toLocaleString('en-IN')}</div>
                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">This is a demo. Clicking "Pay Now" will simulate a successful payment and generate a booking confirmation. No real payment will be processed.</p>
+                    <p className="text-sm text-muted-foreground">This is a demo. Clicking "Pay Now" will simulate a successful payment and save your booking to our database.</p>
                 </div>
               </CardContent>
               <CardFooter className="justify-between">
-                <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
-                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={processPayment}>Pay Now <CreditCard className="ml-2 h-4 w-4" /></Button>
+                <Button variant="outline" onClick={() => setStep(2)} disabled={isSubmitting}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
+                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={processPayment} disabled={isSubmitting}>
+                    {isSubmitting ? "Processing..." : "Pay Now"}
+                    <CreditCard className="ml-2 h-4 w-4" />
+                </Button>
               </CardFooter>
             </Card>
           )}

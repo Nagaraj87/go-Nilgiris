@@ -1,9 +1,44 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { getBookings } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Lock, User, Calendar, Ticket } from "lucide-react";
+import { format } from "date-fns";
+
+type Booking = {
+  id: string;
+  bookingId: string;
+  packageSlug: string;
+  bookingDate: string;
+  memberCount: number;
+  totalAmount: number;
+  passengers: { name: string; age: number; gender: string }[];
+  selectedSeats: { number: number; price: number }[];
+};
 
 export default function AdminPage() {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const bookingsData = await getBookings();
+        setBookings(bookingsData as Booking[]);
+      } catch (error) {
+        console.error("Failed to fetch bookings", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookings();
+  }, []);
+
   return (
-    <div className="container mx-auto max-w-4xl py-12">
+    <div className="container mx-auto max-w-7xl py-12">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -11,20 +46,46 @@ export default function AdminPage() {
             Admin Dashboard
           </CardTitle>
           <CardDescription>
-            This is a placeholder for the admin dashboard. A full implementation requires authentication and backend services for managing bookings, payments, and tours.
+            View all tour bookings submitted through the booking form.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
-            In a complete application, this area would be protected and provide tools to:
-          </p>
-          <ul className="list-disc list-inside mt-4 space-y-2 text-sm text-muted-foreground">
-            <li>View real-time bookings and payment logs.</li>
-            <li>Manage tour packages, itineraries, and galleries.</li>
-            <li>Oversee seat availability and make manual adjustments.</li>
-            <li>Export booking data for reporting.</li>
-            <li>Handle cancellations and customer inquiries.</li>
-          </ul>
+          {loading ? (
+            <p>Loading bookings...</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Booking ID</TableHead>
+                  <TableHead>Tour Package</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Members</TableHead>
+                  <TableHead>Total Amount</TableHead>
+                  <TableHead>Seats</TableHead>
+                  <TableHead>Passengers</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {bookings.map((booking) => (
+                  <TableRow key={booking.id}>
+                    <TableCell className="font-medium">{booking.bookingId}</TableCell>
+                    <TableCell>{booking.packageSlug}</TableCell>
+                    <TableCell>{format(new Date(booking.bookingDate), "PPP")}</TableCell>
+                    <TableCell>{booking.memberCount}</TableCell>
+                    <TableCell>₹{booking.totalAmount.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>{booking.selectedSeats.map(s => s.number).join(', ')}</TableCell>
+                    <TableCell>
+                      {booking.passengers.map((p, i) => (
+                        <div key={i} className="text-xs">
+                          {p.name} ({p.age}, {p.gender})
+                        </div>
+                      ))}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

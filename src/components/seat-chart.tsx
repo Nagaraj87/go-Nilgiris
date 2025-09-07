@@ -28,11 +28,11 @@ type SeatChartProps = {
 const generateSeats = (totalSeats: number, pricePerSeat: number): Seat[] => {
   return Array.from({ length: totalSeats }, (_, i) => {
     const isWindow = i % 4 === 0 || i % 4 === 3;
-    const price = pricePerSeat + (isWindow ? 50 : 0) + Math.floor(Math.random() * 50 - 25);
+    const price = pricePerSeat + (isWindow ? 50 : 0);
     return {
       id: `seat-${i + 1}`,
       number: i + 1,
-      status: Math.random() > 0.4 ? "sold" : "available", // 60% sold for realism
+      status: "available",
       price: Math.round(price / 10) * 10,
     }
   });
@@ -49,7 +49,6 @@ export function SeatChart({
   const [seats, setSeats] = useState<Seat[]>([]);
 
   useEffect(() => {
-    // Generate seats only on the client-side to ensure Math.random() doesn't cause hydration issues
     setSeats(generateSeats(totalSeats, pricePerSeat));
   }, [totalSeats, pricePerSeat]);
 
@@ -65,7 +64,6 @@ export function SeatChart({
       if (selectedSeats.length < memberCount) {
         onSeatSelect([...selectedSeats, seat]);
       } else {
-        // Optional: show a toast or alert that the user can't select more seats
         console.warn("Cannot select more seats than the number of members.");
       }
     }
