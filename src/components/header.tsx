@@ -63,6 +63,10 @@ export function Header() {
                     <Home className="h-5 w-5" />
                     <span>Home</span>
                   </Link>
+                  <Link href="/admin" className="flex items-center space-x-2 text-lg font-medium">
+                    <Lock className="h-5 w-5" />
+                    <span>Admin</span>
+                  </Link>
                   {isAdminPage &&
                     <>
                         <Link href="/admin/notifications" className="flex items-center space-x-2 text-lg font-medium">
