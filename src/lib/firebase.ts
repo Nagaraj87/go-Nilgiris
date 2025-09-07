@@ -205,4 +205,24 @@ export const updatePackagePrice = async (slug: string, price: number) => {
     await setDoc(docRef, { price: price }, { merge: true });
 };
 
+
+// Site Config Functions
+export const getContactInfo = async (): Promise<{ whatsapp: string, call: string }> => {
+    const docRef = doc(db, 'site_config', 'contact');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as { whatsapp: string, call: string };
+    } else {
+        // Default values if not set
+        const defaultData = { whatsapp: '8248932947', call: '7418066906' };
+        await setDoc(docRef, defaultData);
+        return defaultData;
+    }
+};
+
+export const updateContactInfo = async (data: { whatsapp: string, call: string }) => {
+    const docRef = doc(db, 'site_config', 'contact');
+    await setDoc(docRef, data, { merge: true });
+};
+
     

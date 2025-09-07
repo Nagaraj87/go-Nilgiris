@@ -1,3 +1,5 @@
+
+import Link from 'next/link';
 import { DeerLogo } from '@/components/icons';
 
 export function Footer() {
@@ -18,15 +20,15 @@ export function Footer() {
             <div>
               <h3 className="mb-4 font-semibold">Tours</h3>
               <ul className="space-y-2">
-                <li><a href="/tours/ooty-coonoor-tour" className="text-muted-foreground hover:text-primary">Ooty-Coonoor</a></li>
-                <li><a href="/tours/mudhumalai-pykara-tour" className="text-muted-foreground hover:text-primary">Mudhumalai-Pykara</a></li>
+                <li><Link href="/tours/ooty-coonoor-tour" className="text-muted-foreground hover:text-primary">Ooty-Coonoor</Link></li>
+                <li><Link href="/tours/mudhumalai-pykara-tour" className="text-muted-foreground hover:text-primary">Mudhumalai-Pykara</Link></li>
               </ul>
             </div>
             <div>
-              <h3 className="mb-4 font-semibold">Contact Us</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>Email:</li>
-                <li><a href="mailto:lets@gokotagiri.com" className="hover:text-primary">lets@gokotagiri.com</a></li>
+              <h3 className="mb-4 font-semibold">Support</h3>
+              <ul className="space-y-2">
+                 <li><Link href="/contact" className="text-muted-foreground hover:text-primary">Contact Us</Link></li>
+                 <li><a href="mailto:lets@gokotagiri.com" className="text-muted-foreground hover:text-primary">Email Us</a></li>
               </ul>
             </div>
             <div>
@@ -48,3 +50,5 @@ export function Footer() {
     </footer>
   );
 }
+
+    

@@ -3,10 +3,10 @@
 
 import { useEffect, useState } from "react";
 import Link from 'next/link';
-import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore, getPackagePrices, updatePackagePrice } from "@/lib/firebase";
+import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore, getPackagePrices, updatePackagePrice, getContactInfo, updateContactInfo } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search, Tag, Loader2 } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search, Tag, Loader2, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -40,9 +40,9 @@ type GalleryImage = {
   packageSlug: string;
 };
 
-type PackagePrice = {
-  slug: string;
-  price: number;
+type ContactInfo = {
+    whatsapp: string;
+    call: string;
 }
 
 export default function AdminPage() {
@@ -69,6 +69,11 @@ export default function AdminPage() {
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [updatedPrices, setUpdatedPrices] = useState<Record<string, number | string>>({});
   const [savingPriceSlug, setSavingPriceSlug] = useState<string | null>(null);
+  
+  // Contact Info State
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({ whatsapp: '', call: '' });
+  const [loadingContact, setLoadingContact] = useState(true);
+  const [savingContact, setSavingContact] = useState(false);
 
 
   useEffect(() => {
@@ -123,6 +128,22 @@ export default function AdminPage() {
       }
     };
     fetchPrices();
+  }, [toast]);
+
+  useEffect(() => {
+    const fetchContact = async () => {
+        setLoadingContact(true);
+        try {
+            const data = await getContactInfo();
+            setContactInfo(data);
+        } catch (error) {
+            console.error(error);
+            toast({ variant: "destructive", title: "Error", description: "Could not load contact info." });
+        } finally {
+            setLoadingContact(false);
+        }
+    };
+    fetchContact();
   }, [toast]);
 
 
@@ -210,6 +231,18 @@ export default function AdminPage() {
         toast({ variant: "destructive", title: "Update Failed", description: "Could not update the price." });
     } finally {
         setSavingPriceSlug(null);
+    }
+  }
+
+  const handleSaveContact = async () => {
+    setSavingContact(true);
+    try {
+        await updateContactInfo(contactInfo);
+        toast({ title: "Contact Info Updated", description: "The customer support numbers have been saved."});
+    } catch (error) {
+        toast({ variant: "destructive", title: "Update Failed", description: "Could not save contact info." });
+    } finally {
+        setSavingContact(false);
     }
   }
 
@@ -394,6 +427,47 @@ export default function AdminPage() {
                 </CardContent>
             </Card>
        </div>
+
+        <div id="contact-section" className="mb-12">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Contact Information</CardTitle>
+                    <CardDescription>Update the customer support contact numbers displayed on the contact page.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingContact ? (
+                        <Skeleton className="h-24 w-full" />
+                    ) : (
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="whatsapp-number">WhatsApp Number</Label>
+                                <Input 
+                                    id="whatsapp-number"
+                                    value={contactInfo.whatsapp}
+                                    onChange={(e) => setContactInfo(prev => ({ ...prev, whatsapp: e.target.value }))}
+                                    placeholder="e.g., 8248932947"
+                                    disabled={savingContact}
+                                />
+                            </div>
+                             <div>
+                                <Label htmlFor="call-number">Call Number</Label>
+                                <Input 
+                                    id="call-number"
+                                    value={contactInfo.call}
+                                    onChange={(e) => setContactInfo(prev => ({ ...prev, call: e.target.value }))}
+                                    placeholder="e.g., 7418066906"
+                                    disabled={savingContact}
+                                />
+                            </div>
+                            <Button onClick={handleSaveContact} disabled={savingContact}>
+                                {savingContact ? <Loader2 className="animate-spin" /> : "Save Contact Info"}
+                            </Button>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+       </div>
+
         <div id="pricing-section" className="mb-12">
             <Card>
                 <CardHeader>
@@ -525,5 +599,4 @@ export default function AdminPage() {
     </div>
   );
 
-    
     
