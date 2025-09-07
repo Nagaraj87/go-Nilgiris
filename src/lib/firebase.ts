@@ -2,6 +2,7 @@
 'use client';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { format, addDays } from 'date-fns';
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
@@ -32,6 +33,19 @@ export const saveBooking = async (bookingData: any) => {
 
 export const getBookings = async () => {
     const querySnapshot = await getDocs(collection(db, "bookings"));
+    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return bookings;
+}
+
+export const getTodaysAndTomorrowsBookings = async () => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+
+    const q = query(
+        collection(db, "bookings"),
+        where("bookingDate", "in", [todayStr, tomorrowStr])
+    );
+    const querySnapshot = await getDocs(q);
     const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return bookings;
 }
@@ -224,5 +238,3 @@ export const updateContactInfo = async (data: { whatsapp: string, call: string }
     const docRef = doc(db, 'site_config', 'contact');
     await setDoc(docRef, data, { merge: true });
 };
-
-    
