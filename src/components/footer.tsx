@@ -16,7 +16,7 @@ export function Footer() {
           </p>
         </div>
         <div className="md:col-span-2">
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-2">
             <div>
               <h3 className="mb-4 font-semibold">Tours</h3>
               <ul className="space-y-2">
@@ -29,13 +29,6 @@ export function Footer() {
               <ul className="space-y-2">
                  <li><Link href="/contact" className="text-muted-foreground hover:text-primary">Contact Us</Link></li>
                  <li><a href="mailto:lets@gokotagiri.com" className="text-muted-foreground hover:text-primary">Email Us</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-4 font-semibold">Legal</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-muted-foreground hover:text-primary">Privacy Policy</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-primary">Cancellation Policy</a></li>
               </ul>
             </div>
           </div>
