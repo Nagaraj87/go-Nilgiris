@@ -42,7 +42,7 @@ export function BookingsManagement() {
     };
 
   const handleDeleteBooking = (bookingId: string) => {
-    setBookings(bookings.filter(b => b.id !== bookingId));
+    setBookings((bookings || []).filter(b => b.id !== bookingId));
   }
   
   const handleDeleteAll = async () => {
@@ -112,7 +112,7 @@ export function BookingsManagement() {
             </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary">{filteredBookings.length} booking(s)</Badge>
-             <Button variant="destructive" onClick={() => setIsDeleteAllOpen(true)} disabled={bookings.length === 0}>
+             <Button variant="destructive" onClick={() => setIsDeleteAllOpen(true)} disabled={(bookings || []).length === 0}>
                 <Trash className="mr-2"/>
                 Delete All
             </Button>
