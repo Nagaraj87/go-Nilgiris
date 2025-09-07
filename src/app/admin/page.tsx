@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 type Booking = {
   id: string;
@@ -30,6 +31,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -57,6 +59,10 @@ export default function AdminPage() {
         setBookingToDelete(null);
     }
   }
+
+  const handleEditBooking = (bookingId: string) => {
+    router.push(`/admin/edit-booking/${bookingId}`);
+  };
 
 
   return (
@@ -124,7 +130,7 @@ export default function AdminPage() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => alert("Edit feature coming soon!")}>
+                                  <DropdownMenuItem onClick={() => handleEditBooking(booking.id)}>
                                     <Pencil className="mr-2 h-4 w-4" />
                                     Edit
                                   </DropdownMenuItem>

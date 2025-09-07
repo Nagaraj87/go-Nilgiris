@@ -1,7 +1,7 @@
 
 'use client';
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, query, where, writeBatch, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, where, writeBatch, doc, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { tourPackages } from './data';
 
 const firebaseConfig = {
@@ -36,6 +36,29 @@ export const getBookings = async () => {
     const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return bookings;
 }
+
+export const getBookingById = async (bookingId: string) => {
+    if (!bookingId) {
+        throw new Error('Booking ID is required.');
+    }
+    const bookingDocRef = doc(db, 'bookings', bookingId);
+    const bookingSnap = await getDoc(bookingDocRef);
+
+    if (bookingSnap.exists()) {
+        return { id: bookingSnap.id, ...bookingSnap.data() };
+    } else {
+        return null;
+    }
+};
+
+export const updateBooking = async (bookingId: string, updatedData: any) => {
+    if (!bookingId) {
+        throw new Error('Booking ID is required.');
+    }
+    const bookingDocRef = doc(db, 'bookings', bookingId);
+    await updateDoc(bookingDocRef, updatedData);
+};
+
 
 export const deleteBooking = async (bookingId: string) => {
     if (!bookingId) {
@@ -99,9 +122,6 @@ export const unblockSeatForDate = async (packageSlug: string, date: string, seat
 export const blockAllSeatsForDate = async (packageSlug: string, date: string, totalSeats: number) => {
     const batch = writeBatch(db);
     
-    // First, query for existing blocked seats to avoid duplicates, although unblockAll is better.
-    // For simplicity here, we assume we might be adding to existing blocks, or starting fresh.
-    // A robust solution might clear existing blocks first.
     const existingBlockedSeatsQuery = query(
         collection(db, "blocked_seats"), 
         where("packageSlug", "==", packageSlug), 
@@ -151,5 +171,3 @@ export const getOccupiedSeats = async (packageSlug: string, date: string): Promi
     });
     return seats;
 };
-
-    
