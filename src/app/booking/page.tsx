@@ -1,0 +1,269 @@
+"use client";
+
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useState, useMemo } from 'react';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { tourPackages } from '@/lib/data';
+import type { TourPackage } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { SeatChart } from '@/components/seat-chart';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { cn } from '@/lib/utils';
+import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, User, Woman, Child, CreditCard, Ticket } from 'lucide-react';
+import { format } from 'date-fns';
+import { useToast } from "@/hooks/use-toast";
+
+const passengerSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  age: z.coerce.number().min(1, 'Age must be at least 1').max(100),
+  gender: z.enum(['male', 'female', 'child']),
+});
+
+const bookingSchema = z.object({
+  packageSlug: z.string(),
+  bookingDate: z.date(),
+  memberCount: z.coerce.number().min(1, 'At least one member is required').max(10),
+  passengers: z.array(passengerSchema),
+});
+
+type BookingFormValues = z.infer<typeof bookingSchema>;
+
+function BookingFlow() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const packageSlug = searchParams.get('package');
+  const { toast } = useToast();
+
+  const tourPackage = useMemo(() => tourPackages.find(p => p.slug === packageSlug) || tourPackages[0], [packageSlug]);
+  
+  const [step, setStep] = useState(1);
+  const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
+
+  const form = useForm<BookingFormValues>({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: {
+      packageSlug: tourPackage.slug,
+      bookingDate: undefined,
+      memberCount: 1,
+      passengers: [{ name: '', age: 0, gender: 'male' }],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'passengers',
+  });
+
+  const memberCount = form.watch('memberCount');
+  const passengers = form.watch('passengers');
+
+  // Sync passengers array with memberCount
+  useState(() => {
+    const currentCount = passengers.length;
+    if (memberCount > currentCount) {
+      for (let i = 0; i < memberCount - currentCount; i++) {
+        append({ name: '', age: 0, gender: 'male' });
+      }
+    } else if (memberCount < currentCount) {
+      for (let i = 0; i < currentCount - memberCount; i++) {
+        remove(currentCount - 1 - i);
+      }
+    }
+  });
+
+  const totalAmount = useMemo(() => {
+    const seatTotal = selectedSeats.reduce((acc, seat) => acc + seat.price, 0);
+    // base price for members not yet seated
+    const remainingMembers = memberCount - selectedSeats.length;
+    const baseTotal = remainingMembers > 0 ? remainingMembers * tourPackage.price : 0;
+    return seatTotal + baseTotal;
+  }, [selectedSeats, memberCount, tourPackage.price]);
+  
+  const processStep1 = async () => {
+    const result = await form.trigger(['bookingDate', 'memberCount']);
+    if (result) setStep(2);
+  };
+  
+  const processStep2 = async () => {
+    const result = await form.trigger('passengers');
+    if (!result) return;
+    if (selectedSeats.length !== memberCount) {
+       toast({
+        variant: "destructive",
+        title: "Seat Selection Incomplete",
+        description: `Please select seats for all ${memberCount} members.`,
+      })
+      return;
+    }
+    setStep(3);
+  };
+
+  const processPayment = () => {
+    const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    router.push(`/booking/confirmation?bookingId=${bookingId}&package=${tourPackage.slug}`);
+  };
+
+  const steps = [
+    { num: 1, title: "Booking Details" },
+    { num: 2, title: "Passenger Info & Seats" },
+    { num: 3, title: "Payment" },
+  ];
+
+  return (
+    <div className="container mx-auto max-w-4xl py-12">
+      <div className="flex items-center justify-center mb-8">
+        {steps.map((s, index) => (
+          <div key={s.num} className="flex items-center">
+            <div className="flex flex-col items-center">
+              <div
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg",
+                  step > s.num ? "bg-primary text-primary-foreground" :
+                  step === s.num ? "bg-accent text-accent-foreground" :
+                  "bg-muted text-muted-foreground"
+                )}
+              >
+                {step > s.num ? <Ticket size={20}/> : s.num}
+              </div>
+              <p className="text-sm mt-2 text-center">{s.title}</p>
+            </div>
+            {index < steps.length - 1 && <div className="w-16 h-0.5 bg-border mx-4"></div>}
+          </div>
+        ))}
+      </div>
+      
+      <Form {...form}>
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
+          {step === 1 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Step 1: Booking Details</CardTitle>
+                <CardDescription>Select your tour date and number of members for the "{tourPackage.name}".</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="bookingDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Booking Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button variant={"outline"} className={cn("w-[240px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                              {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="memberCount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Number of Members</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="1" max="10" {...field} className="w-[240px]" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+              <CardFooter className="justify-end">
+                <Button onClick={processStep1}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              </CardFooter>
+            </Card>
+          )}
+
+          {step === 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Step 2: Passenger Details & Seat Selection</CardTitle>
+                <CardDescription>Enter details for each passenger and select your seats.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="p-4 border rounded-lg space-y-4">
+                      <Label className="font-bold">Passenger {index + 1}</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                         <FormField control={form.control} name={`passengers.${index}.name`} render={({ field }) => (
+                            <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                         )} />
+                         <FormField control={form.control} name={`passengers.${index}.age`} render={({ field }) => (
+                            <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                         )} />
+                         <FormField control={form.control} name={`passengers.${index}.gender`} render={({ field }) => (
+                            <FormItem><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4 pt-2">
+                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="male" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><User size={16}/> Male</FormLabel></FormItem>
+                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="female" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><Woman size={16}/> Female</FormLabel></FormItem>
+                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="child" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><Child size={16}/> Child</FormLabel></FormItem>
+                            </RadioGroup></FormControl><FormMessage /></FormItem>
+                         )} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <SeatChart totalSeats={40} seatsPerRow={4} memberCount={memberCount} selectedSeats={selectedSeats} onSeatSelect={setSelectedSeats} pricePerSeat={tourPackage.price} />
+                 <div className="text-right text-2xl font-bold">Total: ₹{totalAmount.toLocaleString('en-IN')}</div>
+              </CardContent>
+              <CardFooter className="justify-between">
+                <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
+                <Button onClick={processStep2}>Proceed to Payment <CreditCard className="ml-2 h-4 w-4" /></Button>
+              </CardFooter>
+            </Card>
+          )}
+
+          {step === 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Step 3: Payment</CardTitle>
+                <CardDescription>Confirm your booking details and proceed to payment.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <h3 className="font-bold">Booking Summary</h3>
+                <p><strong>Package:</strong> {tourPackage.name}</p>
+                <p><strong>Date:</strong> {form.getValues('bookingDate').toLocaleDateString()}</p>
+                <p><strong>Members:</strong> {memberCount}</p>
+                <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
+                <div className="text-3xl font-bold text-primary">Total Amount: ₹{totalAmount.toLocaleString('en-IN')}</div>
+                 <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm text-muted-foreground">This is a demo. Clicking "Pay Now" will simulate a successful payment and generate a booking confirmation. No real payment will be processed.</p>
+                </div>
+              </CardContent>
+              <CardFooter className="justify-between">
+                <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
+                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={processPayment}>Pay Now <CreditCard className="ml-2 h-4 w-4" /></Button>
+              </CardFooter>
+            </Card>
+          )}
+        </form>
+      </Form>
+    </div>
+  );
+}
+
+export default function BookingPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <BookingFlow />
+        </Suspense>
+    )
+}
