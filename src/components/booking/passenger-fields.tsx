@@ -2,33 +2,19 @@
 "use client";
 
 import React from "react";
-import { useFormContext, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { User, Baby, Copy } from 'lucide-react';
+import { User, Baby } from 'lucide-react';
 import { WomanIcon } from '@/components/icons';
-import { Button } from "../ui/button";
 
 type PassengerFieldsProps = {
   form: any;
   index: number;
-  onCopyToAll?: () => void;
-  memberCount?: number;
 };
 
-function PassengerFieldsComponent({ form, index, onCopyToAll, memberCount = 1 }: PassengerFieldsProps) {
+function PassengerFieldsComponent({ form, index }: PassengerFieldsProps) {
   return (
-    <div className="p-4 border rounded-lg space-y-4">
-      <div className="flex justify-between items-center">
-        <Label className="font-bold">Passenger {index + 1}</Label>
-        {index === 0 && memberCount > 1 && onCopyToAll && (
-            <Button type="button" size="sm" variant="outline" onClick={onCopyToAll} className="gap-1 text-xs">
-                <Copy size={12}/>
-                Copy to all
-            </Button>
-        )}
-      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <FormField
           control={form.control}
@@ -108,10 +94,7 @@ function PassengerFieldsComponent({ form, index, onCopyToAll, memberCount = 1 }:
           )}
         />
       </div>
-    </div>
   );
 }
 
 export const PassengerFields = React.memo(PassengerFieldsComponent);
-
-    

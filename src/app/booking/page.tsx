@@ -16,7 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { SeatChart } from '@/components/seat-chart';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
-import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, CreditCard, Ticket, AlertCircle, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, CreditCard, Ticket, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { saveBooking, getBlockedSeatsForDate, getOccupiedSeats, getPackagePrice } from '@/lib/firebase';
@@ -329,13 +329,21 @@ function BookingFlow() {
               <CardContent className="space-y-8">
                 <div className="space-y-4">
                   {fields.map((field, index) => (
-                    <PassengerFields 
-                        key={field.id} 
-                        form={form} 
-                        index={index} 
-                        onCopyToAll={handleCopyToAll}
-                        memberCount={memberCount}
-                    />
+                    <div key={field.id} className="p-4 border rounded-lg space-y-4">
+                        <div className="flex justify-between items-center">
+                            <Label className="font-bold">Passenger {index + 1}</Label>
+                            {index === 0 && memberCount > 1 && (
+                                <Button type="button" size="sm" variant="outline" onClick={handleCopyToAll} className="gap-1 text-xs">
+                                    <Copy size={12}/>
+                                    Copy to all
+                                </Button>
+                            )}
+                        </div>
+                        <PassengerFields 
+                            form={form} 
+                            index={index} 
+                        />
+                    </div>
                   ))}
                 </div>
                 <SeatChart 
@@ -396,7 +404,3 @@ export default function BookingPage() {
         </Suspense>
     )
 }
-
-    
-
-    

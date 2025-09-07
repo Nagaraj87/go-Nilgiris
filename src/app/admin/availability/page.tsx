@@ -23,6 +23,7 @@ export default function AvailabilityPage() {
   const [selectedPackage, setSelectedPackage] = useState<string>(tourPackages[0].slug);
   const [blockedSeats, setBlockedSeats] = useState<number[]>([]);
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const tourPackage = tourPackages.find(p => p.slug === selectedPackage);
   const totalSeats = 40; // Assuming a fixed number of seats for now
@@ -110,7 +111,7 @@ export default function AvailabilityPage() {
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="space-y-2 flex-1">
                             <Label>Date</Label>
-                            <Popover>
+                            <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
                                 <PopoverTrigger asChild>
                                     <Button variant={"outline"} className={cn("w-full justify-start pl-3 text-left font-normal", !availabilityDate && "text-muted-foreground")}>
                                         {availabilityDate ? format(availabilityDate, 'PPP') : <span>Pick a date</span>}
@@ -118,7 +119,15 @@ export default function AvailabilityPage() {
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar mode="single" selected={availabilityDate} onSelect={setAvailabilityDate} initialFocus />
+                                    <Calendar 
+                                        mode="single" 
+                                        selected={availabilityDate} 
+                                        onSelect={(date) => {
+                                            setAvailabilityDate(date);
+                                            setIsDatePickerOpen(false);
+                                        }} 
+                                        initialFocus 
+                                    />
                                 </PopoverContent>
                             </Popover>
                         </div>
