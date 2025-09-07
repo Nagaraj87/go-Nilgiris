@@ -7,7 +7,6 @@ import { DeerLogo } from '@/components/icons';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Home, Lock, Menu, ArrowLeft } from 'lucide-react';
-import { NotificationBell } from './notification-bell';
 
 export function Header() {
   const pathname = usePathname();
@@ -34,7 +33,6 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-4">
-          <NotificationBell />
           <Button variant="ghost" asChild>
             <Link href="/">
               <Home className="mr-2 h-4 w-4" />
@@ -70,9 +68,6 @@ export function Header() {
                 </SheetTitle>
               </SheetHeader>
               <div className="grid gap-4 py-6">
-                <div className="flex justify-center">
-                   <NotificationBell />
-                </div>
                 <Link href="/" className="flex items-center space-x-2 text-lg font-medium">
                   <Home className="h-5 w-5" />
                   <span>Home</span>

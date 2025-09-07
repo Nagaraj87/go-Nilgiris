@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight } from "lucide-react";
+import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight, Bell } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookingsManagement } from "@/components/admin/bookings-management";
@@ -9,9 +9,19 @@ import { ContactManagement } from "@/components/admin/contact-management";
 import { PriceManagement } from "@/components/admin/price-management";
 import { GalleryManagement } from "@/components/admin/gallery-management";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { getTodaysAndTomorrowsBookings } from "@/lib/firebase";
+import type { Booking } from "@/types";
+import { Badge } from "@/components/ui/badge";
 
 
 export default function AdminPage() {
+  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+
+  useEffect(() => {
+    getTodaysAndTomorrowsBookings().then(data => setUpcomingBookings(data as Booking[]));
+  }, []);
+
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -19,9 +29,22 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto max-w-7xl py-12">
-      <div className="flex items-center gap-2 mb-4">
-        <Lock className="text-primary h-8 w-8"/>
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+            <Lock className="text-primary h-8 w-8"/>
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        </div>
+        <Button asChild variant="outline">
+            <Link href="/admin/notifications" className="relative">
+                <Bell className="mr-2" />
+                Notifications
+                {upcomingBookings.length > 0 && (
+                     <Badge variant="destructive" className="absolute -top-2 -right-2 px-2">
+                        {upcomingBookings.length}
+                    </Badge>
+                )}
+            </Link>
+        </Button>
       </div>
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and update your site content.</p>
 
