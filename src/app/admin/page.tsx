@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GalleryHorizontal, Lock, Ticket, Calendar, ArrowRight, MoreHorizontal, Pencil, Trash2, Upload, Image as ImageIcon, AlertCircle, Link as LinkIcon, Users, ShieldOff } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, Calendar as CalendarIcon, ArrowRight, MoreHorizontal, Pencil, Trash2, Upload, Image as ImageIcon, AlertCircle, Link as LinkIcon, Users, ShieldOff, PlusCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -19,6 +19,11 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createDummyBooking } from "../actions";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
 
 type Booking = {
   id: string;
@@ -47,7 +52,7 @@ export default function AdminPage() {
   const router = useRouter();
 
   // Gallery State
-  const [selectedPackage, setSelectedPackage] = useState<string>(tourPackages[0].slug);
+  const [gallerySelectedPackage, setGallerySelectedPackage] = useState<string>(tourPackages[0].slug);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
@@ -55,9 +60,18 @@ export default function AdminPage() {
   const [isAddingImage, setIsAddingImage] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<GalleryImage | null>(null);
 
+  // Dummy Booking State
+  const [dummyPackage, setDummyPackage] = useState<string>(tourPackages[0].slug);
+  const [dummyDate, setDummyDate] = useState<Date | undefined>(new Date());
+  const [dummyCount, setDummyCount] = useState(1);
+  const [isGeneratingDummies, setIsGeneratingDummies] = useState(false);
+
 
   useEffect(() => {
-    const fetchBookings = async () => {
+    fetchBookings();
+  }, [toast]);
+
+  const fetchBookings = async () => {
       setLoadingBookings(true);
       try {
         const bookingsData = await getBookings();
@@ -69,15 +83,13 @@ export default function AdminPage() {
         setLoadingBookings(false);
       }
     };
-    fetchBookings();
-  }, [toast]);
 
   useEffect(() => {
-    if (!selectedPackage) return;
+    if (!gallerySelectedPackage) return;
     const fetchGallery = async () => {
       setLoadingGallery(true);
       try {
-        const images = await getGalleryImages(selectedPackage);
+        const images = await getGalleryImages(gallerySelectedPackage);
         setGalleryImages(images as GalleryImage[]);
       } catch (error) {
         console.error("Failed to fetch gallery images", error);
@@ -87,7 +99,7 @@ export default function AdminPage() {
       }
     }
     fetchGallery();
-  }, [selectedPackage, toast]);
+  }, [gallerySelectedPackage, toast]);
 
 
   const handleDeleteBooking = async () => {
@@ -112,7 +124,7 @@ export default function AdminPage() {
   }
 
   const handleAddImage = async () => {
-    if (!imageUrl || !imageAlt || !selectedPackage) {
+    if (!imageUrl || !imageAlt || !gallerySelectedPackage) {
         toast({ variant: "destructive", title: "Error", description: "Please provide an image URL and a description." });
         return;
     }
@@ -123,7 +135,7 @@ export default function AdminPage() {
     setIsAddingImage(true);
 
     try {
-        const newImage = await addGalleryImageToFirestore(imageUrl, imageAlt, selectedPackage);
+        const newImage = await addGalleryImageToFirestore(imageUrl, imageAlt, gallerySelectedPackage);
         setGalleryImages([...galleryImages, newImage as GalleryImage]);
         toast({ title: "Image Added", description: "The image has been added to the gallery." });
         setImageUrl("");
@@ -150,6 +162,27 @@ export default function AdminPage() {
     }
   }
 
+  const handleGenerateDummies = async () => {
+    if (!dummyDate || !dummyPackage || dummyCount < 1) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please fill out all fields for dummy booking generation.' });
+      return;
+    }
+    setIsGeneratingDummies(true);
+    try {
+      const result = await createDummyBooking(dummyPackage, format(dummyDate, 'yyyy-MM-dd'), dummyCount);
+      if (result.error) {
+        toast({ variant: 'destructive', title: 'Generation Failed', description: result.error });
+      } else {
+        toast({ title: 'Success', description: `${result.success} dummy bookings created successfully!` });
+        fetchBookings(); // Refresh the bookings table
+      }
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Error', description: e.message || 'An unknown error occurred.' });
+    } finally {
+      setIsGeneratingDummies(false);
+    }
+  };
+
 
   return (
     <div className="container mx-auto max-w-7xl py-12">
@@ -159,7 +192,7 @@ export default function AdminPage() {
       </div>
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and update your site content.</p>
       
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
                  <CardHeader>
                     <div className="flex justify-between items-center">
@@ -197,6 +230,54 @@ export default function AdminPage() {
                         <a href="#gallery-section">
                            Update Gallery <ArrowRight className="ml-2"/>
                         </a>
+                    </Button>
+                </CardFooter>
+            </Card>
+            <Card className="flex flex-col justify-between hover:border-primary transition-colors md:col-span-2 lg:col-span-1">
+                 <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Dummy Booking Generator</CardTitle>
+                         <div className="p-2 bg-muted rounded-full">
+                            <Users className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                    </div>
+                    <CardDescription>
+                        Create dummy bookings to show activity on your site.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label>Tour Package</Label>
+                        <Select value={dummyPackage} onValueChange={setDummyPackage}>
+                            <SelectTrigger><SelectValue placeholder="Select a package" /></SelectTrigger>
+                            <SelectContent>
+                                {tourPackages.map(pkg => (<SelectItem key={pkg.slug} value={pkg.slug}>{pkg.name}</SelectItem>))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Date</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant={"outline"} className={cn("w-full justify-start pl-3 text-left font-normal", !dummyDate && "text-muted-foreground")}>
+                                    {dummyDate ? format(dummyDate, 'PPP') : <span>Pick a date</span>}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar mode="single" selected={dummyDate} onSelect={setDummyDate} initialFocus />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Number of Bookings</Label>
+                        <Input type="number" min="1" max="10" value={dummyCount} onChange={(e) => setDummyCount(Number(e.target.value))} />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button className="w-full" onClick={handleGenerateDummies} disabled={isGeneratingDummies}>
+                        {isGeneratingDummies ? <Loader2 className="animate-spin" /> : <PlusCircle />}
+                        Generate Bookings
                     </Button>
                 </CardFooter>
             </Card>
@@ -299,7 +380,7 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div>
-                         <Select value={selectedPackage} onValueChange={setSelectedPackage}>
+                         <Select value={gallerySelectedPackage} onValueChange={setGallerySelectedPackage}>
                             <SelectTrigger className="w-full md:w-1/3">
                                 <SelectValue placeholder="Select a package" />
                             </SelectTrigger>
