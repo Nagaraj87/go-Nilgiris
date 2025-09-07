@@ -34,6 +34,7 @@ export type Booking = {
   bookingId: string;
   packageSlug: string;
   bookingDate: string;
+  busNumber?: number;
   memberCount: number;
   totalAmount: number;
   passengers: { name: string; age: number; gender: string; phone: string }[];

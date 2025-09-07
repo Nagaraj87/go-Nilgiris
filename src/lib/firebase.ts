@@ -34,6 +34,8 @@ export const saveBooking = async (bookingData: any) => {
 export const getBookings = async () => {
     const querySnapshot = await getDocs(collection(db, "bookings"));
     const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Sort by date descending
+    bookings.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
     return bookings;
 }
 
@@ -86,56 +88,67 @@ export const deleteBooking = async (bookingId: string) => {
     }
 }
 
-// Availability Functions - Refactored for efficiency
+// --- Availability & Bus Management ---
+
 const getAvailabilityDocRef = (packageSlug: string, date: string) => {
     const availabilityDocId = `${packageSlug}_${date}`;
     return doc(db, "availability", availabilityDocId);
 }
 
-export const getBlockedSeatsForDate = async (packageSlug: string, date: string): Promise<number[]> => {
+export const getAvailabilityForDate = async (packageSlug: string, date: string): Promise<{ blockedSeats: Record<number, number[]>, busCount: number }> => {
     const docRef = getAvailabilityDocRef(packageSlug, date);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-        return docSnap.data().blockedSeats || [];
+        const data = docSnap.data();
+        return {
+            // Ensure blockedSeats is an object, default to {1: []} for bus 1
+            blockedSeats: data.blockedSeats && Object.keys(data.blockedSeats).length > 0 ? data.blockedSeats : { '1': [] },
+            busCount: data.busCount || 1,
+        };
     }
-    return [];
+    // Default state if no document exists
+    return { blockedSeats: { '1': [] }, busCount: 1 };
+};
+
+export const updateBusCountForDate = async (packageSlug: string, date: string, count: number) => {
+    const docRef = getAvailabilityDocRef(packageSlug, date);
+    await setDoc(docRef, { busCount: count }, { merge: true });
 }
 
-export const blockSeatForDate = async (packageSlug: string, date: string, seatNumber: number) => {
+export const blockSeatForDate = async (packageSlug: string, date: string, busNumber: number, seatNumber: number) => {
     const docRef = getAvailabilityDocRef(packageSlug, date);
-    await setDoc(docRef, { 
-        blockedSeats: arrayUnion(seatNumber),
-        packageSlug, // Store for potential queries
-        date,        // Store for potential queries
-    }, { merge: true });
+    const key = `blockedSeats.${busNumber}`;
+    await updateDoc(docRef, { 
+        [key]: arrayUnion(seatNumber),
+    });
 }
 
-export const unblockSeatForDate = async (packageSlug: string, date: string, seatNumber: number) => {
+export const unblockSeatForDate = async (packageSlug: string, date: string, busNumber: number, seatNumber: number) => {
     const docRef = getAvailabilityDocRef(packageSlug, date);
+    const key = `blockedSeats.${busNumber}`;
      await updateDoc(docRef, {
-        blockedSeats: arrayRemove(seatNumber)
+        [key]: arrayRemove(seatNumber)
     });
 }
 
-export const blockAllSeatsForDate = async (packageSlug: string, date: string, seatsToBlock: number[]) => {
+export const blockAllSeatsForDate = async (packageSlug: string, date: string, busNumber: number, seatsToBlock: number[]) => {
     const docRef = getAvailabilityDocRef(packageSlug, date);
-    await setDoc(docRef, {
-        blockedSeats: seatsToBlock,
-        packageSlug,
-        date
-    }, { merge: true });
-}
-
-export const unblockAllSeatsForDate = async (packageSlug: string, date: string) => {
-    const docRef = getAvailabilityDocRef(packageSlug, date);
+    const key = `blockedSeats.${busNumber}`;
     await updateDoc(docRef, {
-        blockedSeats: []
+        [key]: seatsToBlock
     });
 }
 
+export const unblockAllSeatsForDate = async (packageSlug: string, date: string, busNumber: number) => {
+    const docRef = getAvailabilityDocRef(packageSlug, date);
+    const key = `blockedSeats.${busNumber}`;
+    await updateDoc(docRef, {
+        [key]: []
+    });
+}
 
-export const getOccupiedSeats = async (packageSlug: string, date: string): Promise<number[]> => {
-    if (!date) return [];
+export const getOccupiedSeatsForDate = async (packageSlug: string, date: string): Promise<Record<number, number[]>> => {
+    if (!date) return { '1': [] };
     const q = query(
         collection(db, "bookings"),
         where("packageSlug", "==", packageSlug),
@@ -143,15 +156,22 @@ export const getOccupiedSeats = async (packageSlug: string, date: string): Promi
     );
 
     const querySnapshot = await getDocs(q);
-    const seats: number[] = [];
+    const seatsByBus: Record<number, number[]> = {};
+
     querySnapshot.forEach(doc => {
         const booking = doc.data();
+        const busNum = booking.busNumber || 1; 
+        if (!seatsByBus[busNum]) {
+            seatsByBus[busNum] = [];
+        }
         if (booking.selectedSeats) {
-            booking.selectedSeats.forEach((seat: { number: number }) => seats.push(seat.number));
+            booking.selectedSeats.forEach((seat: { number: number }) => seatsByBus[busNum].push(seat.number));
         }
     });
-    return seats;
+
+    return seatsByBus;
 };
+
 
 // Gallery Functions
 export const addGalleryImageToFirestore = async (url: string, alt: string, packageSlug: string) => {
