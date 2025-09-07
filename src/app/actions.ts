@@ -5,5 +5,3 @@ export async function customizeItineraryAction(prevState: any, formData: FormDat
   // This is a placeholder now that the AI functionality has been removed.
   return { error: 'This feature is no longer available.' };
 }
-
-    

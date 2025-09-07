@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore, getHeroImage, updateHeroImage } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search, Save, Camera } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search, Save } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -380,7 +380,7 @@ export default function AdminPage() {
                         )}
                     </div>
                      <div className="space-y-2">
-                        <label htmlFor="hero-url" className="font-semibold">New Image URL</label>
+                        <Label htmlFor="hero-url">New Image URL</Label>
                         <div className="flex gap-2">
                             <Input id="hero-url" placeholder="https://example.com/new-image.jpg" value={heroImageUrl} onChange={(e) => setHeroImageUrl(e.target.value)} disabled={isSavingHero}/>
                             <Button onClick={handleSaveHeroImage} disabled={isSavingHero}>

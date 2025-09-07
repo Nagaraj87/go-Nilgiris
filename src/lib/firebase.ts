@@ -172,7 +172,7 @@ export const getHeroImage = async () => {
     if (docSnap.exists()) {
         return docSnap.data();
     }
-    return { url: '' };
+    return null;
 };
 
 export const updateHeroImage = async (url: string) => {
