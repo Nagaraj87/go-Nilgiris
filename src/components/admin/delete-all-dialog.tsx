@@ -1,6 +1,8 @@
+
 "use client";
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useEffect } from 'react';
+import { useFormStatus } from 'react-dom';
 import { deleteAllBookings } from '@/app/actions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
@@ -8,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
 
 type DeleteAllDialogProps = {
     isOpen: boolean;
@@ -28,7 +29,7 @@ function DeleteButton() {
 
 export function DeleteAllDialog({ isOpen, onOpenChange, onSuccess }: DeleteAllDialogProps) {
     const { toast } = useToast();
-    const [state, dispatch] = useFormState(deleteAllBookings, undefined);
+    const [state, dispatch] = useActionState(deleteAllBookings, undefined);
 
     useEffect(() => {
         if (state === 'success') {
