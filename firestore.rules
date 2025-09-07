@@ -7,28 +7,15 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Allow public read access to blocked dates for the calendar
-    match /blocked_dates/{date} {
-       allow read: if true;
+    // Allow public read/write to the new availability collection
+    match /availability/{document=**} {
+      allow read, write: if true;
     }
 
-    // Allow admins to write to blocked dates
-    match /blocked_dates/{date} {
-      allow write: if request.auth != null; // For a real app, you'd check for an admin claim
-    }
-
-    // Allow public read access to blocked seats for the seat chart
-    match /blocked_seats/{seat} {
-      allow read: if true;
-    }
-
-    // Allow admins to write to blocked seats
-     match /blocked_seats/{seat} {
-      allow write: if request.auth != null; // For a real app, you'd check for an admin claim
-    }
-
-    // Allow public read/write access to gallery for the app to function
-    match /gallery/{document=**} {
+    // --- RULES FOR GALLERY ---
+    // Allow public read access for viewing tour galleries
+    // Allow public write access for adding/deleting images until auth is added
+    match /gallery/{image} {
       allow read, write: if true;
     }
   }

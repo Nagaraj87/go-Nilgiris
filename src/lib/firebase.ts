@@ -1,7 +1,7 @@
 
 'use client';
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, query, where, writeBatch, doc, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
@@ -72,74 +72,53 @@ export const deleteBooking = async (bookingId: string) => {
     }
 }
 
-// Availability Functions
-export const getBlockedSeatsForDate = async (packageSlug: string, date: string): Promise<number[]> => {
-    const q = query(
-        collection(db, "blocked_seats"), 
-        where("packageSlug", "==", packageSlug), 
-        where("date", "==", date)
-    );
-    const querySnapshot = await getDocs(q);
-    const seatNumbers = new Set<number>();
-    querySnapshot.forEach(doc => {
-        seatNumbers.add(doc.data().seatNumber);
-    });
-    return Array.from(seatNumbers);
+// Availability Functions - Refactored for efficiency
+const getAvailabilityDocRef = (packageSlug: string, date: string) => {
+    const availabilityDocId = `${packageSlug}_${date}`;
+    return doc(db, "availability", availabilityDocId);
 }
 
+export const getBlockedSeatsForDate = async (packageSlug: string, date: string): Promise<number[]> => {
+    const docRef = getAvailabilityDocRef(packageSlug, date);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return docSnap.data().blockedSeats || [];
+    }
+    return [];
+}
 
 export const blockSeatForDate = async (packageSlug: string, date: string, seatNumber: number) => {
-    await addDoc(collection(db, 'blocked_seats'), { packageSlug, date, seatNumber });
+    const docRef = getAvailabilityDocRef(packageSlug, date);
+    await setDoc(docRef, { 
+        blockedSeats: arrayUnion(seatNumber),
+        packageSlug, // Store for potential queries
+        date,        // Store for potential queries
+    }, { merge: true });
 }
 
 export const unblockSeatForDate = async (packageSlug: string, date: string, seatNumber: number) => {
-    const q = query(
-        collection(db, "blocked_seats"), 
-        where("packageSlug", "==", packageSlug), 
-        where("date", "==", date),
-        where("seatNumber", "==", seatNumber)
-    );
-    const querySnapshot = await getDocs(q);
-    const batch = writeBatch(db);
-    querySnapshot.forEach(doc => {
-        batch.delete(doc.ref);
+    const docRef = getAvailabilityDocRef(packageSlug, date);
+     await updateDoc(docRef, {
+        blockedSeats: arrayRemove(seatNumber)
     });
-    await batch.commit();
 }
 
 export const blockAllSeatsForDate = async (packageSlug: string, date: string, seatsToBlock: number[]) => {
-    const batch = writeBatch(db);
-    
-    const existingBlockedSeatsQuery = query(
-        collection(db, "blocked_seats"), 
-        where("packageSlug", "==", packageSlug), 
-        where("date", "==", date)
-    );
-    const querySnapshot = await getDocs(existingBlockedSeatsQuery);
-    const existingSeats = new Set(querySnapshot.docs.map(d => d.data().seatNumber));
-
-    for (const seatNumber of seatsToBlock) {
-        if (!existingSeats.has(seatNumber)) {
-            const newDocRef = doc(collection(db, 'blocked_seats'));
-            batch.set(newDocRef, { packageSlug, date, seatNumber });
-        }
-    }
-    await batch.commit();
+    const docRef = getAvailabilityDocRef(packageSlug, date);
+    await setDoc(docRef, {
+        blockedSeats: seatsToBlock,
+        packageSlug,
+        date
+    }, { merge: true });
 }
 
 export const unblockAllSeatsForDate = async (packageSlug: string, date: string) => {
-    const q = query(
-        collection(db, "blocked_seats"), 
-        where("packageSlug", "==", packageSlug), 
-        where("date", "==", date)
-    );
-    const querySnapshot = await getDocs(q);
-    const batch = writeBatch(db);
-    querySnapshot.forEach(doc => {
-        batch.delete(doc.ref);
+    const docRef = getAvailabilityDocRef(packageSlug, date);
+    await updateDoc(docRef, {
+        blockedSeats: []
     });
-    await batch.commit();
 }
+
 
 export const getOccupiedSeats = async (packageSlug: string, date: string): Promise<number[]> => {
     if (!date) return [];

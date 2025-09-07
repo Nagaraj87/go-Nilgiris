@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { blockSeatForDate, getBlockedSeatsForDate, unblockSeatForDate, blockAllSeatsForDate, unblockAllSeatsForDate, getOccupiedSeats } from "@/lib/firebase";
+import { blockAllSeatsForDate, blockSeatForDate, getBlockedSeatsForDate, getOccupiedSeats, unblockAllSeatsForDate, unblockSeatForDate } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldOff, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -63,6 +63,7 @@ export default function AvailabilityPage() {
             toast({ title: "Seat Blocked" });
         }
     } catch (e) {
+        console.error(e)
         toast({ variant: "destructive", title: "Error", description: "Could not update seat status." });
     }
   }
