@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -45,6 +45,9 @@ export default function AdminPage() {
   const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
+
+  // Search State
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Gallery State
   const [gallerySelectedPackage, setGallerySelectedPackage] = useState<string>(tourPackages[0].slug);
@@ -150,6 +153,16 @@ export default function AdminPage() {
     }
   }
 
+  const filteredBookings = bookings.filter(booking => {
+    const query = searchQuery.toLowerCase();
+    return (
+        booking.bookingId.toLowerCase().includes(query) ||
+        booking.packageSlug.toLowerCase().includes(query) ||
+        booking.passengers.some(p => p.name.toLowerCase().includes(query))
+    );
+  });
+
+
   return (
     <div className="container mx-auto max-w-7xl py-12">
       <div className="flex items-center gap-2 mb-4">
@@ -204,10 +217,22 @@ export default function AdminPage() {
        <div id="bookings-section" className="mb-12">
             <Card>
                 <CardHeader>
-                    <CardTitle>All Bookings</CardTitle>
+                    <div className="flex justify-between items-center mb-4">
+                        <CardTitle>All Bookings</CardTitle>
+                        <Badge variant="secondary">{filteredBookings.length} booking(s)</Badge>
+                    </div>
                     <CardDescription>
-                        View all tour bookings submitted through the booking form.
+                        View all tour bookings submitted through the booking form. Use the search below to filter results.
                     </CardDescription>
+                     <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by Booking ID, package, or passenger name..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10 w-full"
+                        />
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
@@ -238,8 +263,8 @@ export default function AdminPage() {
                                 <TableCell className="text-right"><Skeleton className="h-8 w-8" /></TableCell>
                             </TableRow>
                             ))
-                        ) : bookings.length > 0 ? (
-                            bookings.map((booking) => (
+                        ) : filteredBookings.length > 0 ? (
+                            filteredBookings.map((booking) => (
                             <TableRow key={booking.id}>
                             <TableCell className="font-medium">{booking.bookingId}</TableCell>
                             <TableCell>{booking.packageSlug}</TableCell>
@@ -279,7 +304,7 @@ export default function AdminPage() {
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={8} className="h-24 text-center">
-                                No bookings found. Start by making a booking on the main site.
+                                  {searchQuery ? "No bookings match your search." : "No bookings found. Start by making a booking on the main site."}
                                 </TableCell>
                             </TableRow>
                         )}
