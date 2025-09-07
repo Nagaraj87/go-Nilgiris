@@ -1,15 +1,27 @@
 
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, collection, query, where, getDocs, addDoc } from 'firebase-admin/firestore';
 
 // This is a server-only file. It is not intended to be used on the client.
-// The Firebase Admin SDK is initialized without credentials, as it will automatically
-// detect them from the GOOGLE_APPLICATION_CREDENTIALS environment variable in a
-// standard server environment like Firebase App Hosting.
+// This implementation explicitly uses the service account credentials from
+// the GOOGLE_APPLICATION_CREDENTIALS environment variable.
 
-if (!getApps().length) {
-    initializeApp();
+try {
+    if (!getApps().length) {
+        const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        if (serviceAccount) {
+            initializeApp({
+                credential: cert(JSON.parse(serviceAccount)),
+                projectId: 'nilgiri-explorer'
+            });
+        } else {
+             console.warn("Firebase Admin SDK not initialized. GOOGLE_APPLICATION_CREDENTIALS not set.");
+        }
+    }
+} catch (e) {
+    console.error("Firebase Admin SDK initialization error:", e);
 }
+
 
 const db = getFirestore();
 
@@ -57,12 +69,20 @@ export const saveBooking = async (bookingData: any) => {
 
 // Server-side function to get the hero image
 export const getHeroImage = async () => {
-    const docRef = db.collection('site_config').doc('hero');
-    const docSnap = await docRef.get();
-    if (docSnap.exists) {
-        return docSnap.data();
+    try {
+        const docRef = db.collection('site_config').doc('hero');
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+            const data = docSnap.data();
+            if (data && data.url) {
+                return data;
+            }
+        }
+    } catch (e) {
+        console.error("Error fetching hero image from Firestore:", e);
     }
-    // Return a default if it doesn't exist
+    // Return a default if it doesn't exist or an error occurs
     return { url: 'https://picsum.photos/1920/1080' };
 };
+
 
