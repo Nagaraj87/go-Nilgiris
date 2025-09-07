@@ -17,11 +17,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { SeatChart } from '@/components/seat-chart';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
-import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, User, Baby, CreditCard, Ticket } from 'lucide-react';
+import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, User, Baby, CreditCard, Ticket, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { WomanIcon } from '@/components/icons';
-import { saveBooking } from '@/lib/firebase';
+import { saveBooking, getBlockedDates, getBlockedSeatsForDate, getOccupiedSeats } from '@/lib/firebase';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -51,7 +52,10 @@ function BookingFlow() {
   const [step, setStep] = useState(1);
   const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [blockedDates, setBlockedDates] = useState<Date[]>([]);
+  const [adminBlockedSeats, setAdminBlockedSeats] = useState<number[]>([]);
+  const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
+  
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
@@ -69,6 +73,13 @@ function BookingFlow() {
 
   const memberCount = form.watch('memberCount');
   const passengers = form.watch('passengers');
+  const bookingDate = form.watch('bookingDate');
+
+  useEffect(() => {
+    getBlockedDates().then(dates => {
+        setBlockedDates(dates.map(d => new Date(d)));
+    });
+  }, []);
 
   useEffect(() => {
     const currentCount = passengers.length;
@@ -84,17 +95,40 @@ function BookingFlow() {
     }
   }, [memberCount, append, remove, passengers.length]);
 
+  useEffect(() => {
+      if(bookingDate) {
+        const dateStr = format(bookingDate, "yyyy-MM-dd");
+        Promise.all([
+            getBlockedSeatsForDate(tourPackage.slug, dateStr),
+            getOccupiedSeats(tourPackage.slug, dateStr)
+        ]).then(([adminBlocked, occupied]) => {
+            setAdminBlockedSeats(adminBlocked);
+            setOccupiedSeats(occupied);
+        })
+      }
+  }, [bookingDate, tourPackage.slug])
+
 
   const totalAmount = useMemo(() => {
     const seatTotal = selectedSeats.reduce((acc, seat) => acc + seat.price, 0);
-    const remainingMembers = memberCount - selectedSeats.length;
-    const baseTotal = remainingMembers > 0 ? remainingMembers * tourPackage.price : 0;
-    return seatTotal + baseTotal;
-  }, [selectedSeats, memberCount, tourPackage.price]);
+    return seatTotal;
+  }, [selectedSeats]);
   
   const processStep1 = async () => {
     const result = await form.trigger(['bookingDate', 'memberCount']);
-    if (result) setStep(2);
+    if (result) {
+        const date = form.getValues('bookingDate');
+        const isBlocked = blockedDates.some(d => format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
+        if (isBlocked) {
+            toast({
+                variant: "destructive",
+                title: "Service Unavailable",
+                description: "There is no service on the selected date. Please choose another date."
+            });
+            return;
+        }
+        setStep(2);
+    }
   };
   
   const processStep2 = async () => {
@@ -148,6 +182,19 @@ function BookingFlow() {
     { num: 2, title: "Passenger Info & Seats" },
     { num: 3, title: "Payment" },
   ];
+  
+  const isDateFullyBooked = useMemo(() => {
+    const totalSeats = 40;
+    const allSeats = Array.from({length: totalSeats}, (_, i) => i + 1);
+    const availableSeats = allSeats.filter(s => !adminBlockedSeats.includes(s) && !occupiedSeats.includes(s));
+    return availableSeats.length === 0;
+  }, [adminBlockedSeats, occupiedSeats]);
+
+  const disabledDates = (date: Date) => {
+    const isPast = date < new Date(new Date().setDate(new Date().getDate() - 1));
+    const isBlocked = blockedDates.some(d => format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
+    return isPast || isBlocked || isDateFullyBooked;
+  }
 
   return (
     <div className="container mx-auto max-w-4xl py-12">
@@ -170,7 +217,6 @@ function BookingFlow() {
             {index < steps.length - 1 && <div className="w-16 h-0.5 bg-border mx-4"></div>}
           </div>
         ))}
-      </div>
       
       <Form {...form}>
         <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
@@ -187,6 +233,15 @@ function BookingFlow() {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Booking Date</FormLabel>
+                       {isDateFullyBooked && bookingDate && format(new Date(), 'yyyy-MM-dd') === format(bookingDate, 'yyyy-MM-dd') && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>No Service</AlertTitle>
+                            <AlertDescription>
+                              All seats for this date are blocked or booked. Please select another date.
+                            </AlertDescription>
+                          </Alert>
+                       )}
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -197,7 +252,7 @@ function BookingFlow() {
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))} initialFocus />
+                           <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={disabledDates} initialFocus />
                         </PopoverContent>
                       </Popover>
                       <FormMessage />
@@ -253,7 +308,16 @@ function BookingFlow() {
                     </div>
                   ))}
                 </div>
-                <SeatChart totalSeats={40} seatsPerRow={4} memberCount={memberCount} selectedSeats={selectedSeats} onSeatSelect={setSelectedSeats} pricePerSeat={tourPackage.price} />
+                <SeatChart 
+                  totalSeats={40} 
+                  seatsPerRow={4} 
+                  memberCount={memberCount} 
+                  selectedSeats={selectedSeats} 
+                  onSeatSelect={setSelectedSeats} 
+                  pricePerSeat={tourPackage.price}
+                  adminBlockedSeats={adminBlockedSeats}
+                  occupiedSeats={occupiedSeats}
+                />
                  <div className="text-right text-2xl font-bold">Total: ₹{totalAmount.toLocaleString('en-IN')}</div>
               </CardContent>
               <CardFooter className="justify-between">

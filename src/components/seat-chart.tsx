@@ -1,13 +1,14 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Armchair, User, PersonStanding, Car } from "lucide-react";
+import { Armchair, User, Ban } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "./ui/button";
 import React from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
-type SeatStatus = "available" | "sold" | "selected";
+type SeatStatus = "available" | "sold" | "selected" | "blocked";
 
 type Seat = {
   id: string;
@@ -23,6 +24,9 @@ type SeatChartProps = {
   selectedSeats: Seat[];
   onSeatSelect: (seats: Seat[]) => void;
   pricePerSeat: number;
+  occupiedSeats?: number[];
+  adminBlockedSeats?: number[];
+  isBlockingMode?: boolean;
 };
 
 const generateSeats = (totalSeats: number, pricePerSeat: number): Seat[] => {
@@ -45,6 +49,9 @@ export function SeatChart({
   selectedSeats,
   onSeatSelect,
   pricePerSeat,
+  occupiedSeats = [],
+  adminBlockedSeats = [],
+  isBlockingMode = false,
 }: SeatChartProps) {
   const [seats, setSeats] = useState<Seat[]>([]);
 
@@ -53,8 +60,14 @@ export function SeatChart({
   }, [totalSeats, pricePerSeat]);
 
 
-  const handleSeatClick = (seat: Seat) => {
-    if (seat.status === "sold") return;
+  const handleSeatClick = (seat: Seat, status: SeatStatus) => {
+    if (status === "sold" && !isBlockingMode) return;
+    if (status === "blocked" && !isBlockingMode) return;
+
+    if (isBlockingMode) {
+        onSeatSelect([seat]);
+        return;
+    }
 
     const isSelected = selectedSeats.some(s => s.id === seat.id);
 
@@ -70,17 +83,18 @@ export function SeatChart({
   };
 
   const getSeatStatus = (seat: Seat): SeatStatus => {
-    if (selectedSeats.some(s => s.id === seat.id)) {
-        return "selected";
-    }
+    if (selectedSeats.some(s => s.id === seat.id)) return "selected";
+    if (occupiedSeats.includes(seat.number)) return "sold";
+    if (adminBlockedSeats.includes(seat.number)) return "blocked";
     return seat.status;
   }
 
   const seatsWithAisles = useMemo(() => {
     const newSeats = [];
+    const aisleIndex = Math.ceil(seatsPerRow / 2);
     for (let i = 0; i < seats.length; i++) {
         newSeats.push(seats[i]);
-        if ((i + 1) % seatsPerRow === seatsPerRow / 2) {
+        if ((i + 1) % seatsPerRow === aisleIndex) {
             newSeats.push(null); // Aisle marker
         }
     }
@@ -91,13 +105,17 @@ export function SeatChart({
     <Card className="border-dashed">
       <CardHeader>
         <CardTitle>Reservation Seat Chart</CardTitle>
-        <CardDescription>Select seats for {memberCount} member(s). Click on an available seat to select it.</CardDescription>
+        <CardDescription>
+            {isBlockingMode
+                ? "Click a seat to block or unblock it."
+                : `Select seats for ${memberCount} member(s). Click on an available seat to select it.`}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="bg-muted/30 p-4 rounded-lg flex justify-center">
             <div className="w-fit">
-                <div className="w-64 h-16 border-2 border-muted-foreground rounded-t-full rounded-b-md flex items-center justify-center mb-4">
-                  <Car className="w-8 h-8 text-muted-foreground" />
+                <div className="mx-auto w-16 h-16 border-2 border-muted-foreground rounded-full flex items-center justify-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 21h4"/><path d="M5 21h14"/><path d="M12 17a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2Z"/><path d="M12 17a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2Z"/><path d="M17 15V9a5 5 0 0 0-5-5h-1a5 5 0 0 0-5 5v6"/><path d="M6 9h13"/></svg>
                 </div>
                 <div className={cn("grid gap-2")} style={{ gridTemplateColumns: `repeat(${seatsPerRow + 1}, minmax(0, 1fr))` }}>
                   {seatsWithAisles.map((seat, index) => {
@@ -105,40 +123,61 @@ export function SeatChart({
                       return <div key={`aisle-${index}`} className="w-full"></div>; // Aisle space
                     }
                     const status = getSeatStatus(seat);
-                    return <SeatButton key={seat.id} seat={seat} status={status} onClick={handleSeatClick} />;
+                    return <SeatButton key={seat.id} seat={seat} status={status} onClick={handleSeatClick} isBlockingMode={isBlockingMode} />;
                   })}
                 </div>
             </div>
         </div>
         <div className="flex justify-center gap-4 mt-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-primary/20 border border-primary"></div>Available</div>
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-accent"></div>Selected</div>
-          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-muted"></div>Sold</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-primary/20 border border-primary"></div>Available</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-accent"></div>Selected</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-muted text-muted-foreground"><User size={12}/></div>Sold</div>
+          <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-sm bg-destructive/20 text-destructive"><Ban size={12}/></div>Blocked</div>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function SeatButton({ seat, status, onClick }: { seat: Seat, status: SeatStatus, onClick: (seat: Seat) => void }) {
-  const icon = status === 'sold' ? <User size={16}/> : <Armchair size={16}/>;
-
-  return (
+function SeatButton({ seat, status, onClick, isBlockingMode }: { seat: Seat, status: SeatStatus, onClick: (seat: Seat, status: SeatStatus) => void, isBlockingMode: boolean }) {
+  
+  const getIcon = () => {
+    if (status === 'sold') return <User size={16}/>;
+    if (status === 'blocked') return <Ban size={16}/>;
+    return <Armchair size={16}/>;
+  }
+  
+  const buttonContent = (
     <Button
       variant="outline"
       size="icon"
       className={cn(
-        "h-10 w-10 flex flex-col items-center justify-center text-xs",
+        "h-10 w-10 flex flex-col items-center justify-center text-xs rounded-md",
         status === "available" && "bg-primary/20 text-primary-foreground hover:bg-primary/30",
-        status === "sold" && "bg-muted text-muted-foreground cursor-not-allowed",
-        status === "selected" && "bg-accent text-accent-foreground hover:bg-accent/90"
+        status === "sold" && "bg-muted text-muted-foreground",
+        status === "blocked" && "bg-destructive/20 text-destructive",
+        status === "selected" && "bg-accent text-accent-foreground hover:bg-accent/90",
+        !isBlockingMode && (status === "sold" || status === "blocked") && "cursor-not-allowed"
       )}
-      onClick={() => onClick(seat)}
-      disabled={status === "sold"}
+      onClick={() => onClick(seat, status)}
+      disabled={!isBlockingMode && (status === "sold" || status === "blocked")}
       aria-label={`Seat ${seat.number}, Status: ${status}, Price: ₹${seat.price}`}
     >
-      {icon}
+      {getIcon()}
       <span className="text-[10px]">{seat.number}</span>
     </Button>
+  );
+
+  return (
+    <TooltipProvider delayDuration={200}>
+        <Tooltip>
+            <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
+            <TooltipContent>
+                <p>Seat {seat.number}</p>
+                <p>Price: ₹{seat.price}</p>
+                <p>Status: {status}</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
   )
 }
