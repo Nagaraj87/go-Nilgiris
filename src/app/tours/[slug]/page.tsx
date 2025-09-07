@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Check, Info, X } from 'lucide-react';
-import { CustomizeItineraryTool } from '@/components/customize-itinerary-tool';
 
 export function generateStaticParams() {
   return tourPackages.map((pkg) => ({
@@ -62,7 +61,6 @@ export default function TourPackagePage({ params }: { params: { slug: string } }
                         </div>
                     ))}
                 </div>
-                <CustomizeItineraryTool currentItinerary={currentItinerary} />
             </TabsContent>
             <TabsContent value="gallery" className="mt-6">
               <Carousel className="w-full">
