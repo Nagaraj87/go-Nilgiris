@@ -55,13 +55,13 @@ export default function AdminPage() {
                         </div>
                     </div>
                     <CardDescription>
-                        Block or unblock seats for specific tours.
+                        Block seats and add or remove buses for peak days.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
                      <Button asChild variant="outline" className="w-full">
                         <Link href="/admin/availability">
-                           Manage Seats <ArrowRight className="ml-2"/>
+                           Manage Seats & Buses <ArrowRight className="ml-2"/>
                         </Link>
                     </Button>
                 </CardFooter>
