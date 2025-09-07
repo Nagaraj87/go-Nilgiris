@@ -3,7 +3,8 @@
 
 import { useEffect, useState } from "react";
 import Link from 'next/link';
-import { deleteBooking, getBookings, getGalleryImages, uploadGalleryImage, deleteGalleryImage } from "@/lib/firebase";
+import { deleteBooking, getBookings, getGalleryImages, uploadGalleryImage, addGalleryImageToFirestore, deleteGalleryImage } from "@/lib/firebase";
+import { getDownloadURL } from 'firebase/storage';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -116,22 +117,38 @@ export default function AdminPage() {
     }
     setUploading(true);
     setUploadProgress(0);
-    try {
-        const newImage = await uploadGalleryImage(imageFile, imageAlt, selectedPackage, setUploadProgress);
-        setGalleryImages([...galleryImages, newImage as GalleryImage]);
-        toast({ title: "Image Uploaded", description: "The image has been added to the gallery." });
-        setImageFile(null);
-        setImageAlt("");
-        // Reset file input
-        const fileInput = document.getElementById('gallery-upload') as HTMLInputElement;
-        if(fileInput) fileInput.value = "";
 
-    } catch (error) {
-        console.error(error);
-        toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload the image." });
-    } finally {
-        setUploading(false);
-    }
+    const uploadTask = uploadGalleryImage(imageFile, selectedPackage);
+
+    uploadTask.on('state_changed', 
+        (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(progress);
+        }, 
+        (error) => {
+            console.error("Upload failed:", error);
+            toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload the image." });
+            setUploading(false);
+        }, 
+        async () => {
+            try {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                const newImage = await addGalleryImageToFirestore(downloadURL, imageAlt, selectedPackage);
+                setGalleryImages([...galleryImages, newImage as GalleryImage]);
+                toast({ title: "Image Uploaded", description: "The image has been added to the gallery." });
+            } catch (dbError) {
+                 console.error("Firestore error:", dbError);
+                toast({ variant: "destructive", title: "Upload Failed", description: "Could not save image details to database." });
+            } finally {
+                // Reset state
+                setUploading(false);
+                setImageFile(null);
+                setImageAlt("");
+                const fileInput = document.getElementById('gallery-upload') as HTMLInputElement;
+                if(fileInput) fileInput.value = "";
+            }
+        }
+    );
   }
 
   const handleDeleteImage = async () => {
@@ -294,7 +311,7 @@ export default function AdminPage() {
                                 <p className="text-sm text-muted-foreground text-center">Uploading... {Math.round(uploadProgress)}%</p>
                             </div>
                         ) : (
-                            <Button onClick={handleImageUpload} disabled={uploading}>
+                            <Button onClick={handleImageUpload} disabled={uploading || !imageFile || !imageAlt}>
                                 <Upload className="mr-2"/> Upload Image
                             </Button>
                         )}

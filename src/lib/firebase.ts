@@ -2,7 +2,7 @@
 'use client';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, writeBatch, doc, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject, UploadTask } from "firebase/storage";
 import { tourPackages } from './data';
 
 const firebaseConfig = {
@@ -175,37 +175,20 @@ export const getOccupiedSeats = async (packageSlug: string, date: string): Promi
 };
 
 // Gallery Functions
-export const uploadGalleryImage = (file: File, alt: string, packageSlug: string, onProgress: (progress: number) => void) => {
-    return new Promise((resolve, reject) => {
-        const storageRef = ref(storage, `gallery/${packageSlug}/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                onProgress(progress);
-            },
-            (error) => {
-                console.error("Upload failed:", error);
-                reject(error);
-            },
-            async () => {
-                try {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    const docRef = await addDoc(collection(db, 'gallery'), {
-                        url: downloadURL,
-                        alt: alt,
-                        packageSlug: packageSlug,
-                        createdAt: new Date(),
-                    });
-                    resolve({ id: docRef.id, url: downloadURL, alt, packageSlug });
-                } catch (error) {
-                    reject(error);
-                }
-            }
-        );
-    });
+export const uploadGalleryImage = (file: File, packageSlug: string): UploadTask => {
+    const storageRef = ref(storage, `gallery/${packageSlug}/${Date.now()}_${file.name}`);
+    return uploadBytesResumable(storageRef, file);
 };
+
+export const addGalleryImageToFirestore = async (url: string, alt: string, packageSlug: string) => {
+     const docRef = await addDoc(collection(db, 'gallery'), {
+        url: url,
+        alt: alt,
+        packageSlug: packageSlug,
+        createdAt: new Date(),
+    });
+    return { id: docRef.id, url, alt, packageSlug };
+}
 
 
 export const getGalleryImages = async (packageSlug: string) => {
