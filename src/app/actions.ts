@@ -1,6 +1,7 @@
 
 'use server';
-import { saveBooking, getOccupiedSeats, getBlockedSeatsForDate } from '@/lib/firebase';
+import { saveBooking } from '@/lib/firebase';
+import { getOccupiedSeats, getBlockedSeatsForDate } from '@/lib/firebase-server';
 import { tourPackages } from '@/lib/data';
 import { format } from 'date-fns';
 
