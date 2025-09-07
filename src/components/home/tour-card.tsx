@@ -3,8 +3,7 @@ import Link from 'next/link';
 import type { TourPackage } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 
 type TourCardProps = {
     pkg: TourPackage;
@@ -23,7 +22,10 @@ export function TourCard({ pkg, price, loading }: TourCardProps) {
                 <div>
                 <p className="text-sm text-muted-foreground">Overall {pkg.duration} trip</p>
                 {loading ? (
-                    <Skeleton className="h-9 w-28 mt-1" />
+                    <div className="flex items-center gap-2 mt-1">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span className="text-muted-foreground">Loading price...</span>
+                    </div>
                 ) : (
                     <p className="text-3xl font-bold">
                         ₹{(price || pkg.price).toLocaleString('en-IN')} 

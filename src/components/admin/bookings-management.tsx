@@ -2,13 +2,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { deleteBooking, getBookings } from "@/lib/firebase";
+import { getBookings } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Search } from "lucide-react";
+import { AlertCircle, Search, Loader2 } from "lucide-react";
 import { BookingsTable } from "./bookings-table";
 import type { Booking } from "@/types";
 
@@ -51,15 +50,12 @@ export function BookingsManagement() {
   const renderContent = () => {
     if (loading) {
         return (
-            Array.from({ length: 5 }).map((_, i) => (
-                <div key={`skel-book-${i}`} className="flex items-center space-x-4 p-4">
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-[250px]" />
-                        <Skeleton className="h-4 w-[200px]" />
-                    </div>
+            <div className="flex items-center justify-center h-48">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span>Loading bookings...</span>
                 </div>
-            ))
+            </div>
         )
     }
 

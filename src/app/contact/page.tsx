@@ -4,10 +4,9 @@
 import { useEffect, useState } from "react";
 import { getContactInfo } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ContactCard } from "@/components/contact/contact-card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 type ContactInfo = {
     whatsapp: string;
@@ -35,10 +34,12 @@ export default function ContactPage() {
     const renderContent = () => {
         if (loading) {
             return (
-                <>
-                    <ContactCardSkeleton />
-                    <ContactCardSkeleton />
-                </>
+                <div className="md:col-span-2 flex items-center justify-center h-48">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-8 h-8 animate-spin" />
+                        <span>Loading contact details...</span>
+                    </div>
+                </div>
             );
         }
 
@@ -93,20 +94,4 @@ export default function ContactPage() {
             </div>
         </div>
     );
-}
-
-function ContactCardSkeleton() {
-    return (
-        <div className="p-6 border rounded-lg bg-background space-y-4">
-            <div className="flex items-center gap-4">
-                <Skeleton className="h-14 w-14 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="h-6 w-24" />
-                    <Skeleton className="h-4 w-32" />
-                </div>
-            </div>
-            <Skeleton className="h-10 w-1/2 mx-auto" />
-            <Skeleton className="h-12 w-full" />
-        </div>
-    )
 }

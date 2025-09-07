@@ -2,12 +2,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, ImageIcon } from 'lucide-react';
+import { AlertCircle, ImageIcon, Loader2 } from 'lucide-react';
 import { tourPackages } from '@/lib/data';
 import type { GalleryImage } from '@/types';
 import { getGalleryImages } from '@/lib/firebase';
@@ -15,7 +13,6 @@ import { AddImageForm } from './add-image-form';
 import { ImageGrid } from './image-grid';
 
 export function GalleryManagement() {
-    const { toast } = useToast();
     const [selectedPackage, setSelectedPackage] = useState<string>(tourPackages[0].slug);
     const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
@@ -50,10 +47,11 @@ export function GalleryManagement() {
     const renderContent = () => {
         if (loading) {
             return (
-                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <Skeleton key={`skel-img-${i}`} className="rounded-lg object-cover aspect-[4/3]" />
-                    ))}
+                 <div className="flex items-center justify-center h-48">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span>Loading gallery...</span>
+                    </div>
                 </div>
             )
         }

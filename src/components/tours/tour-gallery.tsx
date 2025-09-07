@@ -7,9 +7,8 @@ import type { GalleryImage, TourPackage } from '@/types';
 import { getGalleryImages } from '@/lib/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ImageIcon, AlertCircle } from 'lucide-react';
+import { ImageIcon, AlertCircle, Loader2 } from 'lucide-react';
 
 
 type TourGalleryProps = {
@@ -45,7 +44,12 @@ export function TourGallery({ slug, staticGallery }: TourGalleryProps) {
     }, [slug, staticGallery]);
 
     if (loading) {
-        return <Skeleton className="w-full aspect-video rounded-lg" />;
+        return (
+            <div className="flex flex-col items-center justify-center w-full aspect-video rounded-lg bg-muted/50">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Loading Gallery...</p>
+            </div>
+        )
     }
 
     if (error && images.length === 0) {

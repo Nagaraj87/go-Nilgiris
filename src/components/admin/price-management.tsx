@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertCircle } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { tourPackages } from "@/lib/data";
 
@@ -70,7 +69,14 @@ export function PriceManagement() {
 
     const renderContent = () => {
         if (loading) {
-            return <Skeleton className="h-40 w-full" />
+            return (
+                <div className="flex items-center justify-center h-40">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span>Loading prices...</span>
+                    </div>
+                </div>
+            )
         }
         if (error) {
             return (

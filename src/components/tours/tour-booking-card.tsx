@@ -8,7 +8,6 @@ import { getPackagePrice } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, Check, X, Info } from 'lucide-react';
 
 type TourBookingCardProps = {
@@ -45,7 +44,10 @@ export function TourBookingCard({ tourPackage }: TourBookingCardProps) {
             <CardHeader>
                 <CardTitle className="font-headline text-2xl">Book Your Tour</CardTitle>
                 {loadingPrice ? (
-                    <Skeleton className="h-10 w-32 mt-1" />
+                     <div className="flex items-center gap-2 mt-1">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                        <span className="text-lg text-muted-foreground">Finding best price...</span>
+                    </div>
                 ) : (
                     <p className="text-3xl font-bold text-primary">₹{price?.toLocaleString('en-IN')} <span className="text-lg font-normal text-muted-foreground">onwards</span></p>
                 )}
