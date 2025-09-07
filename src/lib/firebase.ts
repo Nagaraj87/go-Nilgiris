@@ -1,3 +1,4 @@
+
 'use client';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, writeBatch, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
@@ -87,12 +88,12 @@ export const blockAllSeatsForDate = async (packageSlug: string, date: string, to
     await unblockAllSeatsForDate(packageSlug, date);
 
     // Then block all seats
-    const writeBatch = writeBatch(db);
+    const batch = writeBatch(db);
     for (let i = 1; i <= totalSeats; i++) {
         const newDocRef = doc(collection(db, 'blocked_seats'));
-        writeBatch.set(newDocRef, { packageSlug, date, seatNumber: i });
+        batch.set(newDocRef, { packageSlug, date, seatNumber: i });
     }
-    await writeBatch.commit();
+    await batch.commit();
 }
 
 export const unblockAllSeatsForDate = async (packageSlug: string, date: string) => {
@@ -114,7 +115,7 @@ export const getOccupiedSeats = async (packageSlug: string, date: string): Promi
     const q = query(
         collection(db, "bookings"),
         where("packageSlug", "==", packageSlug),
-        where("bookingDate", "==", new Date(date).toISOString())
+        where("bookingDate", "==", date)
     );
 
     const querySnapshot = await getDocs(q);
@@ -127,3 +128,5 @@ export const getOccupiedSeats = async (packageSlug: string, date: string): Promi
     });
     return seats;
 };
+
+    

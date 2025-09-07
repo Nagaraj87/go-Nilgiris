@@ -161,7 +161,7 @@ function BookingFlow() {
       ...form.getValues(),
       selectedSeats: selectedSeats.map(s => ({ number: s.number, price: s.price })),
       totalAmount,
-      bookingDate: form.getValues('bookingDate').toISOString(),
+      bookingDate: format(form.getValues('bookingDate'), "yyyy-MM-dd"),
     };
 
     try {
@@ -234,10 +234,10 @@ function BookingFlow() {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Booking Date</FormLabel>
-                       {isDateFullyBooked && bookingDate && format(new Date(), 'yyyy-MM-dd') === format(bookingDate, 'yyyy-MM-dd') && (
+                       {isDateFullyBooked && bookingDate && (
                           <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>No Service</AlertTitle>
+                            <AlertTitle>Fully Booked</AlertTitle>
                             <AlertDescription>
                               All seats for this date are blocked or booked. Please select another date.
                             </AlertDescription>
@@ -367,3 +367,5 @@ export default function BookingPage() {
         </Suspense>
     )
 }
+
+    
