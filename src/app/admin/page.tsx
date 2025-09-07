@@ -159,7 +159,7 @@ export default function AdminPage() {
       </div>
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and update your site content.</p>
       
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
                  <CardHeader>
                     <div className="flex justify-between items-center">
@@ -197,26 +197,6 @@ export default function AdminPage() {
                         <a href="#gallery-section">
                            Update Gallery <ArrowRight className="ml-2"/>
                         </a>
-                    </Button>
-                </CardFooter>
-            </Card>
-             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
-                 <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <CardTitle>Dummy Bookings</CardTitle>
-                        <div className="p-2 bg-muted rounded-full">
-                            <Users className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                    </div>
-                    <CardDescription>
-                        Generate fake bookings to increase perceived popularity.
-                    </CardDescription>
-                </CardHeader>
-                <CardFooter>
-                    <Button asChild variant="outline" className="w-full">
-                        <Link href="/admin/dummy-bookings">
-                           Go to Generator <ArrowRight className="ml-2"/>
-                        </Link>
                     </Button>
                 </CardFooter>
             </Card>
