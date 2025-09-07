@@ -225,12 +225,12 @@ export default function AdminPage() {
                         <CardDescription>Manually block or unblock specific seats for a tour on a particular date.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex gap-4">
-                            <div className="space-y-2">
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="space-y-2 flex-1">
                                 <Label>Date</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button variant={"outline"} className={cn("w-[240px] pl-3 text-left font-normal", !availabilityDate && "text-muted-foreground")}>
+                                        <Button variant={"outline"} className={cn("w-full sm:w-[240px] pl-3 text-left font-normal", !availabilityDate && "text-muted-foreground")}>
                                             {availabilityDate ? format(availabilityDate, 'PPP') : <span>Pick a date</span>}
                                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                         </Button>
@@ -240,10 +240,10 @@ export default function AdminPage() {
                                     </PopoverContent>
                                 </Popover>
                             </div>
-                             <div className="space-y-2">
+                             <div className="space-y-2 flex-1">
                                 <Label>Tour Package</Label>
                                 <Select value={selectedPackage} onValueChange={setSelectedPackage}>
-                                    <SelectTrigger className="w-[240px]">
+                                    <SelectTrigger className="w-full sm:w-[240px]">
                                         <SelectValue placeholder="Select a package" />
                                     </SelectTrigger>
                                     <SelectContent>
