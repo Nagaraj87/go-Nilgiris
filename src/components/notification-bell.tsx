@@ -3,13 +3,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { getTodaysAndTomorrowsBookings } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Bell, Loader2 } from 'lucide-react';
 
 export function NotificationBell() {
+    const params = useParams();
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(true);
+
+    const secret = params.secret as string;
 
     useEffect(() => {
         const fetchBookingCount = async () => {
@@ -26,7 +30,6 @@ export function NotificationBell() {
 
         fetchBookingCount();
         
-        // Optional: poll for new bookings periodically
         const intervalId = setInterval(fetchBookingCount, 5 * 60 * 1000); // every 5 minutes
 
         return () => clearInterval(intervalId);
@@ -35,7 +38,7 @@ export function NotificationBell() {
 
     return (
         <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin/notifications" className="relative">
+            <Link href={`/admin/${secret}/notifications`} className="relative">
                 {loading ? (
                     <Loader2 className="animate-spin" />
                 ) : (

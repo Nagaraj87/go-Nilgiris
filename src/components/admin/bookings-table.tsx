@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { format } from "date-fns";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
@@ -26,9 +26,11 @@ export function BookingsTable({ bookings, onBookingDeleted, searchQuery }: Booki
     const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
+    const params = useParams();
+    const secret = params.secret as string;
 
     const handleEditBooking = (bookingId: string) => {
-        router.push(`/admin/edit-booking/${bookingId}`);
+        router.push(`/admin/${secret}/edit-booking/${bookingId}`);
     };
 
     const handleDeleteBooking = async () => {
@@ -116,7 +118,7 @@ export function BookingsTable({ bookings, onBookingDeleted, searchQuery }: Booki
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This action cannot be undone. This will permanently delete the booking and release the seats.
-                        </AlertDialogDescription>
+                        </Description>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setBookingToDelete(null)}>Cancel</AlertDialogCancel>

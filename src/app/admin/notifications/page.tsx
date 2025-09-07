@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { notFound, useParams } from 'next/navigation';
 import { getTodaysAndTomorrowsBookings } from '@/lib/firebase';
 import type { Booking } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,9 +28,15 @@ type GroupedBookings = {
 };
 
 export default function NotificationsPage() {
+  const params = useParams();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const secret = params.secret as string;
+  if (secret !== process.env.NEXT_PUBLIC_ADMIN_SECRET_PATH) {
+    notFound();
+  }
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -179,4 +186,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-
