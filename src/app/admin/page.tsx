@@ -7,7 +7,7 @@ import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImage
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GalleryHorizontal, Lock, Ticket, Calendar, ArrowRight, MoreHorizontal, Pencil, Trash2, Upload, Image as ImageIcon, AlertCircle, Link as LinkIcon } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, Calendar, ArrowRight, MoreHorizontal, Pencil, Trash2, Upload, Image as ImageIcon, AlertCircle, Link as LinkIcon, Users } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -161,10 +161,11 @@ export default function AdminPage() {
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and update your site content.</p>
       
       <Tabs defaultValue="bookings">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="bookings"><Ticket className="mr-2"/> Bookings</TabsTrigger>
           <TabsTrigger value="availability"><Calendar className="mr-2"/> Availability</TabsTrigger>
           <TabsTrigger value="gallery"><GalleryHorizontal className="mr-2"/> Gallery</TabsTrigger>
+          <TabsTrigger value="dummy-bookings"><Users className="mr-2"/> Dummy Bookings</TabsTrigger>
         </TabsList>
         <TabsContent value="bookings">
           <Card>
@@ -262,13 +263,33 @@ export default function AdminPage() {
                     </div>
                     <CardTitle className="text-center">Manage Availability</CardTitle>
                     <CardDescription className="text-center">
-                        Block entire dates or manage individual seats for specific tours.
+                        Block or unblock individual seats for specific tours.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-center">
                     <Button asChild>
                         <Link href="/admin/availability">
                            Go to Availability Page <ArrowRight className="ml-2"/>
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="dummy-bookings">
+            <Card className="min-h-[400px]">
+                <CardHeader>
+                     <div className="mx-auto bg-muted rounded-full p-4 w-fit">
+                        <Users className="w-12 h-12 text-muted-foreground" />
+                    </div>
+                    <CardTitle className="text-center">Dummy Booking Generator</CardTitle>
+                    <CardDescription className="text-center">
+                       Create fake bookings to make your tours appear more popular.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                    <Button asChild>
+                        <Link href="/admin/dummy-bookings">
+                           Go to Generator <ArrowRight className="ml-2"/>
                         </Link>
                     </Button>
                 </CardContent>
