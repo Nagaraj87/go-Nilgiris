@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { saveBooking, getBlockedSeatsForDate, getOccupiedSeats, getPackagePrice } from '@/lib/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PassengerFields } from '@/components/booking/passenger-fields';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 const passengerSchema = z.object({
@@ -324,20 +325,20 @@ function BookingFlow() {
               <CardHeader>
                 <CardTitle>Step 2: Passenger Details & Seat Selection</CardTitle>
                 <CardDescription>Enter details for each passenger and select your seats.</CardDescription>
+                 {memberCount > 1 && (
+                    <div className="pt-2">
+                        <Button type="button" size="sm" variant="outline" onClick={handleCopyToAll} className="gap-1">
+                            <Copy size={12}/>
+                            Copy first passenger details to all
+                        </Button>
+                    </div>
+                )}
               </CardHeader>
               <CardContent className="space-y-8">
                 <div className="space-y-4">
                   {fields.map((field, index) => (
                     <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                        <div className="flex justify-between items-center">
-                            <Label className="font-bold">Passenger {index + 1}</Label>
-                            {index === 0 && memberCount > 1 && (
-                                <Button type="button" size="sm" variant="outline" onClick={handleCopyToAll} className="gap-1 text-xs">
-                                    <Copy size={12}/>
-                                    Copy to all
-                                </Button>
-                            )}
-                        </div>
+                        <Label className="font-bold">Passenger {index + 1}</Label>
                         <PassengerFields 
                             form={form} 
                             index={index} 
