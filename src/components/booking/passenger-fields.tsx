@@ -23,7 +23,7 @@ function PassengerFieldsComponent({ form, index, onCopyToAll, memberCount = 1 }:
       <div className="flex justify-between items-center">
         <Label className="font-bold">Passenger {index + 1}</Label>
         {index === 0 && memberCount > 1 && onCopyToAll && (
-            <Button type="button" size="sm" variant="ghost" onClick={onCopyToAll} className="gap-1 text-xs">
+            <Button type="button" size="sm" variant="outline" onClick={onCopyToAll} className="gap-1 text-xs">
                 <Copy size={12}/>
                 Copy to all
             </Button>
@@ -113,3 +113,5 @@ function PassengerFieldsComponent({ form, index, onCopyToAll, memberCount = 1 }:
 }
 
 export const PassengerFields = React.memo(PassengerFieldsComponent);
+
+    

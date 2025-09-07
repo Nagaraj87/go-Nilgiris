@@ -37,7 +37,7 @@ const bookingSchema = z.object({
   bookingDate: z.date({
     required_error: "A booking date is required.",
   }),
-  memberCount: z.coerce.number().min(1, 'At least one member is required').max(10),
+  memberCount: z.coerce.number().min(1, 'At least one member is required'),
   passengers: z.array(passengerSchema),
 });
 
@@ -188,9 +188,10 @@ function BookingFlow() {
 
     for(let i = 1; i < fields.length; i++) {
         form.setValue(`passengers.${i}.name`, firstPassenger.name, { shouldValidate: true });
+        form.setValue(`passengers.${i}.age`, firstPassenger.age, { shouldValidate: true });
         form.setValue(`passengers.${i}.phone`, firstPassenger.phone, { shouldValidate: true });
     }
-     toast({ title: "Details Copied", description: "Name and contact number have been copied to all passengers." });
+     toast({ title: "Details Copied", description: "Name, age, and contact number have been copied to all passengers." });
   }
 
   const steps = [
@@ -290,7 +291,7 @@ function BookingFlow() {
                     <FormItem>
                       <FormLabel>Number of Members</FormLabel>
                       <FormControl>
-                        <Input type="number" min="1" max="10" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} className="w-[240px]" />
+                        <Input type="number" min="1" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} className="w-[240px]" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -382,3 +383,5 @@ export default function BookingPage() {
         </Suspense>
     )
 }
+
+    
