@@ -59,7 +59,7 @@ export function BookingsManagement() {
   }
 
 
-  const filteredBookings = bookings.filter(booking => {
+  const filteredBookings = (bookings || []).filter(booking => {
     const query = searchQuery.toLowerCase();
     return (
         booking.bookingId.toLowerCase().includes(query) ||
