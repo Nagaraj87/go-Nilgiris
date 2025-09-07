@@ -3,10 +3,10 @@
 
 import { useEffect, useState } from "react";
 import Link from 'next/link';
-import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore } from "@/lib/firebase";
+import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore, getHeroImage, updateHeroImage } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, ArrowRight, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Link as LinkIcon, ShieldOff, Search, Save, Camera } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -39,7 +39,6 @@ type GalleryImage = {
   packageSlug: string;
 };
 
-
 export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
@@ -59,6 +58,12 @@ export default function AdminPage() {
   const [isAddingImage, setIsAddingImage] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<GalleryImage | null>(null);
 
+  // Hero Image State
+  const [heroImageUrl, setHeroImageUrl] = useState("");
+  const [currentHeroImage, setCurrentHeroImage] = useState("https://picsum.photos/1920/1080");
+  const [loadingHero, setLoadingHero] = useState(true);
+  const [isSavingHero, setIsSavingHero] = useState(false);
+
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -73,7 +78,23 @@ export default function AdminPage() {
         setLoadingBookings(false);
       }
     };
+    const fetchHero = async () => {
+        setLoadingHero(true);
+        try {
+            const hero = await getHeroImage();
+            if (hero && hero.url) {
+                setCurrentHeroImage(hero.url);
+                setHeroImageUrl(hero.url);
+            }
+        } catch (error) {
+             console.error("Failed to fetch hero image", error);
+             toast({ variant: "destructive", title: "Error", description: "Could not load hero image." });
+        } finally {
+            setLoadingHero(false);
+        }
+    }
     fetchBookings();
+    fetchHero();
   }, [toast]);
 
   useEffect(() => {
@@ -112,7 +133,12 @@ export default function AdminPage() {
   };
 
   const isValidImageUrl = (url: string) => {
-    return /\.(jpg|jpeg|png|webp|avif|gif|svg)$/.test(url);
+    try {
+        new URL(url);
+        return /\.(jpg|jpeg|png|webp|avif|gif|svg)$/.test(url);
+    } catch (_) {
+        return false;
+    }
   }
 
   const handleAddImage = async () => {
@@ -154,6 +180,28 @@ export default function AdminPage() {
     }
   }
 
+  const handleSaveHeroImage = async () => {
+      if (!heroImageUrl) {
+          toast({ variant: "destructive", title: "Error", description: "Image URL cannot be empty." });
+          return;
+      }
+       if (!isValidImageUrl(heroImageUrl)) {
+           toast({ variant: "destructive", title: "Invalid URL", description: "Please provide a valid image URL." });
+           return;
+       }
+       setIsSavingHero(true);
+       try {
+           await updateHeroImage(heroImageUrl);
+           setCurrentHeroImage(heroImageUrl);
+           toast({ title: "Hero Image Updated", description: "The homepage hero image has been changed." });
+       } catch (error) {
+            console.error("Failed to update hero image:", error);
+           toast({ variant: "destructive", title: "Update Failed", description: "Could not save the new hero image." });
+       } finally {
+           setIsSavingHero(false);
+       }
+  }
+
   const filteredBookings = bookings.filter(booking => {
     const query = searchQuery.toLowerCase();
     return (
@@ -171,8 +219,28 @@ export default function AdminPage() {
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
       </div>
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and update your site content.</p>
-      
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+       
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <Card className="flex flex-col justify-between hover:border-primary transition-colors">
+                 <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Site Content</CardTitle>
+                         <div className="p-2 bg-muted rounded-full">
+                            <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                    </div>
+                    <CardDescription>
+                       Manage gallery images and the main hero banner.
+                    </CardDescription>
+                </CardHeader>
+                <CardFooter>
+                     <Button asChild variant="outline" className="w-full" onClick={() => document.getElementById('content-section')?.scrollIntoView({ behavior: 'smooth' })}>
+                        <a href="#content-section">
+                           Update Content <ArrowRight className="ml-2"/>
+                        </a>
+                    </Button>
+                </CardFooter>
+            </Card>
             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
                  <CardHeader>
                     <div className="flex justify-between items-center">
@@ -190,26 +258,6 @@ export default function AdminPage() {
                         <Link href="/admin/availability">
                            Manage Seats <ArrowRight className="ml-2"/>
                         </Link>
-                    </Button>
-                </CardFooter>
-            </Card>
-             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
-                 <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <CardTitle>Gallery Management</CardTitle>
-                        <div className="p-2 bg-muted rounded-full">
-                            <ImageIcon className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                    </div>
-                    <CardDescription>
-                       Add or remove tour gallery images using URLs.
-                    </CardDescription>
-                </CardHeader>
-                 <CardFooter>
-                     <Button asChild variant="outline" className="w-full" onClick={() => document.getElementById('gallery-section')?.scrollIntoView({ behavior: 'smooth' })}>
-                        <a href="#gallery-section">
-                           Update Gallery <ArrowRight className="ml-2"/>
-                        </a>
                     </Button>
                 </CardFooter>
             </Card>
@@ -316,7 +364,33 @@ export default function AdminPage() {
             </Card>
        </div>
 
-       <div id="gallery-section">
+       <div id="content-section" className="space-y-12">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Hero Image Management</CardTitle>
+                    <CardDescription>Update the main background image on the homepage. The image will have a dark overlay to ensure text is readable.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div>
+                        <h3 className="font-semibold mb-2">Current Hero Image</h3>
+                        {loadingHero ? (
+                            <Skeleton className="w-full aspect-video rounded-lg" />
+                        ) : (
+                            <Image src={currentHeroImage} alt="Current hero image" width={800} height={450} className="rounded-lg object-cover aspect-video" />
+                        )}
+                    </div>
+                     <div className="space-y-2">
+                        <label htmlFor="hero-url" className="font-semibold">New Image URL</label>
+                        <div className="flex gap-2">
+                            <Input id="hero-url" placeholder="https://example.com/new-image.jpg" value={heroImageUrl} onChange={(e) => setHeroImageUrl(e.target.value)} disabled={isSavingHero}/>
+                            <Button onClick={handleSaveHeroImage} disabled={isSavingHero}>
+                                {isSavingHero ? <><Save className="animate-spin" /> Saving...</> : <><Save/> Save</>}
+                            </Button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
              <Card>
                 <CardHeader>
                     <CardTitle>Gallery Management</CardTitle>
@@ -412,8 +486,3 @@ export default function AdminPage() {
       </AlertDialog>
     </div>
   );
-
-    
-
-    
-

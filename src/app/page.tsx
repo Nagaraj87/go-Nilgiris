@@ -4,13 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { tourPackages } from '@/lib/data';
 import { CheckCircle2 } from 'lucide-react';
+import { getHeroImage } from '@/lib/firebase-server';
 
-export default function Home() {
+export default async function Home() {
+  const heroImage = await getHeroImage();
+
   return (
     <div className="flex flex-col">
       <section className="relative h-[60vh] w-full">
         <Image
-          src="https://picsum.photos/1920/1080"
+          src={heroImage.url || 'https://picsum.photos/1920/1080'}
           alt="Scenic view of the Nilgiri hills"
           fill
           className="object-cover"

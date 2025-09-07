@@ -6,15 +6,24 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Allow public read, write access to availability for admins
+    // Allow public read/write access to the availability collection
+    // This is used for admins to block/unblock seats
     match /availability/{document=**} {
       allow read, write: if true;
     }
 
+    // --- RULES FOR GALLERY ---
     // Allow public read access for viewing tour galleries
     // Allow public write access for adding/deleting images until auth is added
     match /gallery/{image} {
       allow read, write: if true;
+    }
+
+    // --- RULES FOR SITE CONFIG ---
+    // Allow public read for anyone (so homepage can get hero image)
+    // Allow write for admins (will be secured later with auth)
+    match /site_config/{config} {
+        allow read, write: if true;
     }
   }
 }

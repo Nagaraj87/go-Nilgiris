@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore, collection, query, where, getDocs, getDoc, doc, addDoc } from 'firebase-admin/firestore';
+import { getFirestore, collection, query, where, getDocs, addDoc } from 'firebase-admin/firestore';
 
 // This is a server-only file. It is not intended to be used on the client.
 // The Firebase Admin SDK is initialized without credentials, as it will automatically
@@ -15,9 +15,9 @@ const db = getFirestore();
 
 export const getBlockedSeatsForDate = async (packageSlug: string, date: string): Promise<number[]> => {
     const availabilityDocId = `${packageSlug}_${date}`;
-    const docRef = doc(db, "availability", availabilityDocId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
+    const docRef = db.collection("availability").doc(availabilityDocId);
+    const docSnap = await docRef.get();
+    if (docSnap.exists) {
         const data = docSnap.data();
         return data?.blockedSeats || [];
     }
@@ -54,3 +54,15 @@ export const saveBooking = async (bookingData: any) => {
     throw new Error('Could not save booking');
   }
 };
+
+// Server-side function to get the hero image
+export const getHeroImage = async () => {
+    const docRef = db.collection('site_config').doc('hero');
+    const docSnap = await docRef.get();
+    if (docSnap.exists) {
+        return docSnap.data();
+    }
+    // Return a default if it doesn't exist
+    return { url: 'https://picsum.photos/1920/1080' };
+};
+
