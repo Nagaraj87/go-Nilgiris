@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -217,7 +218,7 @@ function BookingFlow() {
             {index < steps.length - 1 && <div className="w-16 h-0.5 bg-border mx-4"></div>}
           </div>
         ))}
-      
+      </div>
       <Form {...form}>
         <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
           {step === 1 && (
