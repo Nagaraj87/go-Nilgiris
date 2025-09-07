@@ -8,11 +8,11 @@ export function HeroSection() {
     return (
         <section className="relative h-[60vh] w-full">
             <Image
-            src="https://picsum.photos/1920/1080"
-            alt="Scenic view of the Nilgiri hills"
+            src="https://images.pexels.com/photos/33786358/pexels-photo-33786358.jpeg"
+            alt="A scenic mountain road in the Nilgiris"
             fill
             className="object-cover"
-            data-ai-hint="mountain landscape"
+            data-ai-hint="mountain road"
             priority
             />
             <div className="absolute inset-0 bg-black/50" />
