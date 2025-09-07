@@ -23,30 +23,31 @@ type GalleryImage = {
 };
 
 export default function TourPackagePage({ params }: { params: { slug: string } }) {
-  const tourPackage = tourPackages.find((p) => p.slug === params.slug);
+  const { slug } = params;
+  const tourPackage = tourPackages.find((p) => p.slug === slug);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(true);
 
   useEffect(() => {
-    if (!params.slug) return;
+    if (!slug) return;
     const fetchGallery = async () => {
       setLoadingGallery(true);
       try {
-        const images = await getGalleryImages(params.slug);
+        const images = await getGalleryImages(slug);
         setGalleryImages(images as GalleryImage[]);
       } catch (error) {
         console.error("Failed to fetch gallery images", error);
         // Fallback to static data if firebase fails
-        const staticPackage = tourPackages.find(p => p.slug === params.slug);
+        const staticPackage = tourPackages.find(p => p.slug === slug);
         if (staticPackage) {
-           setGalleryImages(staticPackage.gallery.map((g, i) => ({ ...g, id: `static-${i}`, url: g.src, packageSlug: params.slug })));
+           setGalleryImages(staticPackage.gallery.map((g, i) => ({ ...g, id: `static-${i}`, url: g.src, packageSlug: slug })));
         }
       } finally {
         setLoadingGallery(false);
       }
     };
     fetchGallery();
-  }, [params.slug]);
+  }, [slug]);
 
 
   if (!tourPackage) {
@@ -174,5 +175,3 @@ export default function TourPackagePage({ params }: { params: { slug: string } }
     </div>
   );
 }
-
-    
