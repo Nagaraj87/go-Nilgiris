@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
-import { getFirestore, collection, query, where, getDocs, addDoc, Firestore } from 'firebase-admin/firestore';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 // This is a server-only file. It is not intended to be used on the client.
 // This implementation explicitly uses the service account credentials from
@@ -9,28 +9,36 @@ import { getFirestore, collection, query, where, getDocs, addDoc, Firestore } fr
 let app: App;
 let db: Firestore;
 
-try {
-    const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-    if (serviceAccount) {
-         if (!getApps().length) {
-            app = initializeApp({
-                credential: cert(JSON.parse(serviceAccount)),
-                projectId: 'nilgiri-explorer'
-            });
-         } else {
-            app = getApps()[0];
-         }
-         db = getFirestore(app);
-    } else {
-        console.warn("Firebase Admin SDK not initialized. GOOGLE_APPLICATION_CREDENTIALS not set.");
+function getDb(): Firestore {
+    if (db) {
+        return db;
     }
-} catch (e) {
-    console.error("Firebase Admin SDK initialization error:", e);
+
+    try {
+        const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        if (serviceAccount) {
+            if (!getApps().length) {
+                app = initializeApp({
+                    credential: cert(JSON.parse(serviceAccount)),
+                    projectId: 'nilgiri-explorer'
+                });
+            } else {
+                app = getApps()[0];
+            }
+            db = getFirestore(app);
+            return db;
+        } else {
+             throw new Error("Firebase Admin SDK not initialized. GOOGLE_APPLICATION_CREDENTIALS not set.");
+        }
+    } catch (e) {
+        console.error("Firebase Admin SDK initialization error:", e);
+        throw new Error("Could not initialize Firebase Admin SDK.");
+    }
 }
 
 
 export const getBlockedSeatsForDate = async (packageSlug: string, date: string): Promise<number[]> => {
-    if (!db) return [];
+    const db = getDb();
     const availabilityDocId = `${packageSlug}_${date}`;
     const docRef = db.collection("availability").doc(availabilityDocId);
     const docSnap = await docRef.get();
@@ -42,14 +50,13 @@ export const getBlockedSeatsForDate = async (packageSlug: string, date: string):
 }
 
 export const getOccupiedSeats = async (packageSlug: string, date: string): Promise<number[]> => {
-    if (!db || !date) return [];
-    const q = query(
-        collection(db, "bookings"),
-        where("packageSlug", "==", packageSlug),
-        where("bookingDate", "==", date)
-    );
+    const db = getDb();
+    if (!date) return [];
+    const q = db.collection("bookings")
+        .where("packageSlug", "==", packageSlug)
+        .where("bookingDate", "==", date);
 
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await q.get();
     const seats: number[] = [];
     querySnapshot.forEach(doc => {
         const booking = doc.data();
@@ -62,9 +69,9 @@ export const getOccupiedSeats = async (packageSlug: string, date: string): Promi
 
 // Server-side saveBooking for use in Server Actions
 export const saveBooking = async (bookingData: any) => {
-  if (!db) throw new Error("Database not initialized");
+  const db = getDb();
   try {
-    const docRef = await addDoc(collection(db, 'bookings'), bookingData);
+    const docRef = await db.collection('bookings').add(bookingData);
     console.log('Document written with ID: ', docRef.id);
     return docRef.id;
   } catch (e) {
@@ -76,9 +83,7 @@ export const saveBooking = async (bookingData: any) => {
 // Server-side function to get the hero image
 export const getHeroImage = async () => {
     try {
-        if (!db) {
-             throw new Error("Database not initialized");
-        }
+        const db = getDb();
         const docRef = db.collection('site_config').doc('hero');
         const docSnap = await docRef.get();
         if (docSnap.exists) {
