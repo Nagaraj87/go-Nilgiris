@@ -20,3 +20,23 @@ export const DeerLogo = (props: SVGProps<SVGSVGElement>) => (
     <path d="M3.79 8A5 5 0 0 0 8 12" />
   </svg>
 );
+
+export const WomanIcon = (props: SVGProps<SVGSVGElement>) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M12 5a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+      <path d="M12 8v7" />
+      <path d="M9 15h6" />
+      <path d="M12 22l-3-3" />
+      <path d="M12 19l3 3" />
+    </svg>
+  );
+  

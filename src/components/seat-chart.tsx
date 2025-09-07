@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Armchair, User, PersonStanding, Steering } from "lucide-react";
+import { Armchair, User, PersonStanding, Car } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "./ui/button";
@@ -99,7 +99,7 @@ export function SeatChart({
         <div className="bg-muted/30 p-4 rounded-lg flex justify-center">
             <div className="w-fit">
                 <div className="w-64 h-16 border-2 border-muted-foreground rounded-t-full rounded-b-md flex items-center justify-center mb-4">
-                  <Steering className="w-8 h-8 text-muted-foreground" />
+                  <Car className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <div className={cn("grid gap-2")} style={{ gridTemplateColumns: `repeat(${seatsPerRow + 1}, minmax(0, 1fr))` }}>
                   {seatsWithAisles.map((seat, index) => {
