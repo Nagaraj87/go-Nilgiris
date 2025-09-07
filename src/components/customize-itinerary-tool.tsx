@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useState, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { customizeItineraryAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +29,7 @@ function SubmitButton() {
 }
 
 export function CustomizeItineraryTool({ currentItinerary }: CustomizeItineraryToolProps) {
-  const [state, formAction] = useFormState(customizeItineraryAction, initialState);
+  const [state, formAction] = useActionState(customizeItineraryAction, initialState);
   const [preferences, setPreferences] = useState("");
 
   return (
