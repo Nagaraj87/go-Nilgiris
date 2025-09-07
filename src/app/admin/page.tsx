@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { deleteBooking, getBookings, addGalleryImageToFirestore, getGalleryImages, deleteGalleryImageFromFirestore } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GalleryHorizontal, Lock, Ticket, Calendar, ArrowRight, MoreHorizontal, Pencil, Trash2, Upload, Image as ImageIcon, AlertCircle, Link as LinkIcon, Users } from "lucide-react";
+import { GalleryHorizontal, Lock, Ticket, Calendar, ArrowRight, MoreHorizontal, Pencil, Trash2, Upload, Image as ImageIcon, AlertCircle, Link as LinkIcon, Users, ShieldOff } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -160,143 +159,160 @@ export default function AdminPage() {
       </div>
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and update your site content.</p>
       
-      <Tabs defaultValue="bookings">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="bookings"><Ticket className="mr-2"/> Bookings</TabsTrigger>
-          <TabsTrigger value="availability"><Calendar className="mr-2"/> Availability</TabsTrigger>
-          <TabsTrigger value="gallery"><GalleryHorizontal className="mr-2"/> Gallery</TabsTrigger>
-          <TabsTrigger value="dummy-bookings"><Users className="mr-2"/> Dummy Bookings</TabsTrigger>
-        </TabsList>
-        <TabsContent value="bookings">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Bookings</CardTitle>
-              <CardDescription>
-                View all tour bookings submitted through the booking form.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Booking ID</TableHead>
-                        <TableHead>Tour Package</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Members</TableHead>
-                        <TableHead>Total Amount</TableHead>
-                        <TableHead>Seats</TableHead>
-                        <TableHead>Passengers</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loadingBookings ? (
-                        Array.from({ length: 5 }).map((_, i) => (
-                           <TableRow key={`skel-book-${i}`}>
-                             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                             <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                             <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                             <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                             <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                             <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                             <TableCell className="text-right"><Skeleton className="h-8 w-8" /></TableCell>
-                           </TableRow>
-                        ))
-                      ) : bookings.length > 0 ? (
-                        bookings.map((booking) => (
-                        <TableRow key={booking.id}>
-                          <TableCell className="font-medium">{booking.bookingId}</TableCell>
-                          <TableCell>{booking.packageSlug}</TableCell>
-                          <TableCell>{format(new Date(booking.bookingDate), "PPP")}</TableCell>
-                          <TableCell>{booking.memberCount}</TableCell>
-                          <TableCell>₹{booking.totalAmount.toLocaleString('en-IN')}</TableCell>
-                          <TableCell>{booking.selectedSeats.map(s => s.number).join(', ')}</TableCell>
-                          <TableCell>
-                            {booking.passengers.map((p, i) => (
-                              <div key={i} className="text-xs">
-                                {p.name} ({p.age}, {p.gender})
-                              </div>
-                            ))}
-                          </TableCell>
-                          <TableCell className="text-right">
-                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Actions</span>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleEditBooking(booking.id)}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => setBookingToDelete(booking.id)} className="text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                        ))
-                      ) : (
-                         <TableRow>
-                            <TableCell colSpan={8} className="h-24 text-center">
-                              No bookings found. Start by making a booking on the main site.
-                            </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="availability">
-            <Card className="min-h-[400px]">
-                <CardHeader>
-                     <div className="mx-auto bg-muted rounded-full p-4 w-fit">
-                        <Calendar className="w-12 h-12 text-muted-foreground" />
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <Card className="flex flex-col justify-between hover:border-primary transition-colors">
+                 <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Manage Availability</CardTitle>
+                         <div className="p-2 bg-muted rounded-full">
+                            <ShieldOff className="w-6 h-6 text-muted-foreground" />
+                        </div>
                     </div>
-                    <CardTitle className="text-center">Manage Availability</CardTitle>
-                    <CardDescription className="text-center">
-                        Block or unblock individual seats for specific tours.
+                    <CardDescription>
+                        Block or unblock seats for specific tours and dates.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="flex justify-center">
-                    <Button asChild>
+                <CardFooter>
+                     <Button asChild variant="outline" className="w-full">
                         <Link href="/admin/availability">
-                           Go to Availability Page <ArrowRight className="ml-2"/>
+                           Manage Seats <ArrowRight className="ml-2"/>
                         </Link>
                     </Button>
-                </CardContent>
+                </CardFooter>
             </Card>
-        </TabsContent>
-        <TabsContent value="dummy-bookings">
-            <Card className="min-h-[400px]">
-                <CardHeader>
-                     <div className="mx-auto bg-muted rounded-full p-4 w-fit">
-                        <Users className="w-12 h-12 text-muted-foreground" />
+             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
+                 <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Gallery Management</CardTitle>
+                        <div className="p-2 bg-muted rounded-full">
+                            <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                        </div>
                     </div>
-                    <CardTitle className="text-center">Dummy Booking Generator</CardTitle>
-                    <CardDescription className="text-center">
-                       Create fake bookings to make your tours appear more popular.
+                    <CardDescription>
+                       Add or remove tour gallery images using URLs.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="flex justify-center">
-                    <Button asChild>
+                 <CardFooter>
+                     <Button asChild variant="outline" className="w-full" onClick={() => document.getElementById('gallery-section')?.scrollIntoView({ behavior: 'smooth' })}>
+                        <a href="#gallery-section">
+                           Update Gallery <ArrowRight className="ml-2"/>
+                        </a>
+                    </Button>
+                </CardFooter>
+            </Card>
+             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
+                 <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Dummy Bookings</CardTitle>
+                        <div className="p-2 bg-muted rounded-full">
+                            <Users className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                    </div>
+                    <CardDescription>
+                        Generate fake bookings to increase perceived popularity.
+                    </CardDescription>
+                </CardHeader>
+                <CardFooter>
+                    <Button asChild variant="outline" className="w-full">
                         <Link href="/admin/dummy-bookings">
                            Go to Generator <ArrowRight className="ml-2"/>
                         </Link>
                     </Button>
+                </CardFooter>
+            </Card>
+       </div>
+
+       <div id="bookings-section" className="mb-12">
+            <Card>
+                <CardHeader>
+                    <CardTitle>All Bookings</CardTitle>
+                    <CardDescription>
+                        View all tour bookings submitted through the booking form.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>Booking ID</TableHead>
+                            <TableHead>Tour Package</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Members</TableHead>
+                            <TableHead>Total Amount</TableHead>
+                            <TableHead>Seats</TableHead>
+                            <TableHead>Passengers</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {loadingBookings ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                            <TableRow key={`skel-book-${i}`}>
+                                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                                <TableCell className="text-right"><Skeleton className="h-8 w-8" /></TableCell>
+                            </TableRow>
+                            ))
+                        ) : bookings.length > 0 ? (
+                            bookings.map((booking) => (
+                            <TableRow key={booking.id}>
+                            <TableCell className="font-medium">{booking.bookingId}</TableCell>
+                            <TableCell>{booking.packageSlug}</TableCell>
+                            <TableCell>{format(new Date(booking.bookingDate), "PPP")}</TableCell>
+                            <TableCell>{booking.memberCount}</TableCell>
+                            <TableCell>₹{booking.totalAmount.toLocaleString('en-IN')}</TableCell>
+                            <TableCell>{booking.selectedSeats.map(s => s.number).join(', ')}</TableCell>
+                            <TableCell>
+                                {booking.passengers.map((p, i) => (
+                                <div key={i} className="text-xs">
+                                    {p.name} ({p.age}, {p.gender})
+                                </div>
+                                ))}
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">Actions</span>
+                                    </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEditBooking(booking.id)}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setBookingToDelete(booking.id)} className="text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                            </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={8} className="h-24 text-center">
+                                No bookings found. Start by making a booking on the main site.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
+                    </div>
                 </CardContent>
             </Card>
-        </TabsContent>
-         <TabsContent value="gallery">
-            <Card>
+       </div>
+
+       <div id="gallery-section">
+             <Card>
                 <CardHeader>
                     <CardTitle>Gallery Management</CardTitle>
                     <CardDescription>Add or delete images for your tour packages using direct image URLs.</CardDescription>
@@ -359,8 +375,8 @@ export default function AdminPage() {
                     </div>
                 </CardContent>
             </Card>
-        </TabsContent>
-      </Tabs>
+       </div>
+
       <AlertDialog open={!!bookingToDelete} onOpenChange={(open) => !open && setBookingToDelete(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
@@ -391,4 +407,5 @@ export default function AdminPage() {
       </AlertDialog>
     </div>
   );
-}
+
+    
