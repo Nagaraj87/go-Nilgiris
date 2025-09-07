@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { DeerLogo } from '@/components/icons';
 import { Button } from './ui/button';
-import { Lock } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Home, Lock, Menu } from 'lucide-react';
 
 export function Header() {
   return (
@@ -15,7 +16,15 @@ export function Header() {
             </span>
           </Link>
         </div>
-        <nav>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-4">
+          <Button variant="ghost" asChild>
+            <Link href="/">
+              <Home className="mr-2 h-4 w-4" />
+              Home
+            </Link>
+          </Button>
           <Button variant="ghost" asChild>
             <Link href="/admin">
               <Lock className="mr-2 h-4 w-4" />
@@ -23,6 +32,30 @@ export function Header() {
             </Link>
           </Button>
         </nav>
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Open navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <div className="grid gap-4 py-6">
+                <Link href="/" className="flex items-center space-x-2 text-lg font-medium">
+                  <Home className="h-5 w-5" />
+                  <span>Home</span>
+                </Link>
+                <Link href="/admin" className="flex items-center space-x-2 text-lg font-medium">
+                  <Lock className="h-5 w-5" />
+                  <span>Admin</span>
+                </Link>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   );
