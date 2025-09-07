@@ -67,6 +67,7 @@ export default function EditBookingPage() {
   useEffect(() => {
     if (!bookingId) return;
     const fetchBooking = async () => {
+      setLoading(true);
       try {
         const bookingData = await getBookingById(bookingId);
         if (bookingData) {
@@ -74,7 +75,7 @@ export default function EditBookingPage() {
           form.reset({ passengers: bookingData.passengers });
         } else {
           toast({ variant: 'destructive', title: 'Error', description: 'Booking not found.' });
-          router.push('/admin');
+          setBooking(null);
         }
       } catch (error) {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch booking details.' });
@@ -110,8 +111,20 @@ export default function EditBookingPage() {
 
 if (!booking) {
     return (
-        <div className="flex justify-center items-center h-screen">
-            <p>Booking not found.</p>
+        <div className="container mx-auto max-w-2xl py-12">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Booking Not Found</CardTitle>
+                    <CardDescription>
+                        The booking you are looking for does not exist or could not be loaded.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={() => router.push('/admin')}>
+                        Back to Admin Dashboard
+                    </Button>
+                </CardContent>
+            </Card>
         </div>
     )
 }

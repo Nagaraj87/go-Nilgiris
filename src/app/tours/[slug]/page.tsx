@@ -101,7 +101,7 @@ export default function TourPackagePage() {
                ) : galleryImages.length > 0 ? (
                   <Carousel className="w-full">
                     <CarouselContent>
-                      {galleryImages.map((image, index) => (
+                      {galleryImages.map((image) => (
                         <CarouselItem key={image.id}>
                           <Card className="overflow-hidden">
                             <CardContent className="p-0 relative aspect-video">

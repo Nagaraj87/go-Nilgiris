@@ -194,7 +194,7 @@ function BookingFlow() {
   const disabledDates = (date: Date) => {
     const isPast = date < new Date(new Date().setDate(new Date().getDate() - 1));
     const isBlocked = blockedDates.some(d => format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
-    return isPast || isBlocked || isDateFullyBooked;
+    return isPast || isBlocked;
   }
 
   return (
@@ -367,5 +367,3 @@ export default function BookingPage() {
         </Suspense>
     )
 }
-
-    
