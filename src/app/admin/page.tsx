@@ -169,9 +169,6 @@ export default function AdminPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {loadingBookings ? (
-                <p>Loading bookings...</p>
-              ) : (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -187,7 +184,12 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {bookings.map((booking) => (
+                      {loadingBookings ? (
+                        <TableRow>
+                            <TableCell colSpan={8} className="text-center">Loading bookings...</TableCell>
+                        </TableRow>
+                      ) : bookings.length > 0 ? (
+                        bookings.map((booking) => (
                         <TableRow key={booking.id}>
                           <TableCell className="font-medium">{booking.bookingId}</TableCell>
                           <TableCell>{booking.packageSlug}</TableCell>
@@ -223,11 +225,17 @@ export default function AdminPage() {
                               </DropdownMenu>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        ))
+                      ) : (
+                         <TableRow>
+                            <TableCell colSpan={8} className="h-24 text-center">
+                              No bookings found.
+                            </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
