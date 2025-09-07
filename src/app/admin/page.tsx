@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 
 type Booking = {
   id: string;
@@ -53,6 +54,7 @@ export default function AdminPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageAlt, setImageAlt] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [imageToDelete, setImageToDelete] = useState<GalleryImage | null>(null);
 
 
@@ -113,8 +115,9 @@ export default function AdminPage() {
         return;
     }
     setUploading(true);
+    setUploadProgress(0);
     try {
-        const newImage = await uploadGalleryImage(imageFile, imageAlt, selectedPackage);
+        const newImage = await uploadGalleryImage(imageFile, imageAlt, selectedPackage, setUploadProgress);
         setGalleryImages([...galleryImages, newImage as GalleryImage]);
         toast({ title: "Image Uploaded", description: "The image has been added to the gallery." });
         setImageFile(null);
@@ -282,12 +285,19 @@ export default function AdminPage() {
                     <div className="p-4 border-dashed border-2 rounded-lg space-y-4">
                         <h3 className="font-semibold text-lg">Upload New Image</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Input id="gallery-upload" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} />
-                            <Input placeholder="Image description (for accessibility)" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} />
+                            <Input id="gallery-upload" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} disabled={uploading}/>
+                            <Input placeholder="Image description (for accessibility)" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} disabled={uploading}/>
                         </div>
-                         <Button onClick={handleImageUpload} disabled={uploading}>
-                            {uploading ? "Uploading..." : <><Upload className="mr-2"/> Upload Image</>}
-                        </Button>
+                        {uploading ? (
+                            <div className="space-y-2">
+                                <Progress value={uploadProgress} className="w-full" />
+                                <p className="text-sm text-muted-foreground text-center">Uploading... {Math.round(uploadProgress)}%</p>
+                            </div>
+                        ) : (
+                            <Button onClick={handleImageUpload} disabled={uploading}>
+                                <Upload className="mr-2"/> Upload Image
+                            </Button>
+                        )}
                     </div>
 
                     <div>
