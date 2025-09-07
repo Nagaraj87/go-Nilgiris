@@ -1,14 +1,17 @@
+
 'use server';
 
 import {cookies} from 'next/headers';
 import {redirect} from 'next/navigation';
-import {deleteAllBookings as deleteAllBookingsFromDb} from '@/lib/firebase';
+import {deleteAllBookings as deleteAllBookingsFromDb, getAdminCredentials} from '@/lib/firebase';
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
   const username = formData.get('username');
   const password = formData.get('password');
 
-  if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+  const adminCredentials = await getAdminCredentials();
+
+  if (username === adminCredentials.username && password === adminCredentials.password) {
     cookies().set('session', 'loggedin', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -29,8 +32,10 @@ export async function logout() {
 export async function deleteAllBookings(prevState: string | undefined, formData: FormData) {
   const username = formData.get('username');
   const password = formData.get('password');
+  
+  const adminCredentials = await getAdminCredentials();
 
-  if (username !== process.env.ADMIN_USERNAME || password !== process.env.ADMIN_PASSWORD) {
+  if (username !== adminCredentials.username || password !== adminCredentials.password) {
     return 'Invalid credentials. Deletion cancelled.';
   }
 

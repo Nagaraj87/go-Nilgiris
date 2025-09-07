@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight } from "lucide-react";
+import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight, KeyRound } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookingsManagement } from "@/components/admin/bookings-management";
@@ -9,6 +9,7 @@ import { ContactManagement } from "@/components/admin/contact-management";
 import { PriceManagement } from "@/components/admin/price-management";
 import { GalleryManagement } from "@/components/admin/gallery-management";
 import Link from "next/link";
+import { CredentialsManagement } from "@/components/admin/credentials-management";
 
 export default function AdminPage() {
   const scrollTo = (id: string) => {
@@ -29,19 +30,19 @@ export default function AdminPage() {
              <Card className="flex flex-col justify-between hover:border-primary transition-colors">
                  <CardHeader>
                     <div className="flex justify-between items-center">
-                        <CardTitle>Gallery</CardTitle>
+                        <CardTitle>Credentials</CardTitle>
                          <div className="p-2 bg-muted rounded-full">
-                            <GalleryHorizontal className="w-6 h-6 text-muted-foreground" />
+                            <KeyRound className="w-6 h-6 text-muted-foreground" />
                         </div>
                     </div>
                     <CardDescription>
-                       Manage gallery images for tour packages.
+                       Update your admin username and password.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
-                     <Button asChild variant="outline" className="w-full" onClick={() => scrollTo('gallery-section')}>
-                        <a href="#gallery-section">
-                           Update Gallery <ArrowRight className="ml-2"/>
+                     <Button asChild variant="outline" className="w-full" onClick={() => scrollTo('credentials-section')}>
+                        <a href="#credentials-section">
+                           Update Login <ArrowRight className="ml-2"/>
                         </a>
                     </Button>
                 </CardFooter>
@@ -112,14 +113,17 @@ export default function AdminPage() {
         <div id="bookings-section">
           <BookingsManagement />
         </div>
+        <div id="gallery-section">
+          <GalleryManagement />
+        </div>
+        <div id="credentials-section">
+          <CredentialsManagement />
+        </div>
         <div id="contact-section">
           <ContactManagement />
         </div>
         <div id="pricing-section">
           <PriceManagement />
-        </div>
-        <div id="gallery-section">
-          <GalleryManagement />
         </div>
       </div>
     </div>

@@ -51,3 +51,8 @@ export type ContactInfo = {
     whatsapp: string;
     call: string;
 };
+
+export type AdminCredentials = {
+  username: string;
+  password?: string;
+};
