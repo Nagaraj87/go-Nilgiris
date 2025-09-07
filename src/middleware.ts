@@ -3,54 +3,42 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAdminSecretPath } from '@/lib/firebase';
 
-// This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    const segments = request.nextUrl.pathname.split('/');
-    const secretFromUrl = segments[2];
-    
-    // Allow access to the API route used for validation on the admin page itself
-    if (request.nextUrl.pathname.startsWith('/api/validate-secret')) {
-        return NextResponse.next();
-    }
-    
-    // Avoid fetching from DB for sub-pages like /availability if we can
-    // We assume if the user has the base secret, they can access sub-pages.
-    // A more robust solution might use sessions.
-    const referer = request.headers.get('referer');
-    if (referer) {
-        try {
-            const refererUrl = new URL(referer);
-            if (refererUrl.pathname.startsWith('/admin/')) {
-                 const refererSegments = refererUrl.pathname.split('/');
-                 const refererSecret = refererSegments[2];
-                 if(secretFromUrl === refererSecret) {
-                    return NextResponse.next();
-                 }
-            }
-        } catch(e) {
-            // Invalid referer URL, proceed to DB check
-        }
-    }
+  const pathname = request.nextUrl.pathname;
 
-    try {
-      const storedSecret = await getAdminSecretPath();
+  // Only apply this middleware to routes under /admin/
+  if (pathname.startsWith('/admin/')) {
+    // Exclude the login page from this check if it ever gets re-added.
+    // This also helps avoid redirect loops.
+    // e.g. if (pathname.startsWith('/admin/login')) return NextResponse.next();
+    
+    // The secret is expected to be the second segment, e.g., /admin/{secret}/...
+    const segments = pathname.split('/');
+    if (segments.length > 2) {
+      const secretFromUrl = segments[2];
       
-      if (secretFromUrl === storedSecret) {
-        return NextResponse.next();
+      try {
+        const storedSecret = await getAdminSecretPath();
+        if (secretFromUrl === storedSecret) {
+          // If the secret is correct, allow the request to proceed.
+          return NextResponse.next();
+        }
+      } catch (e) {
+        console.error("Middleware Database Error:", e);
+        // If there's an error fetching the secret, deny access as a security precaution.
+        return NextResponse.redirect(new URL('/404', request.url));
       }
-    } catch (e) {
-      console.error("Middleware DB Error:", e);
-      // Fallthrough to redirect
     }
-
+    
+    // If the secret is missing or incorrect, redirect to a 404 page.
     return NextResponse.redirect(new URL('/404', request.url));
   }
 
+  // For all other routes, do nothing.
   return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
+// Match all routes under /admin/, including nested pages.
 export const config = {
   matcher: '/admin/:path*',
 };
