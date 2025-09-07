@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getBookings } from "@/lib/firebase";
+import { getBookings, deleteAllBookings as deleteAllBookingsFromDb } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -11,7 +11,9 @@ import { AlertCircle, Search, Loader2, Trash } from "lucide-react";
 import { BookingsTable } from "./bookings-table";
 import type { Booking } from "@/types";
 import { Button } from "../ui/button";
-import { DeleteAllDialog } from "./delete-all-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+
 
 export function BookingsManagement() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -19,6 +21,7 @@ export function BookingsManagement() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchBookings();
@@ -41,11 +44,20 @@ export function BookingsManagement() {
   const handleDeleteBooking = (bookingId: string) => {
     setBookings(bookings.filter(b => b.id !== bookingId));
   }
-
-  const handleAllBookingsDeleted = () => {
-    setBookings([]);
-    setIsDeleteAllOpen(false);
+  
+  const handleDeleteAll = async () => {
+    try {
+      await deleteAllBookingsFromDb();
+      setBookings([]);
+      toast({ title: "Success", description: "All bookings have been deleted." });
+    } catch(e) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Error", description: "Could not delete all bookings." });
+    } finally {
+        setIsDeleteAllOpen(false);
+    }
   }
+
 
   const filteredBookings = bookings.filter(booking => {
     const query = searchQuery.toLowerCase();
@@ -122,11 +134,20 @@ export function BookingsManagement() {
         {renderContent()}
       </CardContent>
     </Card>
-    <DeleteAllDialog 
-        isOpen={isDeleteAllOpen} 
-        onOpenChange={setIsDeleteAllOpen}
-        onSuccess={handleAllBookingsDeleted}
-    />
+     <AlertDialog open={isDeleteAllOpen} onOpenChange={setIsDeleteAllOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete all bookings from the database.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive hover:bg-destructive/90">Delete All</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }
