@@ -5,7 +5,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format, addDays } from 'date-fns';
-import type { AdminCredentials } from '@/types';
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
@@ -270,21 +269,4 @@ export const getContactInfo = async (): Promise<{ whatsapp: string, call: string
 export const updateContactInfo = async (data: { whatsapp: string, call: string }) => {
     const docRef = doc(db, 'site_config', 'contact');
     await setDoc(docRef, data, { merge: true });
-};
-
-export const getAdminCredentials = async (): Promise<AdminCredentials> => {
-    const docRef = doc(db, 'site_config', 'credentials');
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        return docSnap.data() as AdminCredentials;
-    } else {
-        const defaultData = { username: 'admin', password: 'password' };
-        await setDoc(docRef, defaultData);
-        return defaultData;
-    }
-};
-
-export const updateAdminCredentials = async (credentials: AdminCredentials) => {
-    const docRef = doc(db, 'site_config', 'credentials');
-    await setDoc(docRef, credentials, { merge: true });
 };
