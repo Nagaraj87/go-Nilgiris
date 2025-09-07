@@ -19,7 +19,7 @@ export function CustomizeItineraryTool({ currentItinerary }: CustomizeItineraryT
   const [state, formAction] = useActionState(customizeItineraryAction, initialState);
 
   return (
-    <div className="mt-8 rounded-lg border border-primary/20 bg-primary/5 p-6">
+    <div className="mt-8">
         <div className="flex items-center gap-2 font-headline text-lg text-primary">
           <Wand2 />
           <h2>Dynamic Itinerary Tool</h2>
