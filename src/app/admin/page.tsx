@@ -20,6 +20,7 @@ import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 
 type Booking = {
   id: string;
@@ -486,3 +487,5 @@ export default function AdminPage() {
       </AlertDialog>
     </div>
   );
+
+    
