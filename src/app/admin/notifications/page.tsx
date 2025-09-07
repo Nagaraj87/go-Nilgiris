@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { tourPackages } from '@/lib/data';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
 
 export default function NotificationsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -147,18 +149,26 @@ function BookingDetailsCard({ booking }: { booking: Booking }) {
                 <Separator />
                  <div>
                     <h4 className="font-semibold mb-2">Passenger Details</h4>
-                    <ul className="space-y-2">
-                        {booking.passengers.map((passenger, index) => (
-                            <li key={index} className="flex justify-between items-center p-2 bg-muted/50 rounded-md">
-                                <span className="font-medium">{passenger.name}</span>
-                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <span>Age: {passenger.age}</span>
-                                    <span>Gender: {passenger.gender}</span>
-                                    <span className="flex items-center gap-1"><Phone size={12} /> {passenger.phone}</span>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                     <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Age</TableHead>
+                                <TableHead>Gender</TableHead>
+                                <TableHead>Contact</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {booking.passengers.map((passenger, index) => (
+                                <TableRow key={index}>
+                                    <TableCell className="font-medium">{passenger.name}</TableCell>
+                                    <TableCell>{passenger.age}</TableCell>
+                                    <TableCell className="capitalize">{passenger.gender}</TableCell>
+                                    <TableCell>{passenger.phone}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </div>
             </CardContent>
         </Card>
