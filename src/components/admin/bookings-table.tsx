@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
@@ -14,7 +14,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Badge } from "../ui/badge";
 
 type BookingsTableProps = {
     bookings: Booking[];
@@ -26,11 +25,9 @@ export function BookingsTable({ bookings, onBookingDeleted, searchQuery }: Booki
     const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const secret = searchParams.get('secret');
 
     const handleEditBooking = (bookingId: string) => {
-        router.push(`/admin/edit-booking/${bookingId}?secret=${secret}`);
+        router.push(`/admin/edit-booking/${bookingId}`);
     };
 
     const handleDeleteBooking = async () => {

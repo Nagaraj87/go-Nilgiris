@@ -2,8 +2,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { notFound, useSearchParams } from 'next/navigation';
-import { getTodaysAndTomorrowsBookings, getAdminSecretPath } from '@/lib/firebase';
+import { getTodaysAndTomorrowsBookings } from '@/lib/firebase';
 import type { Booking } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,30 +27,11 @@ type GroupedBookings = {
 };
 
 export default function NotificationsPage() {
-  const searchParams = useSearchParams();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-
-  const secret = searchParams.get('secret');
 
   useEffect(() => {
-    const authorize = async () => {
-        const storedSecret = await getAdminSecretPath();
-        if(secret !== storedSecret) {
-            setIsAuthorized(false);
-        } else {
-            setIsAuthorized(true);
-        }
-    }
-    authorize();
-  }, [secret]);
-
-
-  useEffect(() => {
-    if (!isAuthorized) return;
-
     const fetchBookings = async () => {
       setLoading(true);
       setError(null);
@@ -68,7 +48,7 @@ export default function NotificationsPage() {
     };
 
     fetchBookings();
-  }, [isAuthorized]);
+  }, []);
 
   const groupedBookings = useMemo(() => {
     const groups: GroupedBookings = {};
@@ -185,18 +165,6 @@ export default function NotificationsPage() {
         </div>
     );
   };
-  
-   if (isAuthorized === null) {
-     return (
-          <div className="flex justify-center items-center h-screen">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-    );
-  }
-
-  if (isAuthorized === false) {
-    notFound();
-  }
 
   return (
     <div className="container mx-auto max-w-6xl py-12">

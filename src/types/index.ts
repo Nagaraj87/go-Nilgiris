@@ -53,5 +53,6 @@ export type ContactInfo = {
 };
 
 export type AdminCredentials = {
-  adminSecretPath?: string;
+  username: string;
+  password?: string;
 };

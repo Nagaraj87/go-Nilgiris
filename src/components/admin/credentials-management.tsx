@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAdminSecretPath, updateAdminSecretPath } from "@/lib/firebase";
+import { getAdminCredentials, updateAdminCredentials } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,13 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertCircle, KeyRound, ShieldAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useRouter } from "next/navigation";
-
+import type { AdminCredentials } from "@/types";
 
 export function CredentialsManagement() {
     const { toast } = useToast();
-    const router = useRouter();
-    const [secretPath, setSecretPath] = useState('');
-    const [newSecretPath, setNewSecretPath] = useState('');
+    const [credentials, setCredentials] = useState<AdminCredentials>({ username: '', password: '' });
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -27,12 +26,11 @@ export function CredentialsManagement() {
             setLoading(true);
             setError(null);
             try {
-                const data = await getAdminSecretPath();
-                setSecretPath(data);
-                setNewSecretPath(data);
+                const data = await getAdminCredentials();
+                setCredentials(data);
             } catch (err) {
                 console.error(err);
-                setError("Could not load current secret path.");
+                setError("Could not load current credentials.");
             } finally {
                 setLoading(false);
             }
@@ -41,20 +39,23 @@ export function CredentialsManagement() {
     }, []);
 
     const handleSaveChanges = async () => {
-        if (!newSecretPath || newSecretPath.length < 10) {
-            toast({ variant: "destructive", title: "Invalid Path", description: "Secret path must be at least 10 characters long." });
+        if (newPassword && newPassword !== confirmPassword) {
+            toast({ variant: "destructive", title: "Passwords do not match" });
             return;
         }
 
         setSaving(true);
         try {
-            await updateAdminSecretPath(newSecretPath);
-            toast({ title: "Secret Path Updated", description: "Your admin URL has been changed." });
-            setSecretPath(newSecretPath);
-            // Redirect to the new path after update
-            router.push(`/admin?secret=${newSecretPath}`);
+            const updatedCredentials = {
+                username: credentials.username,
+                password: newPassword || credentials.password,
+            };
+            await updateAdminCredentials(updatedCredentials);
+            toast({ title: "Credentials Updated", description: "Your login details have been saved." });
+            setNewPassword('');
+            setConfirmPassword('');
         } catch (error) {
-            toast({ variant: "destructive", title: "Update Failed", description: "Could not save the new secret path." });
+            toast({ variant: "destructive", title: "Update Failed", description: "Could not save credentials." });
         } finally {
             setSaving(false);
         }
@@ -86,21 +87,41 @@ export function CredentialsManagement() {
                     <ShieldAlert className="h-4 w-4" />
                     <AlertTitle>Security Warning</AlertTitle>
                     <AlertDescription>
-                       Changing this path will require you to navigate to the new URL with the new secret query parameter. Bookmark the new URL carefully.
+                       For demonstration purposes, the password is not hashed. In a production environment, always use a secure password hashing method.
                     </AlertDescription>
                  </Alert>
                 <div>
-                    <Label htmlFor="secret-path">Admin Secret Path</Label>
+                    <Label htmlFor="username">Username</Label>
                     <Input
-                        id="secret-path"
-                        value={newSecretPath}
-                        onChange={(e) => setNewSecretPath(e.target.value)}
+                        id="username"
+                        value={credentials.username}
+                        onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
                         disabled={saving}
-                        placeholder="Enter a new secret path"
                     />
                 </div>
-
-                <Button onClick={handleSaveChanges} disabled={saving || newSecretPath === secretPath}>
+                <div>
+                    <Label htmlFor="new-password">New Password (leave blank to keep current)</Label>
+                    <Input
+                        id="new-password"
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter new password"
+                        disabled={saving}
+                    />
+                </div>
+                 <div>
+                    <Label htmlFor="confirm-password">Confirm New Password</Label>
+                    <Input
+                        id="confirm-password"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm new password"
+                        disabled={saving || !newPassword}
+                    />
+                </div>
+                <Button onClick={handleSaveChanges} disabled={saving}>
                     {saving ? <Loader2 className="animate-spin" /> : "Save Changes"}
                 </Button>
             </div>
@@ -112,9 +133,9 @@ export function CredentialsManagement() {
             <CardHeader>
                 <div className="flex items-center gap-2">
                      <KeyRound className="w-6 h-6 text-primary"/>
-                     <CardTitle>Admin Security</CardTitle>
+                     <CardTitle>Admin Credentials</CardTitle>
                 </div>
-                <CardDescription>Update the secret path used to access the admin dashboard.</CardDescription>
+                <CardDescription>Update the username and password used to log in to the admin dashboard.</CardDescription>
             </CardHeader>
             <CardContent>
                 {renderContent()}

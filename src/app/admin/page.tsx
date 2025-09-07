@@ -1,6 +1,4 @@
 
-
-import { notFound } from "next/navigation";
 import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight, KeyRound } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,10 +8,9 @@ import { PriceManagement } from "@/components/admin/price-management";
 import { GalleryManagement } from "@/components/admin/gallery-management";
 import Link from "next/link";
 import { CredentialsManagement } from "@/components/admin/credentials-management";
-import { getAdminSecretPath } from "@/lib/firebase";
 
 
-function AdminPageContent() {
+export default function AdminPage() {
   
   const scrollTo = (id: string) => {
     // This needs to be a client component to work, but for now we keep it server-side
@@ -101,13 +98,13 @@ function AdminPageContent() {
                         </div>
                     </div>
                     <CardDescription>
-                        Update the secret admin path.
+                        Update the admin username and password.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
                      <Button asChild variant="outline" className="w-full">
                         <a href="#credentials-section">
-                           Update Secret <ArrowRight className="ml-2"/>
+                           Update Credentials <ArrowRight className="ml-2"/>
                         </a>
                     </Button>
                 </CardFooter>
@@ -133,19 +130,4 @@ function AdminPageContent() {
       </div>
     </div>
   );
-}
-
-type AdminPageProps = {
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
-export default async function AdminPage({ searchParams }: AdminPageProps) {
-    const secret = searchParams.secret;
-    const storedSecret = await getAdminSecretPath();
-
-    if (secret !== storedSecret) {
-        notFound();
-    }
-
-    return <AdminPageContent />;
 }

@@ -263,19 +263,19 @@ export const updateContactInfo = async (data: { whatsapp: string, call: string }
     await setDoc(docRef, data, { merge: true });
 };
 
-export const getAdminSecretPath = async (): Promise<string> => {
+export const getAdminCredentials = async (): Promise<AdminCredentials> => {
     const docRef = doc(db, 'site_config', 'credentials');
     const docSnap = await getDoc(docRef);
-    if (docSnap.exists() && docSnap.data().adminSecretPath) {
-        return docSnap.data().adminSecretPath;
+    if (docSnap.exists()) {
+        return docSnap.data() as AdminCredentials;
     } else {
-        const defaultPath = 'change-me-to-something-secret';
-        await setDoc(docRef, { adminSecretPath: defaultPath }, { merge: true });
-        return defaultPath;
+        const defaultData = { username: 'admin', password: 'password' };
+        await setDoc(docRef, defaultData);
+        return defaultData;
     }
 };
 
-export const updateAdminSecretPath = async (path: string) => {
+export const updateAdminCredentials = async (credentials: AdminCredentials) => {
     const docRef = doc(db, 'site_config', 'credentials');
-    await setDoc(docRef, { adminSecretPath: path }, { merge: true });
+    await setDoc(docRef, credentials, { merge: true });
 };
