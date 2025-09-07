@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { DeerLogo } from '@/components/icons';
 import { Button } from './ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Home, Lock, Menu } from 'lucide-react';
 
 export function Header() {
@@ -43,6 +43,16 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle>
+                  <Link href="/" className="flex items-center space-x-2">
+                    <DeerLogo className="h-6 w-6 text-primary" />
+                    <span className="font-bold">
+                      Nilgiri Explorer
+                    </span>
+                  </Link>
+                </SheetTitle>
+              </SheetHeader>
               <div className="grid gap-4 py-6">
                 <Link href="/" className="flex items-center space-x-2 text-lg font-medium">
                   <Home className="h-5 w-5" />
