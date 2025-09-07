@@ -176,7 +176,7 @@ export const getOccupiedSeats = async (packageSlug: string, date: string): Promi
 
 // Gallery Functions
 export const uploadGalleryImage = (file: File, alt: string, packageSlug: string, onProgress: (progress: number) => void) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         const storageRef = ref(storage, `gallery/${packageSlug}/${Date.now()}_${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
