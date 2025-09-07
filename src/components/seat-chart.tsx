@@ -1,8 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Armchair, User, PersonStanding, Child, Wheelchair } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Armchair, User, PersonStanding, Steering } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "./ui/button";
+import React from "react";
 
 type SeatStatus = "available" | "sold" | "selected";
 
@@ -46,6 +49,7 @@ export function SeatChart({
   const [seats, setSeats] = useState<Seat[]>([]);
 
   useEffect(() => {
+    // Generate seats only on the client-side to ensure Math.random() doesn't cause hydration issues
     setSeats(generateSeats(totalSeats, pricePerSeat));
   }, [totalSeats, pricePerSeat]);
 
@@ -74,16 +78,16 @@ export function SeatChart({
     return seat.status;
   }
 
-  const getSeatIcon = (status: SeatStatus) => {
-    switch (status) {
-      case "sold":
-        return <User className="w-4 h-4" />;
-      case "selected":
-        return <PersonStanding className="w-4 h-4" />;
-      default:
-        return <Armchair className="w-4 h-4" />;
+  const seatsWithAisles = useMemo(() => {
+    const newSeats = [];
+    for (let i = 0; i < seats.length; i++) {
+        newSeats.push(seats[i]);
+        if ((i + 1) % seatsPerRow === seatsPerRow / 2) {
+            newSeats.push(null); // Aisle marker
+        }
     }
-  }
+    return newSeats;
+  }, [seats, seatsPerRow]);
 
   return (
     <Card className="border-dashed">
@@ -92,29 +96,21 @@ export function SeatChart({
         <CardDescription>Select seats for {memberCount} member(s). Click on an available seat to select it.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="bg-muted/30 p-4 rounded-lg">
-          <div className="mx-auto w-fit">
-            <div className="w-64 h-16 border-2 border-muted-foreground rounded-t-full rounded-b-md flex items-center justify-center mb-4">
-              <Wheelchair className="w-8 h-8 text-muted-foreground" />
+        <div className="bg-muted/30 p-4 rounded-lg flex justify-center">
+            <div className="w-fit">
+                <div className="w-64 h-16 border-2 border-muted-foreground rounded-t-full rounded-b-md flex items-center justify-center mb-4">
+                  <Steering className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <div className={cn("grid gap-2")} style={{ gridTemplateColumns: `repeat(${seatsPerRow + 1}, minmax(0, 1fr))` }}>
+                  {seatsWithAisles.map((seat, index) => {
+                    if (seat === null) {
+                      return <div key={`aisle-${index}`} className="w-full"></div>; // Aisle space
+                    }
+                    const status = getSeatStatus(seat);
+                    return <SeatButton key={seat.id} seat={seat} status={status} onClick={handleSeatClick} />;
+                  })}
+                </div>
             </div>
-            <div className={cn("grid gap-2")} style={{ gridTemplateColumns: `repeat(${seatsPerRow}, minmax(0, 1fr))` }}>
-              {seats.map((seat, index) => {
-                const status = getSeatStatus(seat);
-                
-                // Add an aisle space
-                if (index > 0 && index % seatsPerRow === Math.floor(seatsPerRow/2)) {
-                  return (
-                    <React.Fragment key={`aisle-${index}`}>
-                      <div />
-                      <SeatButton seat={seat} status={status} onClick={handleSeatClick} />
-                    </React.Fragment>
-                  );
-                }
-                
-                return <SeatButton key={seat.id} seat={seat} status={status} onClick={handleSeatClick} />;
-              })}
-            </div>
-          </div>
         </div>
         <div className="flex justify-center gap-4 mt-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-primary/20 border border-primary"></div>Available</div>
@@ -125,10 +121,6 @@ export function SeatChart({
     </Card>
   );
 }
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "./ui/button";
-import React from "react";
 
 function SeatButton({ seat, status, onClick }: { seat: Seat, status: SeatStatus, onClick: (seat: Seat) => void }) {
   const icon = status === 'sold' ? <User size={16}/> : <Armchair size={16}/>;

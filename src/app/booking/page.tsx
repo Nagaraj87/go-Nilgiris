@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { SeatChart } from '@/components/seat-chart';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
-import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, User, Woman, Child, CreditCard, Ticket } from 'lucide-react';
+import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, User, Woman, Baby, CreditCard, Ticket } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 
@@ -214,7 +214,7 @@ function BookingFlow() {
                             <FormItem><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4 pt-2">
                               <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="male" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><User size={16}/> Male</FormLabel></FormItem>
                               <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="female" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><Woman size={16}/> Female</FormLabel></FormItem>
-                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="child" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><Child size={16}/> Child</FormLabel></FormItem>
+                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="child" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><Baby size={16}/> Child</FormLabel></FormItem>
                             </RadioGroup></FormControl><FormMessage /></FormItem>
                          )} />
                       </div>
