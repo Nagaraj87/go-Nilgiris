@@ -4,9 +4,10 @@
 import { useEffect, useState } from "react";
 import { getContactInfo } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Phone, MessageSquare } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ContactCard } from "@/components/contact/contact-card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 type ContactInfo = {
     whatsapp: string;
@@ -16,13 +17,66 @@ type ContactInfo = {
 export default function ContactPage() {
     const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         getContactInfo()
-            .then(data => setContactInfo(data))
-            .catch(err => console.error("Failed to load contact info:", err))
+            .then(data => {
+                if (data) {
+                    setContactInfo(data)
+                } else {
+                    setError("Contact information is not available at the moment.")
+                }
+            })
+            .catch(() => setError("Failed to load contact information. Please try again later."))
             .finally(() => setLoading(false));
     }, []);
+
+    const renderContent = () => {
+        if (loading) {
+            return (
+                <>
+                    <ContactCardSkeleton />
+                    <ContactCardSkeleton />
+                </>
+            );
+        }
+
+        if (error) {
+            return (
+                <div className="md:col-span-2">
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                </div>
+            )
+        }
+
+        if (contactInfo) {
+            return (
+                <>
+                    <ContactCard
+                        type="WhatsApp"
+                        description="For booking & inquiries"
+                        contactNumber={contactInfo.whatsapp}
+                        link={`https://wa.me/91${contactInfo.whatsapp}`}
+                        buttonText="Chat on WhatsApp"
+                    />
+                     <ContactCard
+                        type="Call"
+                        description="Speak to our support team"
+                        contactNumber={contactInfo.call}
+                        link={`tel:+91${contactInfo.call}`}
+                        buttonText="Call Now"
+                    />
+                </>
+            )
+        }
+
+        return null;
+    }
 
     return (
         <div className="bg-muted/40 py-12 md:py-24">
@@ -33,52 +87,7 @@ export default function ContactPage() {
                         <CardDescription className="text-lg">We're here to help! Reach out to us with any questions.</CardDescription>
                     </CardHeader>
                     <CardContent className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {loading ? (
-                            <>
-                                <ContactCardSkeleton />
-                                <ContactCardSkeleton />
-                            </>
-                        ) : contactInfo ? (
-                            <>
-                                <div className="p-6 border rounded-lg bg-background hover:shadow-lg transition-shadow">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className="p-3 bg-green-100 rounded-full">
-                                            <MessageSquare className="h-8 w-8 text-green-600" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-2xl font-semibold">WhatsApp</h3>
-                                            <p className="text-muted-foreground">For booking & inquiries</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-3xl font-bold my-4 text-center">{contactInfo.whatsapp}</p>
-                                    <Button asChild className="w-full bg-green-500 hover:bg-green-600 text-white">
-                                        <a href={`https://wa.me/91${contactInfo.whatsapp}`} target="_blank" rel="noopener noreferrer">
-                                            Chat on WhatsApp
-                                        </a>
-                                    </Button>
-                                </div>
-                                
-                                <div className="p-6 border rounded-lg bg-background hover:shadow-lg transition-shadow">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className="p-3 bg-blue-100 rounded-full">
-                                            <Phone className="h-8 w-8 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-2xl font-semibold">Call Us</h3>
-                                            <p className="text-muted-foreground">Speak to our support team</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-3xl font-bold my-4 text-center">{contactInfo.call}</p>
-                                    <Button asChild className="w-full">
-                                        <a href={`tel:+91${contactInfo.call}`}>
-                                            Call Now
-                                        </a>
-                                    </Button>
-                                </div>
-                            </>
-                        ) : (
-                            <p className="md:col-span-2 text-center text-red-500">Could not load contact information. Please try again later.</p>
-                        )}
+                       {renderContent()}
                     </CardContent>
                 </Card>
             </div>

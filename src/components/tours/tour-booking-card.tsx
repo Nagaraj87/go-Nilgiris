@@ -1,0 +1,80 @@
+
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from 'next/link';
+import type { TourPackage } from "@/types";
+import { getPackagePrice } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2, Check, X, Info } from 'lucide-react';
+
+type TourBookingCardProps = {
+    tourPackage: TourPackage;
+}
+
+export function TourBookingCard({ tourPackage }: TourBookingCardProps) {
+    const { toast } = useToast();
+    const [price, setPrice] = useState<number | null>(null);
+    const [loadingPrice, setLoadingPrice] = useState(true);
+
+    useEffect(() => {
+        if (!tourPackage.slug) return;
+        
+        const fetchPrice = async () => {
+            setLoadingPrice(true);
+            try {
+                const packagePrice = await getPackagePrice(tourPackage.slug);
+                setPrice(packagePrice);
+            } catch (error) {
+                console.error("Failed to fetch price", error);
+                toast({ variant: "destructive", title: "Price Error", description: "Could not load the latest price. Using default."})
+                setPrice(tourPackage.price); // Fallback to static price
+            } finally {
+                setLoadingPrice(false);
+            }
+        }
+        fetchPrice();
+    }, [tourPackage.slug, tourPackage.price, toast]);
+
+
+    return (
+        <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl">Book Your Tour</CardTitle>
+                {loadingPrice ? (
+                    <Skeleton className="h-10 w-32 mt-1" />
+                ) : (
+                    <p className="text-3xl font-bold text-primary">₹{price?.toLocaleString('en-IN')} <span className="text-lg font-normal text-muted-foreground">onwards</span></p>
+                )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div>
+                    <h4 className="font-semibold mb-2">Inclusions</h4>
+                    <ul className="space-y-2 text-sm">
+                        {tourPackage.inclusions.map(item => <li key={item} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600"/>{item}</li>)}
+                    </ul>
+                </div>
+                <div>
+                    <h4 className="font-semibold mb-2">Exclusions</h4>
+                        <ul className="space-y-2 text-sm">
+                        {tourPackage.exclusions.map(item => <li key={item} className="flex items-center gap-2"><X className="h-4 w-4 text-red-600"/>{item}</li>)}
+                    </ul>
+                </div>
+                    <div>
+                    <h4 className="font-semibold mb-2">Please Note</h4>
+                        <ul className="space-y-2 text-sm">
+                        {tourPackage.notes.map(item => <li key={item} className="flex items-start gap-2"><Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0"/>{item}</li>)}
+                    </ul>
+                </div>
+                <Button asChild size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-base font-bold" disabled={loadingPrice || price === null}>
+                    <Link href={`/booking?package=${tourPackage.slug}`}>
+                        {loadingPrice ? <Loader2 className="animate-spin" /> : "Book Online"}
+                    </Link>
+                </Button>
+            </CardContent>
+        </Card>
+    )
+}

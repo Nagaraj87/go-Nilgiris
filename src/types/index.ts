@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 
 export type TourPackage = {
@@ -26,4 +27,27 @@ export type TourPackage = {
     question: string;
     answer: string;
   }[];
+};
+
+export type Booking = {
+  id: string;
+  bookingId: string;
+  packageSlug: string;
+  bookingDate: string;
+  memberCount: number;
+  totalAmount: number;
+  passengers: { name: string; age: number; gender: string }[];
+  selectedSeats: { number: number; price: number }[];
+};
+
+export type GalleryImage = {
+  id: string;
+  url: string;
+  alt: string;
+  packageSlug: string;
+};
+
+export type ContactInfo = {
+    whatsapp: string;
+    call: string;
 };
