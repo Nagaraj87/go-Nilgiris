@@ -1,8 +1,10 @@
 
 "use client";
 
-import { notFound } from "next/navigation";
-import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight, KeyRound, Bell } from "lucide-react";
+import { useEffect, useState } from "react";
+import { notFound, useParams } from "next/navigation";
+import { getAdminSecretPath } from "@/lib/firebase";
+import { Lock, GalleryHorizontal, Tag, Phone, ShieldOff, ArrowRight, KeyRound } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookingsManagement } from "@/components/admin/bookings-management";
@@ -10,6 +12,9 @@ import { ContactManagement } from "@/components/admin/contact-management";
 import { PriceManagement } from "@/components/admin/price-management";
 import { GalleryManagement } from "@/components/admin/gallery-management";
 import Link from "next/link";
+import { CredentialsManagement } from "@/components/admin/credentials-management";
+import { Skeleton } from "@/components/ui/skeleton";
+
 
 type AdminPageProps = {
   params: {
@@ -18,12 +23,38 @@ type AdminPageProps = {
 };
 
 export default function AdminPage({ params }: AdminPageProps) {
-  if (params.secret !== process.env.NEXT_PUBLIC_ADMIN_SECRET_PATH) {
-    notFound();
-  }
+  const [isValidated, setIsValidated] = useState(false);
+
+  useEffect(() => {
+    const validateSecret = async () => {
+      const serverSecret = await getAdminSecretPath();
+      if (params.secret === serverSecret) {
+        setIsValidated(true);
+      } else {
+        notFound();
+      }
+    };
+    validateSecret();
+  }, [params.secret]);
   
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  if (!isValidated) {
+    return (
+        <div className="container mx-auto max-w-7xl py-12 space-y-8">
+            <Skeleton className="h-16 w-1/2" />
+            <Skeleton className="h-10 w-full" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-48 w-full" />
+            </div>
+            <Skeleton className="h-96 w-full" />
+        </div>
+    )
   }
 
   return (
@@ -36,7 +67,7 @@ export default function AdminPage({ params }: AdminPageProps) {
       </div>
        <p className="text-muted-foreground mb-8">Manage your tours, view bookings, and update your site content.</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
                  <CardHeader>
                     <div className="flex justify-between items-center">
@@ -97,6 +128,26 @@ export default function AdminPage({ params }: AdminPageProps) {
                     </Button>
                 </CardFooter>
             </Card>
+             <Card className="flex flex-col justify-between hover:border-primary transition-colors">
+                 <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Credentials</CardTitle>
+                         <div className="p-2 bg-muted rounded-full">
+                            <KeyRound className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                    </div>
+                    <CardDescription>
+                        Update the secret admin path.
+                    </CardDescription>
+                </CardHeader>
+                <CardFooter>
+                     <Button asChild variant="outline" className="w-full" onClick={() => scrollTo('credentials-section')}>
+                        <a href="#credentials-section">
+                           Update Secret <ArrowRight className="ml-2"/>
+                        </a>
+                    </Button>
+                </CardFooter>
+            </Card>
        </div>
 
       <div className="space-y-12">
@@ -111,6 +162,9 @@ export default function AdminPage({ params }: AdminPageProps) {
         </div>
         <div id="pricing-section">
           <PriceManagement />
+        </div>
+        <div id="credentials-section">
+            <CredentialsManagement />
         </div>
       </div>
     </div>

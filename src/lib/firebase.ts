@@ -155,7 +155,7 @@ export const unblockAllSeatsForDate = async (packageSlug: string, date: string) 
     });
 }
 
-export const getOccupiedSeatsForDate = async (packageSlug: string, date: string): Promise<number[]> => {
+export const getOccupiedSeatsForDate = async (packageSlug:string, date: string): Promise<number[]> => {
     if (!date) return [];
     const q = query(
         collection(db, "bookings"),
@@ -263,20 +263,19 @@ export const updateContactInfo = async (data: { whatsapp: string, call: string }
     await setDoc(docRef, data, { merge: true });
 };
 
-export const getAdminCredentials = async (): Promise<AdminCredentials> => {
+export const getAdminSecretPath = async (): Promise<string> => {
     const docRef = doc(db, 'site_config', 'credentials');
     const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        return docSnap.data() as AdminCredentials;
+    if (docSnap.exists() && docSnap.data().adminSecretPath) {
+        return docSnap.data().adminSecretPath;
     } else {
-        // Default values if not set, store them.
-        const defaultData = { username: 'admin', password: 'admin' };
-        await setDoc(docRef, defaultData);
-        return defaultData;
+        const defaultPath = 'change-me-to-something-secret';
+        await setDoc(docRef, { adminSecretPath: defaultPath }, { merge: true });
+        return defaultPath;
     }
 };
 
-export const updateAdminCredentials = async (data: AdminCredentials) => {
+export const updateAdminSecretPath = async (path: string) => {
     const docRef = doc(db, 'site_config', 'credentials');
-    await setDoc(docRef, data);
+    await setDoc(docRef, { adminSecretPath: path }, { merge: true });
 };
