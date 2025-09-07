@@ -3,7 +3,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { tourPackages } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,8 +22,9 @@ type GalleryImage = {
   packageSlug: string;
 };
 
-export default function TourPackagePage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default function TourPackagePage() {
+  const params = useParams();
+  const slug = params.slug as string;
   const tourPackage = tourPackages.find((p) => p.slug === slug);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(true);
