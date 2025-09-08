@@ -162,26 +162,37 @@ export default function EditTourPage() {
     );
   }
 
-  const renderArrayField = (title: string, fields: any[], remove: (index: number) => void, append: (value: any) => void) => (
+  const renderArrayField = (
+    title: string,
+    fieldKey: 'inclusions' | 'exclusions' | 'notes' | 'disclaimers',
+    fields: any[],
+    remove: (index: number) => void,
+    append: (value: any) => void
+  ) => (
     <div className="space-y-4 p-4 border rounded-md">
-        <h3 className="font-semibold text-lg">{title}</h3>
-        {fields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-2">
-                <FormField
-                    control={form.control}
-                    name={`${field.name}.${index}`}
-                    render={({ field: formField }) => (
-                         <Input {...form.register(`${title.toLowerCase()}.${index}` as const)} defaultValue={field.value} className="flex-grow"/>
-                    )}
-                />
-                <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}>
-                    <Trash2 />
-                </Button>
-            </div>
-        ))}
-        <Button type="button" variant="outline" size="sm" onClick={() => append('')}>
-            <PlusCircle className="mr-2"/> Add {title.slice(0, -1)}
-        </Button>
+      <h3 className="font-semibold text-lg">{title}</h3>
+      {fields.map((field, index) => (
+        <div key={field.id} className="flex items-center gap-2">
+          <FormField
+            control={form.control}
+            name={`${fieldKey}.${index}`}
+            render={({ field }) => (
+              <FormItem className="flex-grow">
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}>
+            <Trash2 />
+          </Button>
+        </div>
+      ))}
+      <Button type="button" variant="outline" size="sm" onClick={() => append('')}>
+        <PlusCircle className="mr-2" /> Add {title.slice(0, -1)}
+      </Button>
     </div>
   );
 
@@ -243,10 +254,10 @@ export default function EditTourPage() {
                 <FormItem><FormLabel>Overview</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               
-              {renderArrayField("Inclusions", inclusionsFields, removeInclusion, () => appendInclusion(""))}
-              {renderArrayField("Exclusions", exclusionsFields, removeExclusion, () => appendExclusion(""))}
-              {renderArrayField("Notes", notesFields, removeNote, () => appendNote(""))}
-              {renderArrayField("Disclaimers", disclaimersFields, removeDisclaimer, () => appendDisclaimer(""))}
+              {renderArrayField("Inclusions", "inclusions", inclusionsFields, removeInclusion, () => appendInclusion(""))}
+              {renderArrayField("Exclusions", "exclusions", exclusionsFields, removeExclusion, () => appendExclusion(""))}
+              {renderArrayField("Notes", "notes", notesFields, removeNote, () => appendNote(""))}
+              {renderArrayField("Disclaimers", "disclaimers", disclaimersFields, removeDisclaimer, () => appendDisclaimer(""))}
 
              <div className="space-y-4 p-4 border rounded-md">
                 <h3 className="font-semibold text-lg">Itinerary</h3>
@@ -295,4 +306,3 @@ export default function EditTourPage() {
     </div>
   );
 }
-
