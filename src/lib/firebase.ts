@@ -5,8 +5,6 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import type { TourPackage } from '@/types';
-// Removed direct import from '@/lib/data' to prevent circular dependencies
-// import { tourPackages as staticTourPackages } from '@/lib/data';
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
@@ -113,6 +111,14 @@ export const getTourPackages = async () => {
         });
         await batch.commit();
         console.log("Seeding complete.");
+        // We also seed the prices collection at the same time
+        const pricesBatch = writeBatch(db);
+        for (const pkg of staticTourPackagesForSeed) {
+            const priceDocRef = doc(db, 'packages', pkg.slug);
+            pricesBatch.set(priceDocRef, { price: pkg.price, slug: pkg.slug });
+        }
+        await pricesBatch.commit();
+
         return staticTourPackagesForSeed as TourPackage[];
     }
     return snapshot.docs.map(doc => doc.data() as TourPackage);
@@ -124,11 +130,43 @@ export const getTourPackageBySlug = async (slug: string): Promise<TourPackage | 
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-        return docSnap.data() as TourPackage;
+        const data = docSnap.data();
+        // Firestore doesn't store 'id' in the document data, so we add it back
+        return { ...data, id: docSnap.id } as TourPackage;
     }
     return null;
 }
 
+export const createOrUpdateTourPackage = async (tourData: Omit<TourPackage, 'id' | 'gallery'>) => {
+    const docRef = doc(db, 'tour_packages', tourData.slug);
+    const priceDocRef = doc(db, 'packages', tourData.slug);
+    
+    // Create a new object for the tour package without the price, id, or gallery
+    const { price, ...tourPackageData } = tourData;
+
+    const batch = writeBatch(db);
+    
+    batch.set(docRef, tourPackageData, { merge: true });
+    batch.set(priceDocRef, { slug: tourData.slug, price: price }, { merge: true });
+    
+    await batch.commit();
+}
+
+export const deleteTourPackage = async (slug: string) => {
+    const docRef = doc(db, 'tour_packages', slug);
+    const priceDocRef = doc(db, 'packages', slug);
+    
+    const batch = writeBatch(db);
+    batch.delete(docRef);
+    batch.delete(priceDocRef);
+    
+    // Also delete associated gallery images
+    const galleryQuery = query(collection(db, "gallery"), where("packageSlug", "==", slug));
+    const gallerySnapshot = await getDocs(galleryQuery);
+    gallerySnapshot.forEach(doc => batch.delete(doc.ref));
+
+    await batch.commit();
+}
 
 // Booking Functions
 export const saveBooking = async (bookingData: any) => {
@@ -331,6 +369,7 @@ export const getPackagePrices = async (): Promise<{ slug: string, price: number 
     const packagesCol = collection(db, 'packages');
     const snapshot = await getDocs(packagesCol);
     if (snapshot.empty) {
+        // This part runs only if the 'packages' collection is empty, seeding from tour_packages default.
         const defaultTourPackages = [
           { slug: 'ooty-coonoor-tour', price: 349 },
           { slug: 'mudhumalai-pykara-tour', price: 349 }

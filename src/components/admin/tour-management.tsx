@@ -2,18 +2,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getTourPackages } from "@/lib/firebase";
 import type { TourPackage } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, PlusCircle, Plane } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, Plane, Pencil } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import Link from "next/link";
 
 export function TourManagement() {
     const [tours, setTours] = useState<TourPackage[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchTours = async () => {
@@ -31,6 +34,10 @@ export function TourManagement() {
         };
         fetchTours();
     }, []);
+    
+    const handleEditTour = (slug: string) => {
+        router.push(`/admin/edit-tour/${slug}`);
+    }
 
     const renderContent = () => {
         if (loading) {
@@ -83,7 +90,10 @@ export function TourManagement() {
                             <TableCell>{tour.slug}</TableCell>
                             <TableCell>{tour.duration}</TableCell>
                             <TableCell className="text-right">
-                                <Button variant="outline" size="sm" disabled>Edit</Button>
+                                <Button variant="outline" size="sm" onClick={() => handleEditTour(tour.slug)}>
+                                    <Pencil className="mr-2"/>
+                                    Edit
+                                </Button>
                             </TableCell>
                         </TableRow>
                     ))}
@@ -100,9 +110,11 @@ export function TourManagement() {
                         <CardTitle>Tour Management</CardTitle>
                         <CardDescription>Add, edit, or delete your tour packages.</CardDescription>
                     </div>
-                     <Button disabled>
-                        <PlusCircle className="mr-2" />
-                        Add New Tour
+                     <Button asChild>
+                        <Link href="/admin/edit-tour/new">
+                            <PlusCircle className="mr-2" />
+                            Add New Tour
+                        </Link>
                     </Button>
                 </div>
             </CardHeader>
