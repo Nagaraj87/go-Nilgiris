@@ -1,16 +1,39 @@
 
-'use client';
-
-import { notFound, useParams } from 'next/navigation';
-import { tourPackages } from '@/lib/data';
+import { notFound } from 'next/navigation';
+import { tourPackages as staticTourPackages } from '@/lib/data';
 import { TourHeader } from '@/components/tours/tour-header';
 import { TourTabs } from '@/components/tours/tour-tabs';
 import { TourBookingCard } from '@/components/tours/tour-booking-card';
+import { getTourPackageBySlug } from '@/lib/firebase';
+import type { TourPackage } from '@/types';
+import * as LucideIcons from 'lucide-react';
 
-export default function TourPackagePage() {
-  const params = useParams();
-  const slug = params.slug as string;
-  const tourPackage = tourPackages.find((p) => p.slug === slug);
+
+async function getTourData(slug: string): Promise<TourPackage | null> {
+    const tourData = await getTourPackageBySlug(slug);
+    if (!tourData) {
+        return null;
+    }
+
+    // Re-hydrate the icon components
+    const hydratedItinerary = tourData.itinerary.map(item => {
+        const IconComponent = LucideIcons[item.iconName as keyof typeof LucideIcons] || LucideIcons.HelpCircle;
+        return {
+            ...item,
+            icon: IconComponent,
+        };
+    });
+
+    return {
+        ...tourData,
+        itinerary: hydratedItinerary,
+    } as TourPackage;
+}
+
+
+export default async function TourPackagePage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
+  const tourPackage = await getTourData(slug);
 
   if (!tourPackage) {
     notFound();
@@ -32,4 +55,11 @@ export default function TourPackagePage() {
       </div>
     </div>
   );
+}
+
+// Generate static paths for all tour packages
+export async function generateStaticParams() {
+  return staticTourPackages.map((pkg) => ({
+    slug: pkg.slug,
+  }));
 }

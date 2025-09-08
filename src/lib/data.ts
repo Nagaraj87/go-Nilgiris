@@ -1,3 +1,4 @@
+
 import type { TourPackage } from '@/types';
 import { Bus, Camera, Car, Sailboat, PawPrint, FerrisWheel, Flower2, Mountain, Search, ShoppingCart, Sunset, Trees, Utensils, Wind } from 'lucide-react';
 
@@ -20,14 +21,14 @@ export const tourPackages: TourPackage[] = [
       "We might sometime not be able to visit all the places in one day as mentioned in the plan due to traffic, customer delay at any sightseeing place, etc. But we will guide and try to make it possible!"
     ],
     itinerary: [
-      { time: '8:00 AM', activity: 'Assembly Point', description: 'Assemble at GoKotagiri Lounge near Pandian Park, Kotagiri.', icon: Bus },
-      { time: '8:30 AM', activity: 'Depart Ooty', description: 'Start our journey towards the beautiful hills.', icon: Car },
-      { time: '9:00 AM', activity: 'Doddabetta Peak', description: 'Visit the highest vantage point in the Nilgiris for panoramic views (1 hour).', icon: Mountain },
-      { time: '11:00 AM', activity: 'Tea Estate Visit', description: 'Explore a lush tea garden and learn about tea processing (30 min).', icon: Flower2 },
-      { time: '12:00 PM', activity: 'Lunch Break', description: 'Break for lunch at a local restaurant (cost not included).', icon: Utensils },
-      { time: '1:30 PM', activity: 'Botanical Gardens', description: 'Stroll through the vast and historic Ooty Botanical Gardens (1.5 hours).', icon: Trees },
-      { time: '3:30 PM', activity: 'Coonoor Lamb\'s Rock', description: 'Enjoy stunning views of the Coimbatore plains from this viewpoint (45 min).', icon: Sunset },
-      { time: '6:00 PM', activity: 'Return to Ooty', description: 'Arrive back at the drop-off point in Ooty.', icon: Bus },
+      { time: '8:00 AM', activity: 'Assembly Point', description: 'Assemble at GoKotagiri Lounge near Pandian Park, Kotagiri.', icon: Bus, iconName: 'Bus' },
+      { time: '8:30 AM', activity: 'Depart Ooty', description: 'Start our journey towards the beautiful hills.', icon: Car, iconName: 'Car' },
+      { time: '9:00 AM', activity: 'Doddabetta Peak', description: 'Visit the highest vantage point in the Nilgiris for panoramic views (1 hour).', icon: Mountain, iconName: 'Mountain' },
+      { time: '11:00 AM', activity: 'Tea Estate Visit', description: 'Explore a lush tea garden and learn about tea processing (30 min).', icon: Flower2, iconName: 'Flower2' },
+      { time: '12:00 PM', activity: 'Lunch Break', description: 'Break for lunch at a local restaurant (cost not included).', icon: Utensils, iconName: 'Utensils' },
+      { time: '1:30 PM', activity: 'Botanical Gardens', description: 'Stroll through the vast and historic Ooty Botanical Gardens (1.5 hours).', icon: Trees, iconName: 'Trees' },
+      { time: '3:30 PM', activity: 'Coonoor Lamb\'s Rock', description: 'Enjoy stunning views of the Coimbatore plains from this viewpoint (45 min).', icon: Sunset, iconName: 'Sunset' },
+      { time: '6:00 PM', activity: 'Return to Ooty', description: 'Arrive back at the drop-off point in Ooty.', icon: Bus, iconName: 'Bus' },
     ],
     gallery: [
       { src: 'https://picsum.photos/800/600?random=1', alt: 'Breathtaking views from Doddabetta', hint: 'mountain landscape' },
@@ -64,13 +65,13 @@ export const tourPackages: TourPackage[] = [
         "We might sometime not be able to visit all the places in one day as mentioned in the plan due to traffic, customer delay at any sightseeing place, etc. But we will guide and try to make it possible!"
     ],
     itinerary: [
-      { time: '8:00 AM', activity: 'Assembly Point', description: 'Assemble at GoKotagiri Lounge near Pandian Park, Kotagiri.', icon: Bus },
-      { time: '9:00 AM', activity: 'Mudumalai Wildlife Safari', description: 'Embark on a jungle safari to spot elephants, deer, and other wildlife (2 hours).', icon: PawPrint },
-      { time: '12:00 PM', activity: 'Lunch Break', description: 'Enjoy lunch at a restaurant near the national park (cost not included).', icon: Utensils },
-      { time: '2:00 PM', activity: 'Pykara Waterfalls', description: 'Witness the majestic Pykara falls and enjoy the scenic beauty (1 hour).', icon: Wind },
-      { time: '3:30 PM', activity: 'Pykara Lake Boat Ride', description: 'Experience a serene boat ride on the beautiful Pykara lake (1.5 hours).', icon: Sailboat },
-      { time: '5:00 PM', activity: 'Pine Forest Shooting Spot', description: 'Visit the famous pine forest, a popular spot for film shoots (30 min).', icon: Trees },
-      { time: '7:00 PM', activity: 'Return to Ooty', description: 'Arrive back at the drop-off point in Ooty.', icon: Bus },
+      { time: '8:00 AM', activity: 'Assembly Point', description: 'Assemble at GoKotagiri Lounge near Pandian Park, Kotagiri.', icon: Bus, iconName: 'Bus' },
+      { time: '9:00 AM', activity: 'Mudumalai Wildlife Safari', description: 'Embark on a jungle safari to spot elephants, deer, and other wildlife (2 hours).', icon: PawPrint, iconName: 'PawPrint' },
+      { time: '12:00 PM', activity: 'Lunch Break', description: 'Enjoy lunch at a restaurant near the national park (cost not included).', icon: Utensils, iconName: 'Utensils' },
+      { time: '2:00 PM', activity: 'Pykara Waterfalls', description: 'Witness the majestic Pykara falls and enjoy the scenic beauty (1 hour).', icon: Wind, iconName: 'Wind' },
+      { time: '3:30 PM', activity: 'Pykara Lake Boat Ride', description: 'Experience a serene boat ride on the beautiful Pykara lake (1.5 hours).', icon: Sailboat, iconName: 'Sailboat' },
+      { time: '5:00 PM', activity: 'Pine Forest Shooting Spot', description: 'Visit the famous pine forest, a popular spot for film shoots (30 min).', icon: Trees, iconName: 'Trees' },
+      { time: '7:00 PM', activity: 'Return to Ooty', description: 'Arrive back at the drop-off point in Ooty.', icon: Bus, iconName: 'Bus' },
     ],
     gallery: [
       { src: 'https://picsum.photos/800/600?random=7', alt: 'An elephant in Mudumalai National Park', hint: 'elephant wildlife' },

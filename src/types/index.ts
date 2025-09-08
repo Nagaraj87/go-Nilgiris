@@ -17,6 +17,7 @@ export type TourPackage = {
     activity: string;
     description: string;
     icon: LucideIcon;
+    iconName: string;
   }[];
   gallery: {
     src: string;

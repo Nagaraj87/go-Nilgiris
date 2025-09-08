@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { initializeApp, getApps } from 'firebase/app';
@@ -29,6 +28,7 @@ export const getTourPackages = async () => {
     const snapshot = await getDocs(tourPackagesCol);
     if (snapshot.empty) {
         // One-time seed if the collection is empty from the static data
+        console.log("Seeding tour_packages from static data...");
         const batch = writeBatch(db);
         staticTourPackages.forEach(pkg => {
             const docRef = doc(db, 'tour_packages', pkg.slug);
@@ -37,9 +37,21 @@ export const getTourPackages = async () => {
             batch.set(docRef, {...pkg, itinerary: storableItinerary});
         });
         await batch.commit();
+        console.log("Seeding complete.");
         return staticTourPackages;
     }
     return snapshot.docs.map(doc => doc.data());
+}
+
+export const getTourPackageBySlug = async (slug: string) => {
+    if (!slug) return null;
+    const docRef = doc(db, 'tour_packages', slug);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        return docSnap.data() as Omit<TourPackage, 'itinerary'> & { itinerary: Omit<TourPackage['itinerary'][0], 'icon'>[] };
+    }
+    return null;
 }
 
 
