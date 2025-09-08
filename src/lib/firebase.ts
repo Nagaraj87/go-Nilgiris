@@ -5,6 +5,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format, addDays } from 'date-fns';
+import type { TourPackage } from '@/types';
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
@@ -216,15 +217,21 @@ export const getPackagePrices = async (): Promise<{ slug: string, price: number 
     const packagesCol = collection(db, 'packages');
     const snapshot = await getDocs(packagesCol);
     if (snapshot.empty) {
-        // One-time seed if the collection is empty
-        const { tourPackages } = await import('@/lib/data');
+        // One-time seed if the collection is empty.
+        // This data is intentionally duplicated from `lib/data.ts` to avoid a circular dependency
+        // that was causing the Next.js server to hang on startup.
+        const defaultTourPackages = [
+          { slug: 'ooty-coonoor-tour', price: 349 },
+          { slug: 'mudhumalai-pykara-tour', price: 349 }
+        ];
+
         const batch = writeBatch(db);
-        for (const pkg of tourPackages) {
+        for (const pkg of defaultTourPackages) {
             const docRef = doc(db, 'packages', pkg.slug);
             batch.set(docRef, { price: pkg.price, slug: pkg.slug });
         }
         await batch.commit();
-        return tourPackages.map(p => ({ slug: p.slug, price: p.price }));
+        return defaultTourPackages;
     }
     return snapshot.docs.map(doc => doc.data() as { slug: string, price: number });
 };
@@ -235,20 +242,18 @@ export const getPackagePrice = async (slug: string): Promise<number> => {
     if (docSnap.exists()) {
         return docSnap.data().price;
     }
-    // Fallback or error
-    const { tourPackages } = await import('@/lib/data');
-    const staticPackage = tourPackages.find(p => p.slug === slug);
-    if(staticPackage) {
-        // Seed this one package if it was missing
-        await setDoc(docRef, { price: staticPackage.price, slug: staticPackage.slug });
-        return staticPackage.price;
-    }
-    throw new Error(`Package price for ${slug} not found`);
+    
+    // Fallback for a missing specific package
+    const defaultPrice = 349;
+    const defaultPackage = { slug, price: defaultPrice };
+    
+    await setDoc(docRef, defaultPackage);
+    return defaultPrice;
 }
 
 export const updatePackagePrice = async (slug: string, price: number) => {
     const docRef = doc(db, 'packages', slug);
-    await setDoc(docRef, { price: price }, { merge: true });
+    await setDoc(docRef, { price: price, slug: slug }, { merge: true });
 };
 
 
@@ -256,7 +261,7 @@ export const updatePackagePrice = async (slug: string, price: number) => {
 export const getContactInfo = async (): Promise<{ whatsapp: string, call: string }> => {
     const docRef = doc(db, 'site_config', 'contact');
     const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
+if (docSnap.exists()) {
         return docSnap.data() as { whatsapp: string, call: string };
     } else {
         // Default values if not set

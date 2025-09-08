@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -85,10 +86,11 @@ function BookingFlow() {
     getPackagePrice(tourPackage.slug)
         .then(price => setPricePerSeat(price))
         .catch(() => {
-            setPricePerSeat(tourPackage.price);
+            const staticPackage = tourPackages.find(p => p.slug === tourPackage.slug);
+            setPricePerSeat(staticPackage?.price || 349);
             toast({variant: "destructive", title: "Error", description: "Could not fetch latest price. Using default."})
         })
-  }, [tourPackage.slug, tourPackage.price, toast]);
+  }, [tourPackage.slug, toast]);
 
   useEffect(() => {
     const currentCount = fields.length;
@@ -216,7 +218,7 @@ function BookingFlow() {
   const steps = [
     { num: 1, title: "Booking Details" },
     { num: 2, title: "Passenger Info & Seats" },
-    { num: "Payment" },
+    { num: 3, title: "Payment" },
   ];
   
   const isDateFullyBooked = useMemo(() => {
@@ -393,7 +395,7 @@ function BookingFlow() {
               <CardContent className="space-y-4">
                 <h3 className="font-bold">Booking Summary</h3>
                 <p><strong>Package:</strong> {tourPackage.name}</p>
-                <p><strong>Date:</strong> {format(form.getValues('bookingDate'), 'PPP')}</p>
+                <p><strong>Date:</strong> {form.getValues('bookingDate') ? format(form.getValues('bookingDate'), 'PPP') : 'N/A'}</p>
                 <p><strong>Members:</strong> {memberCount}</p>
                 <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
                 <div className="text-3xl font-bold text-primary">Total Amount: ₹{totalAmount.toLocaleString('en-IN')}</div>

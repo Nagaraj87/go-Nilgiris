@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Check, X, Info } from 'lucide-react';
+import { tourPackages } from "@/lib/data";
 
 type TourBookingCardProps = {
     tourPackage: TourPackage;
@@ -29,14 +30,15 @@ export function TourBookingCard({ tourPackage }: TourBookingCardProps) {
                 setPrice(packagePrice);
             } catch (error) {
                 console.error("Failed to fetch price", error);
-                toast({ variant: "destructive", title: "Price Error", description: "Could not load the latest price. Using default."})
-                setPrice(tourPackage.price); // Fallback to static price
+                toast({ variant: "destructive", title: "Price Error", description: "Could not load the latest price. Using default."});
+                const staticPackage = tourPackages.find(p => p.slug === tourPackage.slug);
+                setPrice(staticPackage?.price || 349); // Fallback to static price
             } finally {
                 setLoadingPrice(false);
             }
         }
         fetchPrice();
-    }, [tourPackage.slug, tourPackage.price, toast]);
+    }, [tourPackage.slug, toast]);
 
 
     return (
