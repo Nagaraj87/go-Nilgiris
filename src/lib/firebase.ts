@@ -250,7 +250,6 @@ export const getPackagePrices = async (): Promise<{ slug: string, price: number 
     const packagesCol = collection(db, 'packages');
     const snapshot = await getDocs(packagesCol);
     if (snapshot.empty) {
-        // One-time seed if the collection is empty.
         const defaultTourPackages = [
           { slug: 'ooty-coonoor-tour', price: 349 },
           { slug: 'mudhumalai-pykara-tour', price: 349 }
