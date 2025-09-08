@@ -23,7 +23,7 @@ const itineraryItemSchema = z.object({
   time: z.string().min(1, "Time is required."),
   activity: z.string().min(1, "Activity is required."),
   description: z.string().min(1, "Description is required."),
-  iconName: z.string().min(1, "Icon name is required."),
+  iconName: z.string().optional(),
 });
 
 const faqItemSchema = z.object({
@@ -269,7 +269,7 @@ export default function EditTourPage() {
                             <FormField control={form.control} name={`itinerary.${index}.activity`} render={({ field }) => (<FormItem><FormLabel>Activity</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
                         <FormField control={form.control} name={`itinerary.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name={`itinerary.${index}.iconName`} render={({ field }) => (<FormItem><FormLabel>Icon Name (from lucide-react)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name={`itinerary.${index}.iconName`} render={({ field }) => (<FormItem><FormLabel>Icon Name (from lucide-react) (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <Button type="button" variant="destructive" size="sm" onClick={() => removeItinerary(index)} disabled={itineraryFields.length <= 1}><Trash2 className="mr-2"/> Remove Stop</Button>
                     </div>
                 ))}

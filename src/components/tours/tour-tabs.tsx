@@ -17,7 +17,7 @@ export function TourTabs({ tourPackage }: TourTabsProps) {
 
     const hydratedItinerary = useMemo(() => {
         return tourPackage.itinerary.map(item => {
-            const IconComponent = LucideIcons[item.iconName as keyof typeof LucideIcons] || LucideIcons.HelpCircle;
+            const IconComponent = (item.iconName && LucideIcons[item.iconName as keyof typeof LucideIcons]) || LucideIcons.Bus;
             return {
                 ...item,
                 icon: IconComponent,
