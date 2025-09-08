@@ -1,15 +1,30 @@
 
+"use client";
+
 import type { TourPackage } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { TourGallery } from "./tour-gallery";
+import * as LucideIcons from 'lucide-react';
+import { useMemo } from "react";
 
 
 type TourTabsProps = {
-    tourPackage: TourPackage;
+    tourPackage: Omit<TourPackage, 'itinerary'> & { itinerary: Omit<TourPackage['itinerary'][0], 'icon'>[] };
 }
 
 export function TourTabs({ tourPackage }: TourTabsProps) {
+
+    const hydratedItinerary = useMemo(() => {
+        return tourPackage.itinerary.map(item => {
+            const IconComponent = LucideIcons[item.iconName as keyof typeof LucideIcons] || LucideIcons.HelpCircle;
+            return {
+                ...item,
+                icon: IconComponent,
+            };
+        });
+    }, [tourPackage.itinerary]);
+
     return (
         <Tabs defaultValue="itinerary" className="mt-8">
             <TabsList className="grid w-full grid-cols-3">
@@ -20,7 +35,7 @@ export function TourTabs({ tourPackage }: TourTabsProps) {
             <TabsContent value="itinerary" className="mt-6">
                 <div className="relative pl-6">
                     <div className="absolute left-0 top-0 h-full w-0.5 bg-border -translate-x-1/2 ml-3"></div>
-                    {tourPackage.itinerary.map((item, index) => (
+                    {hydratedItinerary.map((item, index) => (
                         <div key={index} className="relative mb-8">
                             <div className="absolute left-0 top-1.5 -translate-x-1/2 w-6 h-6 rounded-full bg-background flex items-center justify-center">
                                 <item.icon className="h-4 w-4 text-primary" />
