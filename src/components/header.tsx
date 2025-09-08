@@ -20,7 +20,7 @@ export function Header() {
         <Link href="/" className="mr-6 flex items-center space-x-2">
             <DeerLogo className="h-6 w-6 text-primary" />
             <span className="font-bold sm:inline-block">
-            Nilgiri Explorer
+            Go Nilgiris
             </span>
         </Link>
 
@@ -31,6 +31,12 @@ export function Header() {
               <Link href="/">
                 <Home className="mr-2 h-4 w-4" />
                 Home
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/admin">
+                <Lock className="mr-2 h-4 w-4" />
+                Admin
               </Link>
             </Button>
           </nav>
@@ -53,7 +59,7 @@ export function Header() {
                     <Link href="/" className="flex items-center space-x-2">
                       <DeerLogo className="h-6 w-6 text-primary" />
                       <span className="font-bold">
-                        Nilgiri Explorer
+                        Go Nilgiris
                       </span>
                     </Link>
                   </SheetTitle>

@@ -9,7 +9,7 @@ export function Footer() {
         <div className="flex flex-col items-start gap-4">
           <div className="flex items-center gap-2">
             <DeerLogo className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">Nilgiri Explorer</span>
+            <span className="text-xl font-bold">Go Nilgiris</span>
           </div>
           <p className="text-muted-foreground">
             Explore the Nilgiris with Ease – Ooty, Coonoor, Mudhumalai & More!
@@ -36,7 +36,7 @@ export function Footer() {
       </div>
       <div className="border-t">
         <div className="container mx-auto flex max-w-screen-2xl flex-col items-center justify-between gap-2 px-4 py-4 sm:flex-row">
-          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Nilgiri Explorer. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Go Nilgiris. All rights reserved.</p>
           <p className="text-sm text-muted-foreground">A GoKotagiri Tourism Venture</p>
         </div>
       </div>

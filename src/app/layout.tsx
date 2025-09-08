@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Nilgiri Explorer',
+  title: 'Go Nilgiris',
   description: 'Explore the Nilgiris with Ease – Ooty, Coonoor, Mudhumalai & More!',
 };
 
