@@ -2,43 +2,48 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { tourPackages } from '@/lib/data';
-import { getPackagePrices } from '@/lib/firebase';
+import { getPackagePrices, getTourPackages } from '@/lib/firebase';
 import { TourCard } from './tour-card';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle } from 'lucide-react';
+import type { TourPackage } from '@/types';
 
 
 export function ToursSection() {
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tourPackages, setTourPackages] = useState<TourPackage[]>([]);
+  const [loadingTours, setLoadingTours] = useState(true);
+
 
   useEffect(() => {
-    const fetchPrices = async () => {
+    const fetchToursAndPrices = async () => {
+      setLoadingTours(true);
       setLoadingPrices(true);
       setError(null);
       try {
-        const packagePrices = await getPackagePrices();
+        const [packagePrices, packages] = await Promise.all([
+           getPackagePrices(),
+           getTourPackages()
+        ]);
+
         const pricesMap: Record<string, number> = {};
         packagePrices.forEach(p => {
           pricesMap[p.slug] = p.price;
         });
         setPrices(pricesMap);
+        setTourPackages(packages);
+
       } catch (err) {
-        console.error("Failed to load prices on homepage", err);
-        setError("Could not load the latest tour prices. Displaying default prices.");
-        // Fallback to static prices
-        const pricesMap: Record<string, number> = {};
-        tourPackages.forEach(p => {
-          pricesMap[p.slug] = p.price;
-        });
-        setPrices(pricesMap);
+        console.error("Failed to load tours or prices on homepage", err);
+        setError("Could not load the latest tour data. Please try again later.");
       } finally {
         setLoadingPrices(false);
+        setLoadingTours(false);
       }
     };
-    fetchPrices();
+    fetchToursAndPrices();
   }, []);
 
   return (
@@ -55,21 +60,28 @@ export function ToursSection() {
               <div className="max-w-2xl w-full pt-4">
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Pricing Error</AlertTitle>
+                    <AlertTitle>Data Error</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
               </div>
             )}
           </div>
           <div className="mx-auto grid max-w-5xl items-start gap-8 py-12 sm:grid-cols-1 md:grid-cols-2 lg:gap-12">
-            {tourPackages.map((pkg) => (
-              <TourCard 
-                key={pkg.id} 
-                pkg={pkg} 
-                price={prices[pkg.slug]} 
-                loading={loadingPrices} 
-              />
-            ))}
+            {loadingTours ? (
+              <>
+                <div className="w-full h-96 bg-muted rounded-lg animate-pulse"></div>
+                <div className="w-full h-96 bg-muted rounded-lg animate-pulse"></div>
+              </>
+            ) : (
+               tourPackages.map((pkg) => (
+                <TourCard 
+                  key={pkg.id} 
+                  pkg={pkg} 
+                  price={prices[pkg.slug]} 
+                  loading={loadingPrices} 
+                />
+              ))
+            )}
           </div>
         </div>
       </section>
