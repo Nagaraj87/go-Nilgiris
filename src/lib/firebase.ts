@@ -6,6 +6,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format, addDays } from 'date-fns';
 import type { TourPackage } from '@/types';
+import { tourPackages as staticTourPackages } from '@/lib/data';
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
@@ -21,6 +22,26 @@ if (!getApps().length) {
 }
 
 const db = getFirestore();
+
+// Tour Package Functions
+export const getTourPackages = async () => {
+    const tourPackagesCol = collection(db, 'tour_packages');
+    const snapshot = await getDocs(tourPackagesCol);
+    if (snapshot.empty) {
+        // One-time seed if the collection is empty from the static data
+        const batch = writeBatch(db);
+        staticTourPackages.forEach(pkg => {
+            const docRef = doc(db, 'tour_packages', pkg.slug);
+            // We need to remove the 'icon' function before storing
+            const storableItinerary = pkg.itinerary.map(({icon, ...rest}) => rest);
+            batch.set(docRef, {...pkg, itinerary: storableItinerary});
+        });
+        await batch.commit();
+        return staticTourPackages;
+    }
+    return snapshot.docs.map(doc => doc.data());
+}
+
 
 // Booking Functions
 export const saveBooking = async (bookingData: any) => {
@@ -218,8 +239,6 @@ export const getPackagePrices = async (): Promise<{ slug: string, price: number 
     const snapshot = await getDocs(packagesCol);
     if (snapshot.empty) {
         // One-time seed if the collection is empty.
-        // This data is intentionally duplicated from `lib/data.ts` to avoid a circular dependency
-        // that was causing the Next.js server to hang on startup.
         const defaultTourPackages = [
           { slug: 'ooty-coonoor-tour', price: 349 },
           { slug: 'mudhumalai-pykara-tour', price: 349 }
