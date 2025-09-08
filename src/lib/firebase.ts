@@ -3,7 +3,7 @@
 
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
-import { format, addDays } from 'date-fns';
+import { format } from 'date-fns';
 import type { TourPackage } from '@/types';
 import { tourPackages as staticTourPackages } from '@/lib/data';
 
@@ -32,24 +32,25 @@ export const getTourPackages = async () => {
         const batch = writeBatch(db);
         staticTourPackages.forEach(pkg => {
             const docRef = doc(db, 'tour_packages', pkg.slug);
-            // We need to remove the 'icon' function before storing
             const storableItinerary = pkg.itinerary.map(({icon, ...rest}) => rest);
             batch.set(docRef, {...pkg, itinerary: storableItinerary});
         });
         await batch.commit();
         console.log("Seeding complete.");
+        // We still return the static data here to ensure the app has the data immediately after seeding.
+        // The `icon` component is needed on the client, and this avoids a second fetch.
         return staticTourPackages;
     }
-    return snapshot.docs.map(doc => doc.data());
+    return snapshot.docs.map(doc => doc.data() as TourPackage);
 }
 
-export const getTourPackageBySlug = async (slug: string) => {
+export const getTourPackageBySlug = async (slug: string): Promise<TourPackage | null> => {
     if (!slug) return null;
     const docRef = doc(db, 'tour_packages', slug);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-        return docSnap.data() as Omit<TourPackage, 'itinerary'> & { itinerary: Omit<TourPackage['itinerary'][0], 'icon'>[] };
+        return docSnap.data() as TourPackage;
     }
     return null;
 }
@@ -76,13 +77,20 @@ export const getBookings = async () => {
 }
 
 export const getTodaysAndTomorrowsBookings = async () => {
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+    // IST is UTC+5.5. We get the current UTC date and apply the offset.
+    const now = new Date();
+    const IST_OFFSET = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const istDate = new Date(now.getTime() + IST_OFFSET);
 
+    // Now format this IST date to get the correct "today" and "tomorrow" strings in YYYY-MM-DD format
+    const todayStr = format(istDate, 'yyyy-MM-dd');
+    const tomorrowStr = format(new Date(istDate.getTime() + 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+    
     const q = query(
         collection(db, "bookings"),
         where("bookingDate", "in", [todayStr, tomorrowStr])
     );
+
     const querySnapshot = await getDocs(q);
     const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return bookings;
@@ -231,7 +239,6 @@ export const getGalleryImages = async (packageSlug: string) => {
     return querySnapshot.docs.map(doc => {
         const data = doc.data();
         const createdAt = data.createdAt;
-        // Convert Timestamp to a serializable format (ISO string)
         if (createdAt instanceof Timestamp) {
             data.createdAt = createdAt.toDate().toISOString();
         }
@@ -239,7 +246,6 @@ export const getGalleryImages = async (packageSlug: string) => {
     });
 };
 
-// Deletes the Firestore document, but not the image from its source URL.
 export const deleteGalleryImageFromFirestore = async (docId: string) => {
     const docRef = doc(db, 'gallery', docId);
     await deleteDoc(docRef);
@@ -274,10 +280,10 @@ export const getPackagePrice = async (slug: string): Promise<number> => {
     }
     
     // Fallback for a missing specific package
-    const defaultPrice = 349;
-    const defaultPackage = { slug, price: defaultPrice };
+    const staticPackage = staticTourPackages.find(p => p.slug === slug);
+    const defaultPrice = staticPackage?.price || 349;
     
-    await setDoc(docRef, defaultPackage);
+    await setDoc(docRef, { slug, price: defaultPrice });
     return defaultPrice;
 }
 
