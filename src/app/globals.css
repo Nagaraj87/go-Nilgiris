@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -59,7 +60,7 @@
     --chart-5: 340 75% 55%;
   }
 
-  [data-theme='forest'] {
+  .forest {
     --background: 60 56% 91%;
     --foreground: 224 71% 4%;
     --card: 60 56% 95%;
@@ -81,7 +82,7 @@
     --ring: 122 41% 39%;
   }
   
-  [data-theme='forest-dark'] {
+  .forest-dark {
     --background: 224 71% 4%;
     --foreground: 60 56% 91%;
     --card: 224 71% 6%;
@@ -103,7 +104,7 @@
     --ring: 122 41% 45%;
   }
 
-  [data-theme='sunset'] {
+  .sunset {
     --background: 20 100% 97%;
     --foreground: 20 15% 15%;
     --card: 15 80% 95%;
@@ -125,7 +126,7 @@
     --ring: 14 86% 51%;
   }
 
-  [data-theme='sunset-dark'] {
+  .sunset-dark {
     --background: 20 15% 10%;
     --foreground: 20 100% 98%;
     --card: 15 20% 12%;
@@ -147,7 +148,7 @@
     --ring: 14 76% 58%;
   }
 
-  [data-theme='indigo'] {
+  .indigo {
     --background: 225 100% 98%;
     --foreground: 226 25% 15%;
     --card: 225 90% 96%;
@@ -169,7 +170,7 @@
     --ring: 221 83% 53%;
   }
 
-  [data-theme='indigo-dark'] {
+  .indigo-dark {
     --background: 226 25% 10%;
     --foreground: 225 100% 98%;
     --card: 225 30% 12%;
@@ -191,7 +192,7 @@
     --ring: 221 73% 63%;
   }
 
-  [data-theme='rose'] {
+  .rose {
     --background: 345 100% 97%;
     --foreground: 346 25% 15%;
     --card: 345 90% 95%;
@@ -213,7 +214,7 @@
     --ring: 341 83% 53%;
   }
 
-  [data-theme='rose-dark'] {
+  .rose-dark {
     --background: 346 25% 10%;
     --foreground: 345 100% 98%;
     --card: 345 30% 12%;
@@ -235,7 +236,7 @@
     --ring: 341 73% 63%;
   }
 
-  [data-theme='mocha'] {
+  .mocha {
     --background: 30 60% 97%;
     --foreground: 30 10% 20%;
     --card: 30 40% 95%;
@@ -257,7 +258,7 @@
     --ring: 25 78% 45%;
   }
 
-  [data-theme='mocha-dark'] {
+  .mocha-dark {
     --background: 30 10% 10%;
     --foreground: 30 60% 98%;
     --card: 30 15% 12%;
@@ -288,3 +289,5 @@
     @apply bg-background text-foreground;
   }
 }
+
+    
