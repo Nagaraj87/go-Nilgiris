@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -20,7 +21,6 @@ import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { saveBooking, getBlockedSeatsForDate, getOccupiedSeatsForDate, getPackagePrice, getTourPackageBySlug } from '@/lib/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { PassengerFields } from '@/components/booking/passenger-fields';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { createOrder } from '@/lib/razorpay';
@@ -29,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   age: z.coerce.number().min(1, 'Age must be at least 1').max(100),
-  gender: z.enum(['male', 'female', 'child']),
+  gender: z.enum(['male', 'female', 'child'], { required_error: "Gender is required."}),
   phone: z.string().regex(/^[0-9]{10}$/, 'Must be a valid 10-digit phone number'),
 });
 
@@ -67,7 +67,7 @@ function BookingFlow() {
     defaultValues: {
       packageSlug: packageSlugFromUrl || '',
       bookingDate: undefined,
-      passengers: [{ name: '', age: 0, gender: 'male', phone: '' }],
+      passengers: [{ name: '', age: 0, gender: undefined, phone: '' }],
     },
   });
 
@@ -83,7 +83,7 @@ function BookingFlow() {
   }, [packageSlugFromUrl, form]);
 
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'passengers',
   });
@@ -105,7 +105,6 @@ function BookingFlow() {
   const handleMemberCountChange = (newCountStr: string) => {
     const newCount = parseInt(newCountStr, 10);
     if (isNaN(newCount) || newCount < 1) {
-        remove();
         return;
     }
     
@@ -149,16 +148,13 @@ function BookingFlow() {
   
   const processStep1 = async () => {
     const isDateValid = await form.trigger('bookingDate');
-    if (!isDateValid) {
+    if (!isDateValid || memberCount < 1) {
+        toast({variant: "destructive", title: "Incomplete Details", description: "Please select a date and number of members."})
         return;
     }
 
     if(pricePerSeat === null){
         toast({variant: "destructive", title: "Price not loaded", description: "Please wait for the price to load."});
-        return;
-    }
-    if (memberCount < 1) {
-        form.setError('passengers', { type: 'manual', message: 'You must have at least one member.' });
         return;
     }
     
@@ -254,13 +250,12 @@ function BookingFlow() {
 
     const currentPassengers = form.getValues('passengers');
     const newPassengers = currentPassengers.map((passenger, index) => {
-        // Keep the original passenger if it's the first one, otherwise copy
-        return index === 0 ? passenger : { ...firstPassenger };
+        return index === 0 ? passenger : { ...passenger, ...firstPassenger };
     });
     
     form.setValue('passengers', newPassengers, { shouldValidate: true, shouldDirty: true });
 
-    toast({ title: "Details Copied", description: "Name, age, gender and contact number have been copied to all passengers." });
+    toast({ title: "Details Copied", description: "Details from the first passenger have been copied to all others." });
   }
 
   const handleSeatSelect = (seat: any, isSelected: boolean) => {
@@ -278,7 +273,7 @@ function BookingFlow() {
 
   const steps = [
     { num: 1, title: "Booking Details" },
-    { num: 2, title: "Passenger Info & Seats" },
+    { num: 2, title: "Passenger Info" },
     { num: 3, title: "Payment" },
   ];
   
@@ -299,13 +294,13 @@ function BookingFlow() {
   return (
     <div className="container mx-auto max-w-4xl py-12">
         <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
-      <div className="flex items-center justify-center mb-8">
+      <div className="flex items-center justify-between mb-8">
         {steps.map((s, index) => (
-          <div key={s.num} className="flex items-center">
-            <div className="flex flex-col items-center">
+          <React.Fragment key={s.num}>
+            <div className="flex flex-col items-center text-center">
               <div
                 className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg",
+                  "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg transition-colors",
                   step > s.num ? "bg-primary text-primary-foreground" :
                   step === s.num ? "bg-accent text-accent-foreground" :
                   "bg-muted text-muted-foreground"
@@ -313,10 +308,10 @@ function BookingFlow() {
               >
                 {step > s.num ? <Ticket size={20}/> : s.num}
               </div>
-              <p className="text-sm mt-2 text-center">{s.title}</p>
+              <p className="text-xs sm:text-sm mt-2">{s.title}</p>
             </div>
-            {index < steps.length - 1 && <div className="w-16 h-0.5 bg-border mx-4"></div>}
-          </div>
+            {index < steps.length - 1 && <div className="flex-grow h-0.5 bg-border mx-2 sm:mx-4"></div>}
+          </React.Fragment>
         ))}
       </div>
       <Form {...form}>
@@ -408,7 +403,7 @@ function BookingFlow() {
                     <div className="pt-2">
                         <Button type="button" size="sm" variant="outline" onClick={handleCopyToAll} className="gap-1">
                             <Copy size={12}/>
-                            Copy first passenger details to all
+                            Copy first passenger to all
                         </Button>
                     </div>
                 )}
@@ -482,10 +477,10 @@ function BookingFlow() {
                 <CardContent>
                      <div className="p-6 bg-muted rounded-lg space-y-4">
                         <div className="flex justify-between items-center text-lg">
-                            <span>{tourPackage.name} ({memberCount} x ₹{pricePerSeat})</span>
+                            <span className="font-semibold">{tourPackage.name} ({memberCount} x ₹{pricePerSeat})</span>
                             <span className="font-bold">₹{totalAmount.toLocaleString('en-IN')}</span>
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-muted-foreground border-t border-muted-foreground/20 pt-4 mt-4">
                             <p><strong>Date:</strong> {format(bookingDate, 'PPP')}</p>
                             <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
                         </div>
@@ -513,3 +508,5 @@ const BookingPage = () => (
 )
 
 export default BookingPage;
+
+    
