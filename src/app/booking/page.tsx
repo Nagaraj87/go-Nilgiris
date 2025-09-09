@@ -241,13 +241,17 @@ function BookingFlow() {
     const firstPassenger = form.getValues('passengers.0');
     if (!firstPassenger) return;
 
-    for(let i = 1; i < fields.length; i++) {
-        form.setValue(`passengers.${i}.name`, firstPassenger.name, { shouldValidate: true });
-        form.setValue(`passengers.${i}.age`, firstPassenger.age, { shouldValidate: true });
-        form.setValue(`passengers.${i}.phone`, firstPassenger.phone, { shouldValidate: true });
-        form.setValue(`passengers.${i}.gender`, firstPassenger.gender, { shouldValidate: true });
-    }
-     toast({ title: "Details Copied", description: "Name, age, gender and contact number have been copied to all passengers." });
+    const currentPassengers = form.getValues('passengers');
+    const newPassengers = currentPassengers.map((passenger, index) => {
+        if (index === 0) return passenger; // Keep the first passenger as is
+        return {
+            ...firstPassenger // Copy all details from the first passenger
+        };
+    });
+
+    form.setValue('passengers', newPassengers, { shouldValidate: true, shouldDirty: true });
+
+    toast({ title: "Details Copied", description: "Name, age, gender and contact number have been copied to all passengers." });
   }
 
   const handleSeatSelect = (seat: any, isSelected: boolean) => {
@@ -478,3 +482,5 @@ export default function BookingPage() {
         </Suspense>
     )
 }
+
+    
