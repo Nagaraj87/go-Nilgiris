@@ -24,6 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PassengerFields } from '@/components/booking/passenger-fields';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
+import { createOrder } from '@/lib/razorpay';
 
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -177,27 +178,59 @@ function BookingFlow() {
   const processPayment = async () => {
     if (!tourPackage) return;
     setIsSubmitting(true);
-    const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-    const bookingData = {
-      bookingId,
-      ...form.getValues(),
-      selectedSeats: selectedSeats.map(s => ({ number: s.number, price: s.price })),
-      totalAmount,
-      bookingDate: format(form.getValues('bookingDate'), "yyyy-MM-dd"),
-    };
-
+    
     try {
-      await saveBooking(bookingData);
-      router.push(`/booking/confirmation?bookingId=${bookingId}&package=${tourPackage.slug}`);
+        const order = await createOrder(totalAmount);
+        
+        const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+            amount: order.amount,
+            currency: order.currency,
+            name: 'Go Nilgiris',
+            description: `Booking for ${tourPackage.name}`,
+            order_id: order.id,
+            handler: async (response: any) => {
+                const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+                const bookingData = {
+                  bookingId,
+                  ...form.getValues(),
+                  selectedSeats: selectedSeats.map(s => ({ number: s.number, price: s.price })),
+                  totalAmount,
+                  bookingDate: format(form.getValues('bookingDate'), "yyyy-MM-dd"),
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpaySignature: response.razorpay_signature,
+                };
+                
+                try {
+                    await saveBooking(bookingData);
+                    router.push(`/booking/confirmation?bookingId=${bookingId}&package=${tourPackage.slug}`);
+                } catch(e) {
+                     toast({ variant: "destructive", title: "Booking Failed", description: "Payment was successful but we failed to save your booking. Please contact support." });
+                     setIsSubmitting(false);
+                }
+            },
+            prefill: {
+                name: form.getValues('passengers.0.name'),
+                contact: form.getValues('passengers.0.phone'),
+            },
+            theme: {
+                color: "#166534"
+            }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function (response: any){
+            toast({ variant: "destructive", title: "Payment Failed", description: response.error.description });
+            setIsSubmitting(false);
+        });
+        rzp.open();
+
     } catch (error) {
-      console.error("Failed to save booking:", error);
-      toast({
-        variant: "destructive",
-        title: "Booking Failed",
-        description: "Could not save your booking. Please try again.",
-      });
-      setIsSubmitting(false);
+        console.error("Failed to create order:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not initiate payment. Please try again." });
+        setIsSubmitting(false);
     }
   };
 
@@ -249,6 +282,7 @@ function BookingFlow() {
 
   return (
     <div className="container mx-auto max-w-4xl py-12">
+        <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
       <div className="flex items-center justify-center mb-8">
         {steps.map((s, index) => (
           <div key={s.num} className="flex items-center">
@@ -416,7 +450,7 @@ function BookingFlow() {
                 <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
                 <div className="text-3xl font-bold text-primary">Total Amount: ₹{totalAmount.toLocaleString('en-IN')}</div>
                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">This is a demo. Clicking "Pay Now" will simulate a successful payment and save your booking to our database.</p>
+                    <p className="text-sm text-muted-foreground">Click "Pay Now" to proceed with your payment via Razorpay. Your booking will be confirmed upon successful payment.</p>
                 </div>
               </CardContent>
               <CardFooter className="justify-between">

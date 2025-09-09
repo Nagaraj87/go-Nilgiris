@@ -42,6 +42,9 @@ export type Booking = {
   totalAmount: number;
   passengers: { name: string; age: number; gender: string; phone: string }[];
   selectedSeats: { number: number; price: number }[];
+  razorpayPaymentId?: string;
+  razorpayOrderId?: string;
+  razorpaySignature?: string;
 };
 
 export type GalleryImage = {
