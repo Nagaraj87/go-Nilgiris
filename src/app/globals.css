@@ -290,4 +290,25 @@
   }
 }
 
-    
+@media print {
+    body {
+        background-color: white;
+        color: black;
+    }
+    header, footer, .print\:hidden {
+        display: none !important;
+    }
+    main {
+        padding: 0;
+        margin: 0;
+    }
+    .print\:block {
+      display: block !important;
+    }
+    .print\:shadow-none {
+        box-shadow: none !important;
+    }
+     .print\:p-0 {
+        padding: 0 !important;
+    }
+}

@@ -29,12 +29,12 @@ export default async function TicketPage({ params }: { params: { id: string } })
     }
 
     return (
-       <div className="bg-muted">
+       <div className="bg-muted print:bg-white">
          <div className="container mx-auto max-w-3xl py-12">
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-end mb-4 print:hidden">
                 <TicketPrint />
             </div>
-            <Card id="ticketContent" className="p-4 sm:p-8 shadow-2xl">
+            <Card id="ticketContent" className="p-4 sm:p-8 shadow-2xl print:shadow-none print:p-0">
                  <CardHeader className="text-center p-0 sm:p-6">
                     <div className="flex justify-between items-start">
                         <div className="text-left">
@@ -105,4 +105,3 @@ export default async function TicketPage({ params }: { params: { id: string } })
        </div>
     );
 }
-
