@@ -4,9 +4,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAdminCredentials } from '@/lib/firebase';
 import type { AdminCredentials } from '@/types';
+import bcrypt from 'bcrypt';
 
 type AuthContextType = {
-  user: AdminCredentials | null;
+  user: { username: string } | null;
   loading: boolean;
   login: (username: string, password?: string) => Promise<boolean>;
   logout: () => void;
@@ -15,7 +16,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AdminCredentials | null>(null);
+  const [user, setUser] = useState<{ username: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,7 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const credentials = await getAdminCredentials();
-      if (credentials.username === username && credentials.password === password) {
+      if (!credentials.password || !password) {
+        return false; // No stored password or no password provided
+      }
+      
+      const usernameMatch = credentials.username === username;
+      const passwordMatch = await bcrypt.compare(password, credentials.password);
+      
+      if (usernameMatch && passwordMatch) {
         const userData = { username };
         sessionStorage.setItem('adminUser', JSON.stringify(userData));
         setUser(userData);

@@ -19,7 +19,14 @@ const nextConfig: NextConfig = {
   },
   env: {
     NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
-  }
+  },
+   webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Exclude bcrypt from the client-side bundle
+      config.externals.push('bcrypt');
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

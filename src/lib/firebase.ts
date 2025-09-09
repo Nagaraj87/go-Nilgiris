@@ -5,6 +5,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import type { TourPackage } from '@/types';
+import bcrypt from 'bcrypt';
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
@@ -434,13 +435,15 @@ export const updateContactInfo = async (data: { whatsapp: string, call: string }
 // Admin Credentials
 const ADMIN_DOC_REF = doc(db, 'site_config', 'admin_credentials');
 
-export const getAdminCredentials = async (): Promise<{username: string; password: string}> => {
+export const getAdminCredentials = async (): Promise<{username: string; password?: string}> => {
     const docSnap = await getDoc(ADMIN_DOC_REF);
     if(docSnap.exists()) {
-        return docSnap.data() as {username: string; password: string};
+        return docSnap.data() as {username: string; password?: string};
     } else {
         // Default credentials
-        const defaultCreds = {username: 'admin', password: 'password'};
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('password', salt);
+        const defaultCreds = {username: 'admin', password: hashedPassword};
         await setDoc(ADMIN_DOC_REF, defaultCreds);
         return defaultCreds;
     }
@@ -449,7 +452,8 @@ export const getAdminCredentials = async (): Promise<{username: string; password
 export const updateAdminCredentials = async(credentials: {username: string; password?: string}) => {
     const dataToUpdate: {username: string; password?: string} = {username: credentials.username};
     if(credentials.password && credentials.password.length > 0) {
-        dataToUpdate.password = credentials.password;
+        const salt = await bcrypt.genSalt(10);
+        dataToUpdate.password = await bcrypt.hash(credentials.password, salt);
     }
     await setDoc(ADMIN_DOC_REF, dataToUpdate, {merge: true});
 }

@@ -14,7 +14,7 @@ import type { AdminCredentials } from "@/types";
 
 export function CredentialsManagement() {
     const { toast } = useToast();
-    const [credentials, setCredentials] = useState<AdminCredentials>({ username: '', password: '' });
+    const [credentials, setCredentials] = useState<AdminCredentials>({ username: '' });
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(true);
@@ -27,7 +27,8 @@ export function CredentialsManagement() {
             setError(null);
             try {
                 const data = await getAdminCredentials();
-                setCredentials(data);
+                // We only fetch the username to display, not the password hash
+                setCredentials({ username: data.username });
             } catch (err) {
                 console.error(err);
                 setError("Could not load current credentials.");
@@ -43,13 +44,21 @@ export function CredentialsManagement() {
             toast({ variant: "destructive", title: "Passwords do not match" });
             return;
         }
+        
+        if (newPassword && newPassword.length < 6) {
+             toast({ variant: "destructive", title: "Password too short", description: "Password must be at least 6 characters long." });
+            return;
+        }
 
         setSaving(true);
         try {
-            const updatedCredentials = {
+            const updatedCredentials: AdminCredentials = {
                 username: credentials.username,
-                password: newPassword || credentials.password,
             };
+            if (newPassword) {
+                updatedCredentials.password = newPassword;
+            }
+            
             await updateAdminCredentials(updatedCredentials);
             toast({ title: "Credentials Updated", description: "Your login details have been saved." });
             setNewPassword('');
@@ -83,13 +92,6 @@ export function CredentialsManagement() {
         }
         return (
             <div className="space-y-4">
-                 <Alert variant="destructive">
-                    <ShieldAlert className="h-4 w-4" />
-                    <AlertTitle>Security Warning</AlertTitle>
-                    <AlertDescription>
-                       For demonstration purposes, the password is not hashed. In a production environment, always use a secure password hashing method.
-                    </AlertDescription>
-                 </Alert>
                 <div>
                     <Label htmlFor="username">Username</Label>
                     <Input
