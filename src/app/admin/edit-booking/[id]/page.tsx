@@ -14,9 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { WomanIcon } from '@/components/icons';
-import { User, Baby } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Booking as BookingType } from '@/types';
 
 
@@ -149,11 +147,22 @@ if (!booking) {
                             <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                          )} />
                          <FormField control={form.control} name={`passengers.${index}.gender`} render={({ field }) => (
-                            <FormItem><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4 pt-2">
-                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="male" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><User size={16}/> Male</FormLabel></FormItem>
-                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="female" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><WomanIcon className="h-4 w-4" /> Female</FormLabel></FormItem>
-                              <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="child" /></FormControl><FormLabel className="font-normal flex items-center gap-1"><Baby size={16}/> Child</FormLabel></FormItem>
-                            </RadioGroup></FormControl><FormMessage /></FormItem>
+                             <FormItem>
+                                <FormLabel>Gender</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select gender" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="male">Male</SelectItem>
+                                        <SelectItem value="female">Female</SelectItem>
+                                        <SelectItem value="child">Child</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                             </FormItem>
                          )} />
                       </div>
                     </div>

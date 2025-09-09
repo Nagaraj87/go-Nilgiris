@@ -4,9 +4,7 @@
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { User, Baby } from 'lucide-react';
-import { WomanIcon } from '@/components/icons';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type PassengerFieldsProps = {
   form: any;
@@ -61,34 +59,18 @@ function PassengerFieldsComponent({ form, index }: PassengerFieldsProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Gender</FormLabel>
-              <FormControl>
-                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4 pt-2">
-                  <FormItem className="flex items-center space-x-2 space-y-0">
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <RadioGroupItem value="male" />
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
                     </FormControl>
-                    <FormLabel className="font-normal flex items-center gap-1">
-                      <User size={16} /> Male
-                    </FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-2 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="female" />
-                    </FormControl>
-                    <FormLabel className="font-normal flex items-center gap-1">
-                      <WomanIcon className="h-4 w-4" /> Female
-                    </FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-2 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="child" />
-                    </FormControl>
-                    <FormLabel className="font-normal flex items-center gap-1">
-                      <Baby size={16} /> Child
-                    </FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
+                    <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="child">Child</SelectItem>
+                    </SelectContent>
+                </Select>
               <FormMessage />
             </FormItem>
           )}
