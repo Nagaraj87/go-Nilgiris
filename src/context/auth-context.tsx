@@ -4,7 +4,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAdminCredentials } from '@/lib/firebase';
 import type { AdminCredentials } from '@/types';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 type AuthContextType = {
   user: { username: string } | null;

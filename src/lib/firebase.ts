@@ -5,7 +5,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import type { TourPackage } from '@/types';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
