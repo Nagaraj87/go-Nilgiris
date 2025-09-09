@@ -24,6 +24,7 @@ import { PassengerFields } from '@/components/booking/passenger-fields';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { createOrder } from '@/lib/razorpay';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -147,18 +148,21 @@ function BookingFlow() {
   }, [selectedSeats]);
   
   const processStep1 = async () => {
-    const result = await form.trigger(['bookingDate', 'passengers']);
-    if (result) {
-        if(pricePerSeat === null){
-            toast({variant: "destructive", title: "Price not loaded", description: "Please wait for the price to load."});
-            return;
-        }
-        if (memberCount < 1) {
-            toast({variant: "destructive", title: "Invalid Member Count", description: "You must have at least one member."});
-            return;
-        }
-        setStep(2);
+    const isDateValid = await form.trigger('bookingDate');
+    if (!isDateValid) {
+        return;
     }
+
+    if(pricePerSeat === null){
+        toast({variant: "destructive", title: "Price not loaded", description: "Please wait for the price to load."});
+        return;
+    }
+    if (memberCount < 1) {
+        form.setError('passengers', { type: 'manual', message: 'You must have at least one member.' });
+        return;
+    }
+    
+    setStep(2);
   };
   
   const processStep2 = async () => {
@@ -249,9 +253,9 @@ function BookingFlow() {
     if (!firstPassenger) return;
 
     const currentPassengers = form.getValues('passengers');
-    const newPassengers = currentPassengers.map(() => {
-        // Create a new object for each passenger to avoid reference issues
-        return { ...firstPassenger };
+    const newPassengers = currentPassengers.map((passenger, index) => {
+        // Keep the original passenger if it's the first one, otherwise copy
+        return index === 0 ? passenger : { ...firstPassenger };
     });
     
     form.setValue('passengers', newPassengers, { shouldValidate: true, shouldDirty: true });
@@ -414,10 +418,35 @@ function BookingFlow() {
                   {fields.map((field, index) => (
                     <div key={field.id} className="p-4 border rounded-lg space-y-4">
                         <Label className="font-bold">Passenger {index + 1}</Label>
-                        <PassengerFields 
-                            form={form} 
-                            index={index} 
-                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <FormField control={form.control} name={`passengers.${index}.name`} render={({ field }) => (
+                                <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name={`passengers.${index}.age`} render={({ field }) => (
+                                <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name={`passengers.${index}.phone`} render={({ field }) => (
+                                <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name={`passengers.${index}.gender`} render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Gender</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select gender" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="male">Male</SelectItem>
+                                            <SelectItem value="female">Female</SelectItem>
+                                            <SelectItem value="child">Child</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        </div>
                     </div>
                   ))}
                 </div>
@@ -439,7 +468,36 @@ function BookingFlow() {
               </CardContent>
               <CardFooter className="justify-between">
                 <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
+                <Button onClick={processStep2}><CreditCard className="mr-2 h-4 w-4"/> Proceed to Payment</Button>
               </CardFooter>
+            </Card>
+          )}
+
+          {step === 3 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Step 3: Confirm & Pay</CardTitle>
+                    <CardDescription>You are just one step away from confirming your adventure.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <div className="p-6 bg-muted rounded-lg space-y-4">
+                        <div className="flex justify-between items-center text-lg">
+                            <span>{tourPackage.name} ({memberCount} x ₹{pricePerSeat})</span>
+                            <span className="font-bold">₹{totalAmount.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                            <p><strong>Date:</strong> {format(bookingDate, 'PPP')}</p>
+                            <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
+                        </div>
+                     </div>
+                </CardContent>
+                <CardFooter className="justify-between">
+                    <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
+                    <Button onClick={processPayment} disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CreditCard className="mr-2 h-4 w-4"/>}
+                        Pay Now
+                    </Button>
+                </CardFooter>
             </Card>
           )}
         </form>
@@ -448,6 +506,10 @@ function BookingFlow() {
   );
 }
 
-export default BookingFlow;
+const BookingPage = () => (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+        <BookingFlow />
+    </Suspense>
+)
 
-    
+export default BookingPage;
