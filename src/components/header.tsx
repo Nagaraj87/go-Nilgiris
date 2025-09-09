@@ -7,12 +7,17 @@ import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Home, Lock, Menu, Bell } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
-import { NotificationBell } from './notification-bell';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 
 export function Header() {
   const pathname = usePathname();
+  const { user } = useAuth();
   const isAdminPage = pathname.startsWith('/admin');
+  
+  if (isAdminPage) {
+    return null; // The admin layout will render its own header
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -34,14 +39,13 @@ export function Header() {
               </Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link href="/admin">
+              <Link href={user ? "/admin" : "/login"}>
                 <Lock className="mr-2 h-4 w-4" />
                 Admin
               </Link>
             </Button>
           </nav>
           
-          {isAdminPage && <NotificationBell />}
           <ThemeToggle />
 
           {/* Mobile Navigation */}
@@ -69,18 +73,10 @@ export function Header() {
                     <Home className="h-5 w-5" />
                     <span>Home</span>
                   </Link>
-                  <Link href="/admin" className="flex items-center space-x-2 text-lg font-medium">
+                  <Link href={user ? "/admin" : "/login"} className="flex items-center space-x-2 text-lg font-medium">
                     <Lock className="h-5 w-5" />
                     <span>Admin</span>
                   </Link>
-                  {isAdminPage &&
-                    <>
-                        <Link href="/admin/notifications" className="flex items-center space-x-2 text-lg font-medium">
-                        <Bell className="h-5 w-5" />
-                        <span>Notifications</span>
-                        </Link>
-                    </>
-                  }
                 </div>
               </SheetContent>
             </Sheet>
