@@ -448,7 +448,7 @@ export const getAdminCredentials = async (): Promise<{username: string; password
 
 export const updateAdminCredentials = async(credentials: {username: string; password?: string}) => {
     const dataToUpdate: {username: string; password?: string} = {username: credentials.username};
-    if(credentials.password) {
+    if(credentials.password && credentials.password.length > 0) {
         dataToUpdate.password = credentials.password;
     }
     await setDoc(ADMIN_DOC_REF, dataToUpdate, {merge: true});
