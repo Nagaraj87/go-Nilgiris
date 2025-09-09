@@ -3,7 +3,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense, useState, useMemo, useEffect, useCallback } from 'react';
+import React, { Suspense, useState, useMemo, useEffect, useCallback } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -111,7 +111,7 @@ function BookingFlow() {
     const currentCount = fields.length;
     if (newCount > currentCount) {
         for (let i = 0; i < newCount - currentCount; i++) {
-            append({ name: '', age: 0, gender: 'male', phone: '' });
+            append({ name: '', age: 0, gender: undefined, phone: '' });
         }
     } else if (newCount < currentCount) {
         for (let i = 0; i < currentCount - newCount; i++) {
@@ -250,12 +250,18 @@ function BookingFlow() {
 
     const currentPassengers = form.getValues('passengers');
     const newPassengers = currentPassengers.map((passenger, index) => {
-        return index === 0 ? passenger : { ...passenger, ...firstPassenger };
+        if (index === 0) return passenger;
+        // Keep name, but copy phone and gender
+        return { 
+            ...passenger, 
+            phone: firstPassenger.phone, 
+            gender: firstPassenger.gender 
+        };
     });
     
     form.setValue('passengers', newPassengers, { shouldValidate: true, shouldDirty: true });
 
-    toast({ title: "Details Copied", description: "Details from the first passenger have been copied to all others." });
+    toast({ title: "Details Copied", description: "Phone and gender from the first passenger have been copied to all others." });
   }
 
   const handleSeatSelect = (seat: any, isSelected: boolean) => {
@@ -273,7 +279,7 @@ function BookingFlow() {
 
   const steps = [
     { num: 1, title: "Booking Details" },
-    { num: 2, title: "Passenger Info" },
+    { num: 2, title: "Passenger Info & Seats" },
     { num: 3, title: "Payment" },
   ];
   
@@ -294,10 +300,10 @@ function BookingFlow() {
   return (
     <div className="container mx-auto max-w-4xl py-12">
         <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-start justify-between mb-8">
         {steps.map((s, index) => (
           <React.Fragment key={s.num}>
-            <div className="flex flex-col items-center text-center">
+            <div className="flex flex-col items-center text-center w-28 sm:w-auto">
               <div
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg transition-colors",
@@ -310,7 +316,7 @@ function BookingFlow() {
               </div>
               <p className="text-xs sm:text-sm mt-2">{s.title}</p>
             </div>
-            {index < steps.length - 1 && <div className="flex-grow h-0.5 bg-border mx-2 sm:mx-4"></div>}
+            {index < steps.length - 1 && <div className="flex-grow h-0.5 bg-border mt-5 mx-2 sm:mx-4"></div>}
           </React.Fragment>
         ))}
       </div>
@@ -481,7 +487,7 @@ function BookingFlow() {
                             <span className="font-bold">₹{totalAmount.toLocaleString('en-IN')}</span>
                         </div>
                         <div className="text-sm text-muted-foreground border-t border-muted-foreground/20 pt-4 mt-4">
-                            <p><strong>Date:</strong> {format(bookingDate, 'PPP')}</p>
+                            <p><strong>Date:</strong> {bookingDate && format(bookingDate, 'PPP')}</p>
                             <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
                         </div>
                      </div>
