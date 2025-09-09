@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -38,8 +37,7 @@ const bookingSchema = z.object({
   bookingDate: z.date({
     required_error: "A booking date is required.",
   }),
-  memberCount: z.coerce.number().min(1, 'At least one member is required'),
-  passengers: z.array(passengerSchema),
+  passengers: z.array(passengerSchema).min(1, "At least one passenger is required."),
 });
 
 type BookingFormValues = z.infer<typeof bookingSchema>;
@@ -68,7 +66,6 @@ function BookingFlow() {
     defaultValues: {
       packageSlug: packageSlugFromUrl || '',
       bookingDate: undefined,
-      memberCount: 1,
       passengers: [{ name: '', age: 0, gender: 'male', phone: '' }],
     },
   });
@@ -85,12 +82,12 @@ function BookingFlow() {
   }, [packageSlugFromUrl, form]);
 
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control: form.control,
     name: 'passengers',
   });
 
-  const memberCount = form.watch('memberCount');
+  const memberCount = form.watch('passengers').length;
   const bookingDate = form.watch('bookingDate');
 
   useEffect(() => {
@@ -104,19 +101,25 @@ function BookingFlow() {
         })
   }, [tourPackage, toast]);
 
-  useEffect(() => {
-    const currentCount = fields.length;
-    const targetCount = memberCount || 0;
-    if (targetCount > currentCount) {
-      for (let i = 0; i < targetCount - currentCount; i++) {
-        append({ name: '', age: 0, gender: 'male', phone: '' });
-      }
-    } else if (targetCount < currentCount) {
-      for (let i = 0; i < currentCount - targetCount; i++) {
-        remove(currentCount - 1 - i);
-      }
+  const handleMemberCountChange = (newCountStr: string) => {
+    const newCount = parseInt(newCountStr, 10);
+    if (isNaN(newCount) || newCount < 1) {
+        remove();
+        return;
     }
-  }, [memberCount, append, remove, fields.length]);
+    
+    const currentCount = fields.length;
+    if (newCount > currentCount) {
+        for (let i = 0; i < newCount - currentCount; i++) {
+            append({ name: '', age: 0, gender: 'male', phone: '' });
+        }
+    } else if (newCount < currentCount) {
+        for (let i = 0; i < currentCount - newCount; i++) {
+            remove(currentCount - 1 - i);
+        }
+    }
+  };
+
 
   useEffect(() => {
       if(bookingDate && tourPackage) {
@@ -144,10 +147,14 @@ function BookingFlow() {
   }, [selectedSeats]);
   
   const processStep1 = async () => {
-    const result = await form.trigger(['bookingDate', 'memberCount']);
+    const result = await form.trigger(['bookingDate', 'passengers']);
     if (result) {
         if(pricePerSeat === null){
             toast({variant: "destructive", title: "Price not loaded", description: "Please wait for the price to load."});
+            return;
+        }
+        if (memberCount < 1) {
+            toast({variant: "destructive", title: "Invalid Member Count", description: "You must have at least one member."});
             return;
         }
         setStep(2);
@@ -242,13 +249,11 @@ function BookingFlow() {
     if (!firstPassenger) return;
 
     const currentPassengers = form.getValues('passengers');
-    const newPassengers = currentPassengers.map((passenger, index) => {
-        if (index === 0) return passenger; // Keep the first passenger as is
-        return {
-            ...firstPassenger // Copy all details from the first passenger
-        };
+    const newPassengers = currentPassengers.map(() => {
+        // Create a new object for each passenger to avoid reference issues
+        return { ...firstPassenger };
     });
-
+    
     form.setValue('passengers', newPassengers, { shouldValidate: true, shouldDirty: true });
 
     toast({ title: "Details Copied", description: "Name, age, gender and contact number have been copied to all passengers." });
@@ -368,22 +373,18 @@ function BookingFlow() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="memberCount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Number of Members</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="1" {...field} onChange={e => {
-                            const value = e.target.value;
-                            field.onChange(value === '' ? '' : parseInt(value, 10));
-                        }} className="w-[240px]" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                    <Label htmlFor="member-count">Number of Members</Label>
+                    <Input
+                        id="member-count"
+                        type="number"
+                        min="1"
+                        value={memberCount}
+                        onChange={e => handleMemberCountChange(e.target.value)}
+                        className="w-[240px]"
+                    />
+                    <FormMessage>{form.formState.errors.passengers?.root?.message}</FormMessage>
+                </div>
               </CardContent>
               <CardFooter className="justify-end">
                 <Button onClick={processStep1} disabled={pricePerSeat === null || loadingAvailability}>
@@ -438,34 +439,6 @@ function BookingFlow() {
               </CardContent>
               <CardFooter className="justify-between">
                 <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
-                <Button onClick={processStep2}>Proceed to Payment <CreditCard className="ml-2 h-4 w-4" /></Button>
-              </CardFooter>
-            </Card>
-          )}
-
-          {step === 3 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Step 3: Payment</CardTitle>
-                <CardDescription>Confirm your booking details and proceed to payment.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <h3 className="font-bold">Booking Summary</h3>
-                <p><strong>Package:</strong> {tourPackage.name}</p>
-                <p><strong>Date:</strong> {form.getValues('bookingDate') ? format(form.getValues('bookingDate'), 'PPP') : 'N/A'}</p>
-                <p><strong>Members:</strong> {memberCount}</p>
-                <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
-                <div className="text-3xl font-bold text-primary">Total Amount: ₹{totalAmount.toLocaleString('en-IN')}</div>
-                 <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">Click "Pay Now" to proceed with your payment via Razorpay. Your booking will be confirmed upon successful payment.</p>
-                </div>
-              </CardContent>
-              <CardFooter className="justify-between">
-                <Button variant="outline" onClick={() => setStep(2)} disabled={isSubmitting}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
-                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={processPayment} disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : "Pay Now"}
-                    <CreditCard className="ml-2 h-4 w-4" />
-                </Button>
               </CardFooter>
             </Card>
           )}
@@ -475,12 +448,6 @@ function BookingFlow() {
   );
 }
 
-export default function BookingPage() {
-    return (
-        <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
-            <BookingFlow />
-        </Suspense>
-    )
-}
+export default BookingFlow;
 
     
