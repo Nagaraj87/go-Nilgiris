@@ -47,7 +47,7 @@ type BookingFormValues = z.infer<typeof bookingSchema>;
 function BookingFlow() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const packageSlug = searchParams.get('package');
+  const packageSlugFromUrl = searchParams.get('package');
   const { toast } = useToast();
 
   const [tourPackage, setTourPackage] = useState<TourPackage | null>(null);
@@ -63,27 +63,27 @@ function BookingFlow() {
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
 
+  const form = useForm<BookingFormValues>({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: {
+      packageSlug: packageSlugFromUrl || '',
+      bookingDate: undefined,
+      memberCount: 1,
+      passengers: [{ name: '', age: 0, gender: 'male', phone: '' }],
+    },
+  });
+
   useEffect(() => {
-    if (packageSlug) {
-        getTourPackageBySlug(packageSlug).then(pkg => {
+    if (packageSlugFromUrl) {
+        getTourPackageBySlug(packageSlugFromUrl).then(pkg => {
             if (pkg) {
                 setTourPackage(pkg);
                 form.setValue('packageSlug', pkg.slug);
             }
         });
     }
-  }, [packageSlug]);
+  }, [packageSlugFromUrl, form]);
 
-
-  const form = useForm<BookingFormValues>({
-    resolver: zodResolver(bookingSchema),
-    defaultValues: {
-      packageSlug: '',
-      bookingDate: undefined,
-      memberCount: 1,
-      passengers: [{ name: '', age: 0, gender: 'male', phone: '' }],
-    },
-  });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -191,8 +191,7 @@ function BookingFlow() {
             order_id: order.id,
             handler: async (response: any) => {
                 const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-                const { packageSlug, memberCount, passengers } = form.getValues();
+                const { packageSlug, passengers } = form.getValues();
 
                 const bookingData = {
                   bookingId,
@@ -208,8 +207,8 @@ function BookingFlow() {
                 };
                 
                 try {
-                    await saveBooking(bookingData);
-                    router.push(`/booking/confirmation?bookingId=${bookingId}&package=${tourPackage.slug}`);
+                    const dbId = await saveBooking(bookingData);
+                    router.push(`/booking/confirmation?id=${dbId}&bookingId=${bookingId}&package=${tourPackage.slug}`);
                 } catch(e) {
                      toast({ variant: "destructive", title: "Booking Failed", description: "Payment was successful but we failed to save your booking. Please contact support." });
                      setIsSubmitting(false);

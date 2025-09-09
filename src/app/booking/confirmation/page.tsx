@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useSearchParams } from 'next/navigation';
@@ -13,6 +14,7 @@ import type { TourPackage } from '@/types';
 function ConfirmationContent() {
     const searchParams = useSearchParams();
     const bookingId = searchParams.get('bookingId');
+    const dbId = searchParams.get('id');
     const packageSlug = searchParams.get('package');
     const [tourPackage, setTourPackage] = useState<TourPackage | null>(null);
     const [loading, setLoading] = useState(true);
@@ -23,6 +25,8 @@ function ConfirmationContent() {
                 setTourPackage(pkg);
                 setLoading(false);
             })
+        } else {
+            setLoading(false);
         }
     }, [packageSlug]);
 
@@ -60,9 +64,11 @@ function ConfirmationContent() {
                         </div>
                     )}
                     <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                        <Button className="w-full" onClick={() => alert("PDF download is a demo feature.")}>
-                            <Download className="mr-2 h-4 w-4" />
-                            Download Ticket
+                        <Button asChild className="w-full">
+                           <Link href={`/booking/ticket/${dbId}`} target="_blank">
+                                <Download className="mr-2 h-4 w-4" />
+                                Download Ticket
+                           </Link>
                         </Button>
                         <Button variant="outline" asChild className="w-full">
                             <Link href="/">Back to Home</Link>
@@ -77,7 +83,7 @@ function ConfirmationContent() {
 
 export default function ConfirmationPage() {
     return (
-        <Suspense fallback={<div>Loading confirmation...</div>}>
+        <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
             <ConfirmationContent />
         </Suspense>
     )
