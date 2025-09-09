@@ -6,17 +6,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, ImageIcon, Loader2 } from 'lucide-react';
-import { tourPackages } from '@/lib/data';
-import type { GalleryImage } from '@/types';
-import { getGalleryImages } from '@/lib/firebase';
+import type { GalleryImage, TourPackage } from '@/types';
+import { getGalleryImages, getTourPackages } from '@/lib/firebase';
 import { AddImageForm } from './add-image-form';
 import { ImageGrid } from './image-grid';
 
 export function GalleryManagement() {
-    const [selectedPackage, setSelectedPackage] = useState<string>(tourPackages[0].slug);
+    const [tourPackages, setTourPackages] = useState<TourPackage[]>([]);
+    const [selectedPackage, setSelectedPackage] = useState<string>('');
     const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [loadingTours, setLoadingTours] = useState(true);
+
+    useEffect(() => {
+        getTourPackages().then(packages => {
+            setTourPackages(packages);
+            if (packages.length > 0) {
+                setSelectedPackage(packages[0].slug);
+            }
+            setLoadingTours(false);
+        });
+    }, []);
 
     useEffect(() => {
         if (!selectedPackage) return;
@@ -76,6 +87,10 @@ export function GalleryManagement() {
                 </AlertDescription>
             </Alert>
         )
+    }
+
+    if (loadingTours) {
+        return <Card><CardHeader><CardTitle>Loading...</CardTitle></CardHeader></Card>
     }
 
     return (

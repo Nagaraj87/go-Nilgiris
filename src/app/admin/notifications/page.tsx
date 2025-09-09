@@ -2,13 +2,12 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { getTodaysAndTomorrowsBookings } from '@/lib/firebase';
-import type { Booking } from '@/types';
+import { getTodaysAndTomorrowsBookings, getTourPackages } from '@/lib/firebase';
+import type { Booking, TourPackage } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, AlertCircle, Bell } from 'lucide-react';
 import { format, isToday, isTomorrow } from 'date-fns';
-import { tourPackages } from '@/lib/data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type GroupedBookings = {
@@ -28,6 +27,7 @@ type GroupedBookings = {
 
 export default function NotificationsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [tourPackages, setTourPackages] = useState<TourPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,9 +36,13 @@ export default function NotificationsPage() {
       setLoading(true);
       setError(null);
       try {
-        const data = await getTodaysAndTomorrowsBookings();
-        data.sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime());
-        setBookings(data as Booking[]);
+        const [bookingData, packageData] = await Promise.all([
+            getTodaysAndTomorrowsBookings(),
+            getTourPackages()
+        ]);
+        bookingData.sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime());
+        setBookings(bookingData as Booking[]);
+        setTourPackages(packageData);
       } catch (err) {
         console.error('Failed to fetch upcoming bookings:', err);
         setError('Could not load upcoming bookings. Please try again later.');
@@ -81,7 +85,7 @@ export default function NotificationsPage() {
     });
 
     return groups;
-  }, [bookings]);
+  }, [bookings, tourPackages]);
   
   const getDateLabel = (dateStr: string) => {
       const date = new Date(dateStr);

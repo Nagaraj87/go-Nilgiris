@@ -1,5 +1,21 @@
 
-import type { LucideIcon } from 'lucide-react';
+export type ItineraryItem = {
+    time: string;
+    activity: string;
+    description: string;
+    iconName?: string;
+};
+
+export type FAQ = {
+    question: string;
+    answer: string;
+};
+
+export type GalleryItem = {
+    src: string;
+    alt: string;
+    hint: string;
+};
 
 export type TourPackage = {
   id: string;
@@ -12,22 +28,9 @@ export type TourPackage = {
   exclusions: string[];
   notes: string[];
   disclaimers: string[];
-  itinerary: {
-    time: string;
-    activity: string;
-    description: string;
-    icon: LucideIcon;
-    iconName: string;
-  }[];
-  gallery: {
-    src: string;
-    alt: string;
-    hint: string;
-  }[];
-  faqs: {
-    question: string;
-    answer: string;
-  }[];
+  itinerary: ItineraryItem[];
+  gallery: GalleryItem[];
+  faqs: FAQ[];
 };
 
 export type Booking = {
@@ -51,4 +54,9 @@ export type GalleryImage = {
 export type ContactInfo = {
     whatsapp: string;
     call: string;
+};
+
+export type AdminCredentials = {
+    username: string;
+    password?: string;
 };

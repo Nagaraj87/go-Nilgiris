@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getPackagePrices, updatePackagePrice } from "@/lib/firebase";
+import { getPackagePrices, updatePackagePrice, getTourPackages } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { tourPackages } from "@/lib/data";
+import type { TourPackage } from "@/types";
 
 type Prices = Record<string, number>;
 type UpdatedPrices = Record<string, number | string>;
@@ -18,31 +18,34 @@ type UpdatedPrices = Record<string, number | string>;
 export function PriceManagement() {
     const { toast } = useToast();
     const [prices, setPrices] = useState<Prices>({});
+    const [tourPackages, setTourPackages] = useState<TourPackage[]>([]);
     const [loading, setLoading] = useState(true);
     const [updatedPrices, setUpdatedPrices] = useState<UpdatedPrices>({});
     const [savingSlug, setSavingSlug] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchPrices = async () => {
+        const fetchPricesAndTours = async () => {
             setLoading(true);
             setError(null);
             try {
-                const packagePrices = await getPackagePrices();
+                const [packagePrices, packages] = await Promise.all([getPackagePrices(), getTourPackages()]);
+                
                 const pricesMap: Prices = {};
                 packagePrices.forEach(p => {
                     pricesMap[p.slug] = p.price;
                 });
                 setPrices(pricesMap);
                 setUpdatedPrices(pricesMap);
+                setTourPackages(packages);
             } catch (err) {
-                console.error("Failed to fetch prices", err);
-                setError("Failed to load package prices. Please try refreshing the page.");
+                console.error("Failed to fetch prices or tours", err);
+                setError("Failed to load data. Please try refreshing the page.");
             } finally {
                 setLoading(false);
             }
         };
-        fetchPrices();
+        fetchPricesAndTours();
     }, []);
 
     const handlePriceChange = (slug: string, value: string) => {

@@ -3,16 +3,21 @@
 
 import { useEffect, useState } from "react";
 import Link from 'next/link';
-import type { TourPackage } from "@/types";
 import { getPackagePrice } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Check, X, Info } from 'lucide-react';
-import { tourPackages } from "@/lib/data";
 
 type TourBookingCardProps = {
-    tourPackageData: Omit<TourPackage, 'itinerary' | 'faqs' | 'disclaimers' | 'gallery'>;
+    tourPackageData: {
+      slug: string;
+      name: string;
+      inclusions: string[];
+      exclusions: string[];
+      notes: string[];
+      price: number;
+    }
 }
 
 export function TourBookingCard({ tourPackageData }: TourBookingCardProps) {
@@ -31,14 +36,13 @@ export function TourBookingCard({ tourPackageData }: TourBookingCardProps) {
             } catch (error) {
                 console.error("Failed to fetch price", error);
                 toast({ variant: "destructive", title: "Price Error", description: "Could not load the latest price. Using default."});
-                const staticPackage = tourPackages.find(p => p.slug === tourPackageData.slug);
-                setPrice(staticPackage?.price || 349); // Fallback to static price
+                setPrice(tourPackageData.price); // Fallback to static price
             } finally {
                 setLoadingPrice(false);
             }
         }
         fetchPrice();
-    }, [tourPackageData.slug, toast]);
+    }, [tourPackageData.slug, tourPackageData.price, toast]);
 
 
     return (

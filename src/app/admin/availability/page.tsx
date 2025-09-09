@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { blockAllSeatsForDate, blockSeatForDate, getBlockedSeatsForDate, getOccupiedSeatsForDate, unblockAllSeatsForDate, unblockSeatForDate } from "@/lib/firebase";
+import { blockAllSeatsForDate, blockSeatForDate, getBlockedSeatsForDate, getOccupiedSeatsForDate, unblockAllSeatsForDate, unblockSeatForDate, getTourPackages } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldOff, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -14,21 +14,33 @@ import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { tourPackages } from "@/lib/data";
 import { SeatChart } from "@/components/seat-chart";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { TourPackage } from "@/types";
 
 export default function AvailabilityPage() {
   const { toast } = useToast();
 
+  const [tourPackages, setTourPackages] = useState<TourPackage[]>([]);
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
-  const [selectedPackage, setSelectedPackage] = useState<string>(tourPackages[0].slug);
+  const [selectedPackage, setSelectedPackage] = useState<string>('');
   
   const [blockedSeats, setBlockedSeats] = useState<number[]>([]);
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
   
   const [isLoading, setIsLoading] = useState(true);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [loadingTours, setLoadingTours] = useState(true);
+
+  useEffect(() => {
+    getTourPackages().then(packages => {
+      setTourPackages(packages);
+      if (packages.length > 0) {
+        setSelectedPackage(packages[0].slug);
+      }
+      setLoadingTours(false);
+    });
+  }, []);
 
   const tourPackage = tourPackages.find(p => p.slug === selectedPackage);
   const totalSeatsPerBus = 17;
@@ -132,6 +144,10 @@ export default function AvailabilityPage() {
             </div>
         </div>
     )
+  }
+
+  if (loadingTours) {
+    return <div className="container mx-auto max-w-7xl py-12">Loading...</div>
   }
 
   return (

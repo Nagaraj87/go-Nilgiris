@@ -3,12 +3,11 @@ import { notFound } from 'next/navigation';
 import { TourHeader } from '@/components/tours/tour-header';
 import { TourTabs } from '@/components/tours/tour-tabs';
 import { TourBookingCard } from '@/components/tours/tour-booking-card';
-import { getTourPackageBySlug } from '@/lib/firebase';
+import { getTourPackageBySlug, getTourPackages } from '@/lib/firebase';
 import type { TourPackage } from '@/types';
-import { tourPackages } from '@/lib/data';
 
 
-async function getTourData(slug: string): Promise<Omit<TourPackage, 'itinerary'> & { itinerary: Omit<TourPackage['itinerary'][0], 'icon'>[] } | null> {
+async function getTourData(slug: string): Promise<TourPackage | null> {
     const tourData = await getTourPackageBySlug(slug);
     if (!tourData) {
         return null;
@@ -25,6 +24,15 @@ export default async function TourPackagePage({ params }: { params: { slug: stri
     notFound();
   }
 
+  const tourPackageForBookingCard = {
+    slug: tourPackage.slug,
+    name: tourPackage.name,
+    inclusions: tourPackage.inclusions,
+    exclusions: tourPackage.exclusions,
+    notes: tourPackage.notes,
+    price: tourPackage.price,
+  };
+
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <div className="grid lg:grid-cols-5 gap-12">
@@ -39,7 +47,7 @@ export default async function TourPackagePage({ params }: { params: { slug: stri
 
         <div className="lg:col-span-2">
             <div className="sticky top-24">
-                <TourBookingCard tourPackageData={tourPackage} />
+                <TourBookingCard tourPackageData={tourPackageForBookingCard} />
             </div>
         </div>
       </div>
@@ -49,7 +57,7 @@ export default async function TourPackagePage({ params }: { params: { slug: stri
 
 // Generate static paths for all tour packages
 export async function generateStaticParams() {
-  // Reading from static data for build-time generation
+  const tourPackages = await getTourPackages();
   return tourPackages.map((pkg) => ({
     slug: pkg.slug,
   }));

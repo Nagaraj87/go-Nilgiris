@@ -13,10 +13,9 @@ import { ImageIcon, AlertCircle, Loader2 } from 'lucide-react';
 
 type TourGalleryProps = {
     slug: string;
-    staticGallery: TourPackage['gallery'];
 }
 
-export function TourGallery({ slug, staticGallery }: TourGalleryProps) {
+export function TourGallery({ slug }: TourGalleryProps) {
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -32,16 +31,14 @@ export function TourGallery({ slug, staticGallery }: TourGalleryProps) {
                 setImages(fetchedImages as GalleryImage[]);
             } catch (err) {
                 console.error("Failed to fetch gallery images", err);
-                setError("Gallery images could not be loaded. Showing default images.");
-                // Fallback to static gallery
-                setImages(staticGallery.map((g, i) => ({ ...g, id: `static-${i}`, url: g.src, packageSlug: slug })));
+                setError("Gallery images could not be loaded. Please check back later.");
             } finally {
                 setLoading(false);
             }
         };
 
         fetchGallery();
-    }, [slug, staticGallery]);
+    }, [slug]);
 
     if (loading) {
         return (
@@ -52,7 +49,7 @@ export function TourGallery({ slug, staticGallery }: TourGalleryProps) {
         )
     }
 
-    if (error && images.length === 0) {
+    if (error) {
         return (
              <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />

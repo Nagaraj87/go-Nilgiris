@@ -10,7 +10,7 @@ import { useMemo } from "react";
 
 
 type TourTabsProps = {
-    tourPackage: Omit<TourPackage, 'itinerary'> & { itinerary: Omit<TourPackage['itinerary'][0], 'icon'>[] };
+    tourPackage: TourPackage;
 }
 
 export function TourTabs({ tourPackage }: TourTabsProps) {
@@ -49,7 +49,7 @@ export function TourTabs({ tourPackage }: TourTabsProps) {
                 </div>
             </TabsContent>
             <TabsContent value="gallery" className="mt-6">
-               <TourGallery slug={tourPackage.slug} staticGallery={tourPackage.gallery} />
+               <TourGallery slug={tourPackage.slug} />
             </TabsContent>
             <TabsContent value="overview" className="mt-6">
               <Accordion type="single" collapsible className="w-full">

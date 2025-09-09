@@ -1,18 +1,38 @@
 "use client";
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, Download } from 'lucide-react';
-import { tourPackages } from '@/lib/data';
+import { CheckCircle2, Download, Loader2 } from 'lucide-react';
+import { getTourPackageBySlug } from '@/lib/firebase';
+import type { TourPackage } from '@/types';
+
 
 function ConfirmationContent() {
     const searchParams = useSearchParams();
     const bookingId = searchParams.get('bookingId');
     const packageSlug = searchParams.get('package');
-    const tourPackage = tourPackages.find(p => p.slug === packageSlug);
+    const [tourPackage, setTourPackage] = useState<TourPackage | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if(packageSlug) {
+            getTourPackageBySlug(packageSlug).then(pkg => {
+                setTourPackage(pkg);
+                setLoading(false);
+            })
+        }
+    }, [packageSlug]);
+
+    if (loading) {
+        return (
+             <div className="flex justify-center items-center h-screen">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        )
+    }
 
     return (
         <div className="container mx-auto max-w-2xl py-12 md:py-24">

@@ -7,7 +7,6 @@ import { Suspense, useState, useMemo, useEffect, useCallback } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { tourPackages } from '@/lib/data';
 import type { TourPackage } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, CreditCard, Ticket, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
-import { saveBooking, getBlockedSeatsForDate, getOccupiedSeatsForDate, getPackagePrice } from '@/lib/firebase';
+import { saveBooking, getBlockedSeatsForDate, getOccupiedSeatsForDate, getPackagePrice, getTourPackageBySlug } from '@/lib/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PassengerFields } from '@/components/booking/passenger-fields';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -50,7 +49,8 @@ function BookingFlow() {
   const packageSlug = searchParams.get('package');
   const { toast } = useToast();
 
-  const tourPackage = useMemo(() => tourPackages.find(p => p.slug === packageSlug) || tourPackages[0], [packageSlug]);
+  const [tourPackage, setTourPackage] = useState<TourPackage | null>(null);
+
   
   const [step, setStep] = useState(1);
   const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
@@ -62,11 +62,22 @@ function BookingFlow() {
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
 
+  useEffect(() => {
+    if (packageSlug) {
+        getTourPackageBySlug(packageSlug).then(pkg => {
+            if (pkg) {
+                setTourPackage(pkg);
+                form.setValue('packageSlug', pkg.slug);
+            }
+        });
+    }
+  }, [packageSlug]);
+
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
-      packageSlug: tourPackage.slug,
+      packageSlug: '',
       bookingDate: undefined,
       memberCount: 1,
       passengers: [{ name: '', age: 0, gender: 'male', phone: '' }],
@@ -82,15 +93,15 @@ function BookingFlow() {
   const bookingDate = form.watch('bookingDate');
 
   useEffect(() => {
+    if (!tourPackage) return;
     setLoadingAvailability(true);
     getPackagePrice(tourPackage.slug)
         .then(price => setPricePerSeat(price))
         .catch(() => {
-            const staticPackage = tourPackages.find(p => p.slug === tourPackage.slug);
-            setPricePerSeat(staticPackage?.price || 349);
+            setPricePerSeat(tourPackage.price);
             toast({variant: "destructive", title: "Error", description: "Could not fetch latest price. Using default."})
         })
-  }, [tourPackage.slug, toast]);
+  }, [tourPackage, toast]);
 
   useEffect(() => {
     const currentCount = fields.length;
@@ -107,7 +118,7 @@ function BookingFlow() {
   }, [memberCount, append, remove, fields.length]);
 
   useEffect(() => {
-      if(bookingDate) {
+      if(bookingDate && tourPackage) {
         setLoadingAvailability(true);
         setSelectedSeats([]); // Reset seats on date change
         const dateStr = format(bookingDate, "yyyy-MM-dd");
@@ -124,7 +135,7 @@ function BookingFlow() {
             setLoadingAvailability(false);
         });
       }
-  }, [bookingDate, tourPackage.slug, toast]);
+  }, [bookingDate, tourPackage, toast]);
 
 
   const totalAmount = useMemo(() => {
@@ -164,6 +175,7 @@ function BookingFlow() {
   };
 
   const processPayment = async () => {
+    if (!tourPackage) return;
     setIsSubmitting(true);
     const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
@@ -229,6 +241,10 @@ function BookingFlow() {
 
   const disabledDates = (date: Date) => {
     return date < new Date(new Date().setDate(new Date().getDate() - 1));
+  }
+
+  if (!tourPackage) {
+    return <div className="flex justify-center items-center h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
   }
 
   return (
