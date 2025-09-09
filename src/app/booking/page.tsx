@@ -192,9 +192,13 @@ function BookingFlow() {
             handler: async (response: any) => {
                 const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
+                const { packageSlug, memberCount, passengers } = form.getValues();
+
                 const bookingData = {
                   bookingId,
-                  ...form.getValues(),
+                  packageSlug,
+                  memberCount,
+                  passengers,
                   selectedSeats: selectedSeats.map(s => ({ number: s.number, price: s.price })),
                   totalAmount,
                   bookingDate: format(form.getValues('bookingDate'), "yyyy-MM-dd"),
