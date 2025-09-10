@@ -23,6 +23,8 @@ export function AddImageForm({ packageSlug, onImageAdded }: AddImageFormProps) {
     const isValidImageUrl = (url: string) => {
         try {
             new URL(url);
+            // A simple regex to check for common image file extensions. 
+            // This is not foolproof but covers most cases.
             return /\.(jpg|jpeg|png|webp|avif|gif|svg)$/.test(url);
         } catch (_) {
             return false;
