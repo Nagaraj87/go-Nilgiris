@@ -3,7 +3,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState, useRef } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,6 +49,9 @@ function BookingFlow() {
   const searchParams = useSearchParams();
   const packageSlugFromUrl = searchParams.get('package');
   const { toast } = useToast();
+  
+  const step2Ref = useRef<HTMLDivElement>(null);
+  const step3Ref = useRef<HTMLDivElement>(null);
 
   const [tourPackage, setTourPackage] = useState<TourPackage | null>(null);
 
@@ -157,6 +160,7 @@ function BookingFlow() {
     }
     
     setStep(2);
+    setTimeout(() => step2Ref.current?.scrollIntoView({ behavior: 'smooth' }), 100);
   };
   
   const processStep2 = async () => {
@@ -178,6 +182,7 @@ function BookingFlow() {
       return;
     }
     setStep(3);
+    setTimeout(() => step3Ref.current?.scrollIntoView({ behavior: 'smooth' }), 100);
   };
 
   const processPayment = async () => {
@@ -400,7 +405,7 @@ function BookingFlow() {
           )}
 
           {step === 2 && pricePerSeat !== null && (
-            <Card>
+            <Card ref={step2Ref}>
               <CardHeader>
                 <CardTitle>Step 2: Passenger Details & Seat Selection</CardTitle>
                 <CardDescription>Enter details for each passenger and select your seats.</CardDescription>
@@ -438,7 +443,7 @@ function BookingFlow() {
                 
                 <div className="text-right text-2xl font-bold">Total: ₹{totalAmount.toLocaleString('en-IN')}</div>
               </CardContent>
-              <CardFooter className="justify-between">
+              <CardFooter className="flex-wrap justify-between gap-4">
                 <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
                 <Button onClick={processStep2}><CreditCard className="mr-2 h-4 w-4"/> Proceed to Payment</Button>
               </CardFooter>
@@ -446,7 +451,7 @@ function BookingFlow() {
           )}
 
           {step === 3 && (
-            <Card>
+            <Card ref={step3Ref}>
                 <CardHeader>
                     <CardTitle>Step 3: Confirm & Pay</CardTitle>
                     <CardDescription>You are just one step away from confirming your adventure.</CardDescription>
@@ -463,7 +468,7 @@ function BookingFlow() {
                         </div>
                      </div>
                 </CardContent>
-                <CardFooter className="justify-between">
+                <CardFooter className="flex-wrap justify-between gap-4">
                     <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
                     <Button onClick={processPayment} disabled={isSubmitting}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CreditCard className="mr-2 h-4 w-4"/>}
@@ -485,3 +490,5 @@ const BookingPage = () => (
 )
 
 export default BookingPage;
+
+    
