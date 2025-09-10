@@ -21,7 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { SeatChart } from '@/components/seat-chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
-import { getBlockedSeatsForDate, getOccupiedSeatsForDate, getPackagePrice, getTourPackageBySlug } from '@/lib/firebase';
+import { getAvailabilityForDate, getPackagePrice, getTourPackageBySlug } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import type { TourPackage } from '@/types';
 import { createPaymentOrder, saveSuccessfulBooking } from './actions';
@@ -61,7 +61,7 @@ function BookingFlow() {
   
   const [blockedSeats, setBlockedSeats] = useState<number[]>([]);
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
-  const [loadingAvailability, setLoadingAvailability] = useState(true);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -94,7 +94,6 @@ function BookingFlow() {
 
   useEffect(() => {
     if (!tourPackage) return;
-    setLoadingAvailability(true);
     getPackagePrice(tourPackage.slug)
         .then(price => setPricePerSeat(price))
         .catch(() => {
@@ -127,18 +126,16 @@ function BookingFlow() {
         setLoadingAvailability(true);
         setSelectedSeats([]); // Reset seats on date change
         const dateStr = format(bookingDate, "yyyy-MM-dd");
-        Promise.all([
-            getBlockedSeatsForDate(tourPackage.slug, dateStr),
-            getOccupiedSeatsForDate(tourPackage.slug, dateStr)
-        ]).then(([blocked, occupied]) => {
-            setBlockedSeats(blocked || []);
-            setOccupiedSeats(occupied || []);
-        }).catch(err => {
-            console.error(err);
-            toast({ variant: "destructive", title: "Error", description: "Could not load seat availability." });
-        }).finally(() => {
-            setLoadingAvailability(false);
-        });
+        getAvailabilityForDate(tourPackage.slug, dateStr)
+            .then(({ blocked, occupied }) => {
+                setBlockedSeats(blocked || []);
+                setOccupiedSeats(occupied || []);
+            }).catch(err => {
+                console.error(err);
+                toast({ variant: "destructive", title: "Error", description: "Could not load seat availability." });
+            }).finally(() => {
+                setLoadingAvailability(false);
+            });
       }
   }, [bookingDate, tourPackage, toast]);
 
@@ -394,8 +391,9 @@ function BookingFlow() {
               </CardContent>
               <CardFooter className="justify-end">
                 <Button onClick={processStep1} disabled={pricePerSeat === null || loadingAvailability}>
-                    {(pricePerSeat === null || loadingAvailability) && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                    {loadingAvailability ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                    {pricePerSeat === null ? 'Loading...' : 'Next'}
+                    <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardFooter>
             </Card>

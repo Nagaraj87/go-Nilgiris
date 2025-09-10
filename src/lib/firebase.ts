@@ -12,7 +12,7 @@ const firebaseConfig = {
   appId: '1:379536738400:web:019de38a8bb5025ab7db05',
   storageBucket: 'nilgiri-explorer.appspot.com',
   apiKey: 'AIzaSyDAZjWPRX1pbM0CAC4QlZlH9eWBksqluE4',
-  authDomain: 'nilgiri-explorer.firebaseapp.com',
+  authDomain: 'nil-explorer.firebaseapp.com',
   messagingSenderId: '379536738400',
 };
 
@@ -176,6 +176,20 @@ const getAvailabilityDocRef = (packageSlug: string, date: string) => {
     const availabilityDocId = `${packageSlug}_${date}`;
     return doc(db, "availability", availabilityDocId);
 }
+
+export const getAvailabilityForDate = async (packageSlug: string, date: string): Promise<{ blocked: number[], occupied: number[] }> => {
+    if (!packageSlug || !date) {
+        return { blocked: [], occupied: [] };
+    }
+    
+    const [blockedSeats, occupiedSeats] = await Promise.all([
+        getBlockedSeatsForDate(packageSlug, date),
+        getOccupiedSeatsForDate(packageSlug, date)
+    ]);
+    
+    return { blocked: blockedSeats, occupied: occupiedSeats };
+}
+
 
 export const getBlockedSeatsForDate = async (packageSlug: string, date: string): Promise<number[]> => {
     const docRef = getAvailabilityDocRef(packageSlug, date);
@@ -365,6 +379,3 @@ export const updateAdminCredentials = async(credentials: AdminCredentials) => {
     await setDoc(ADMIN_DOC_REF, dataToUpdate, {merge: true});
 }
 
-    
-
-    
