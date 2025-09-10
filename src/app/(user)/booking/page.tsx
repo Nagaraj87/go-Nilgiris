@@ -21,10 +21,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { SeatChart } from '@/components/seat-chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
-import { getAvailabilityForDate, getPackagePrice, getTourPackageBySlug } from '@/lib/firebase';
+import { getPackagePrice, getTourPackageBySlug } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import type { TourPackage } from '@/types';
-import { createPaymentOrder, saveSuccessfulBooking } from './actions';
+import { createPaymentOrder, saveSuccessfulBooking, getAvailabilityForDate } from './actions';
 
 
 const passengerSchema = z.object({

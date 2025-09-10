@@ -2,7 +2,7 @@
 'use server';
 
 import { createOrder as createRazorpayOrder } from '@/lib/razorpay';
-import { saveBooking } from '@/lib/firebase';
+import { saveBooking, getAvailabilityForDate as getAvailabilityForDateFromDb } from '@/lib/firebase';
 import type { Booking } from '@/types';
 
 export async function createPaymentOrder(totalAmount: number) {
@@ -23,4 +23,8 @@ export async function saveSuccessfulBooking(bookingData: Omit<Booking, 'id'>) {
         console.error('Error saving booking to Firestore:', e);
         return { success: false, error: 'Payment was successful but we failed to save your booking. Please contact support.' };
     }
+}
+
+export async function getAvailabilityForDate(packageSlug: string, date: string) {
+    return getAvailabilityForDateFromDb(packageSlug, date);
 }
