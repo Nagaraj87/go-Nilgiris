@@ -3,7 +3,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import React, { Suspense, useState, useMemo, useEffect, useCallback } from 'react';
+import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,7 +24,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { createOrder } from '@/lib/razorpay';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PassengerFields } from '@/components/booking/passenger-fields';
+
 
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -147,8 +148,8 @@ function BookingFlow() {
   }, [selectedSeats]);
   
   const processStep1 = async () => {
-    const isDateValid = await form.trigger('bookingDate');
-    if (!isDateValid || memberCount < 1) {
+    const result = await form.trigger(['bookingDate']);
+    if (!result || memberCount < 1) {
         toast({variant: "destructive", title: "Incomplete Details", description: "Please select a date and number of members."})
         return;
     }
@@ -254,14 +255,13 @@ function BookingFlow() {
         // Keep name, but copy phone and gender
         return { 
             ...passenger, 
-            phone: firstPassenger.phone, 
-            gender: firstPassenger.gender 
+            phone: firstPassenger.phone,
         };
     });
     
     form.setValue('passengers', newPassengers, { shouldValidate: true, shouldDirty: true });
 
-    toast({ title: "Details Copied", description: "Phone and gender from the first passenger have been copied to all others." });
+    toast({ title: "Details Copied", description: "Phone number from the first passenger has been copied to all others." });
   }
 
   const handleSeatSelect = (seat: any, isSelected: boolean) => {
@@ -314,7 +314,7 @@ function BookingFlow() {
               >
                 {step > s.num ? <Ticket size={20}/> : s.num}
               </div>
-              <p className="text-xs sm:text-sm mt-2">{s.title}</p>
+              <p className="text-xs sm:text-sm mt-2 text-center">{s.title}</p>
             </div>
             {index < steps.length - 1 && <div className="flex-grow h-0.5 bg-border mt-5 mx-2 sm:mx-4"></div>}
           </React.Fragment>
@@ -409,7 +409,7 @@ function BookingFlow() {
                     <div className="pt-2">
                         <Button type="button" size="sm" variant="outline" onClick={handleCopyToAll} className="gap-1">
                             <Copy size={12}/>
-                            Copy first passenger to all
+                            Copy first passenger's phone
                         </Button>
                     </div>
                 )}
@@ -419,35 +419,7 @@ function BookingFlow() {
                   {fields.map((field, index) => (
                     <div key={field.id} className="p-4 border rounded-lg space-y-4">
                         <Label className="font-bold">Passenger {index + 1}</Label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <FormField control={form.control} name={`passengers.${index}.name`} render={({ field }) => (
-                                <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            <FormField control={form.control} name={`passengers.${index}.age`} render={({ field }) => (
-                                <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            <FormField control={form.control} name={`passengers.${index}.phone`} render={({ field }) => (
-                                <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            <FormField control={form.control} name={`passengers.${index}.gender`} render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Gender</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select gender" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="male">Male</SelectItem>
-                                            <SelectItem value="female">Female</SelectItem>
-                                            <SelectItem value="child">Child</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                        </div>
+                        <PassengerFields form={form} index={index} />
                     </div>
                   ))}
                 </div>
@@ -482,7 +454,7 @@ function BookingFlow() {
                 </CardHeader>
                 <CardContent>
                      <div className="p-6 bg-muted rounded-lg space-y-4">
-                        <div className="flex justify-between items-center text-lg">
+                        <div className="flex justify-between items-center text-lg flex-wrap">
                             <span className="font-semibold">{tourPackage.name} ({memberCount} x ₹{pricePerSeat})</span>
                             <span className="font-bold">₹{totalAmount.toLocaleString('en-IN')}</span>
                         </div>
