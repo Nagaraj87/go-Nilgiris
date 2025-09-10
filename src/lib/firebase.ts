@@ -246,7 +246,7 @@ export const addGalleryImageToFirestore = async (url: string, alt: string, packa
         packageSlug: packageSlug,
         createdAt: new Date(),
     });
-    return { id: docRef.id, url, alt, packageSlug };
+    return { id: docRef.id, url, alt, packageSlug, createdAt: new Date().toISOString() };
 }
 
 export const getGalleryImages = async (packageSlug: string): Promise<GalleryImage[]> => {
@@ -257,7 +257,9 @@ export const getGalleryImages = async (packageSlug: string): Promise<GalleryImag
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => {
         const data = doc.data();
-        return { id: doc.id, ...data } as GalleryImage;
+        // Convert Timestamp to a serializable format (ISO string)
+        const createdAt = (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString();
+        return { id: doc.id, ...data, createdAt } as GalleryImage;
     });
 };
 
@@ -362,5 +364,7 @@ export const updateAdminCredentials = async(credentials: AdminCredentials) => {
     }
     await setDoc(ADMIN_DOC_REF, dataToUpdate, {merge: true});
 }
+
+    
 
     

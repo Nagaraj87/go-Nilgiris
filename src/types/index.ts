@@ -57,6 +57,7 @@ export type GalleryImage = {
   url: string;
   alt: string;
   packageSlug: string;
+  createdAt: string; // Changed to string to be serializable
 };
 
 export type ContactInfo = {
@@ -68,3 +69,5 @@ export type AdminCredentials = {
     username: string;
     password?: string; // Password is a hash, and optional when updating only username
 };
+
+    
