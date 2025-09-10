@@ -7,6 +7,7 @@ import { TourCard } from './tour-card';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle } from 'lucide-react';
 import type { TourPackage } from '@/types';
+import { Skeleton } from '../ui/skeleton';
 
 
 export function ToursSection() {
@@ -69,8 +70,8 @@ export function ToursSection() {
           <div className="mx-auto grid max-w-5xl items-start gap-8 py-12 sm:grid-cols-1 md:grid-cols-2 lg:gap-12">
             {loadingTours ? (
               <>
-                <div className="w-full h-96 bg-muted rounded-lg animate-pulse"></div>
-                <div className="w-full h-96 bg-muted rounded-lg animate-pulse"></div>
+                <CardSkeleton />
+                <CardSkeleton />
               </>
             ) : (
                tourPackages.map((pkg) => (
@@ -87,3 +88,14 @@ export function ToursSection() {
       </section>
   )
 }
+
+
+const CardSkeleton = () => (
+    <div className="flex flex-col space-y-3">
+      <Skeleton className="h-[225px] w-full rounded-xl" />
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+      </div>
+    </div>
+  );

@@ -2,29 +2,29 @@
 
 "use client";
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import React, { Suspense, useState, useMemo, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
-import type { TourPackage } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { SeatChart } from '@/components/seat-chart';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { cn } from '@/lib/utils';
-import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, CreditCard, Ticket, AlertCircle, Loader2, Copy } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { useToast } from "@/hooks/use-toast";
-import { saveBooking, getBlockedSeatsForDate, getOccupiedSeatsForDate, getPackagePrice, getTourPackageBySlug } from '@/lib/firebase';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
-import { createOrder } from '@/lib/razorpay';
+import { AlertCircle, ArrowLeft, ArrowRight, Calendar as CalendarIcon, Copy, CreditCard, Loader2, Ticket } from 'lucide-react';
 import { PassengerFields } from '@/components/booking/passenger-fields';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { SeatChart } from '@/components/seat-chart';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from "@/hooks/use-toast";
+import { getBlockedSeatsForDate, getOccupiedSeatsForDate, getPackagePrice, getTourPackageBySlug, saveBooking } from '@/lib/firebase';
+import { createOrder } from '@/lib/razorpay';
+import { cn } from '@/lib/utils';
+import type { TourPackage } from '@/types';
 
 
 const passengerSchema = z.object({
@@ -131,8 +131,8 @@ function BookingFlow() {
             getBlockedSeatsForDate(tourPackage.slug, dateStr),
             getOccupiedSeatsForDate(tourPackage.slug, dateStr)
         ]).then(([blocked, occupied]) => {
-            setBlockedSeats(blocked);
-            setOccupiedSeats(occupied);
+            setBlockedSeats(blocked || []);
+            setOccupiedSeats(occupied || []);
         }).catch(err => {
             console.error(err);
             toast({ variant: "destructive", title: "Error", description: "Could not load seat availability." });
@@ -314,7 +314,7 @@ function BookingFlow() {
               >
                 {step > s.num ? <Ticket size={20}/> : s.num}
               </div>
-              <p className="text-xs sm:text-sm mt-2 text-center">{s.title}</p>
+              <p className="text-xs sm:text-sm mt-2 text-center break-words">{s.title}</p>
             </div>
             {index < steps.length - 1 && <div className="flex-grow h-0.5 bg-border mt-5 mx-2 sm:mx-4"></div>}
           </React.Fragment>
@@ -454,9 +454,9 @@ function BookingFlow() {
                 </CardHeader>
                 <CardContent>
                      <div className="p-6 bg-muted rounded-lg space-y-4">
-                        <div className="flex justify-between items-center text-lg flex-wrap">
+                        <div className="flex justify-between items-center text-lg flex-wrap gap-2">
                             <span className="font-semibold">{tourPackage.name} ({memberCount} x ₹{pricePerSeat})</span>
-                            <span className="font-bold">₹{totalAmount.toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-xl sm:text-2xl whitespace-nowrap">₹{totalAmount.toLocaleString('en-IN')}</span>
                         </div>
                         <div className="text-sm text-muted-foreground border-t border-muted-foreground/20 pt-4 mt-4">
                             <p><strong>Date:</strong> {bookingDate && format(bookingDate, 'PPP')}</p>
@@ -486,5 +486,3 @@ const BookingPage = () => (
 )
 
 export default BookingPage;
-
-    

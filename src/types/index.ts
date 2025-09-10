@@ -11,12 +11,6 @@ export type FAQ = {
     answer: string;
 };
 
-export type GalleryItem = {
-    src: string;
-    alt: string;
-    hint: string;
-};
-
 export type TourPackage = {
   id: string;
   slug: string;
@@ -29,19 +23,30 @@ export type TourPackage = {
   notes: string[];
   disclaimers: string[];
   itinerary: ItineraryItem[];
-  gallery: GalleryItem[];
   faqs: FAQ[];
 };
+
+type Passenger = {
+    name: string;
+    age: number;
+    gender: 'male' | 'female' | 'child';
+    phone: string;
+}
+
+type SeatSelection = {
+    number: number;
+    price: number;
+}
 
 export type Booking = {
   id: string;
   bookingId: string;
   packageSlug: string;
-  bookingDate: string;
+  bookingDate: string; // Stored as "yyyy-MM-dd"
   memberCount: number;
   totalAmount: number;
-  passengers: { name: string; age: number; gender: string; phone: string }[];
-  selectedSeats: { number: number; price: number }[];
+  passengers: Passenger[];
+  selectedSeats: SeatSelection[];
   razorpayPaymentId?: string;
   razorpayOrderId?: string;
   razorpaySignature?: string;
@@ -61,5 +66,5 @@ export type ContactInfo = {
 
 export type AdminCredentials = {
     username: string;
-    password?: string;
+    password?: string; // Password is a hash, and optional when updating only username
 };
