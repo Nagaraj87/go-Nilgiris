@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter, notFound, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -31,6 +31,17 @@ const editBookingSchema = z.object({
 
 type EditBookingFormValues = z.infer<typeof editBookingSchema>;
 
+async function updateBookingAction(bookingId: string, data: EditBookingFormValues) {
+    'use server';
+    try {
+        await updateBooking(bookingId, { passengers: data.passengers });
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to update booking:', error);
+        return { success: false, error: 'Failed to update booking.' };
+    }
+}
+
 
 export default function EditBookingPage() {
   const router = useRouter();
@@ -49,7 +60,7 @@ export default function EditBookingPage() {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields } = useFieldArray({
     control: form.control,
     name: 'passengers',
   });
@@ -80,16 +91,16 @@ export default function EditBookingPage() {
 
   const onSubmit = async (data: EditBookingFormValues) => {
     setIsSubmitting(true);
-    try {
-      await updateBooking(bookingId, { passengers: data.passengers });
-      toast({ title: 'Success', description: 'Booking updated successfully.' });
-      router.push(`/admin`);
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update booking.' });
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
+    const result = await updateBookingAction(bookingId, data);
+    
+    if (result.success) {
+        toast({ title: 'Success', description: 'Booking updated successfully.' });
+        router.push(`/admin`);
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
+    
+    setIsSubmitting(false);
   };
   
   if (loading) {
