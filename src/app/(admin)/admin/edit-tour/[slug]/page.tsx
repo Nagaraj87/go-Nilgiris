@@ -96,10 +96,10 @@ export default function EditTourPage() {
           form.reset({
             ...tourData,
             // Ensure array fields are not empty for the form
-            inclusions: tourData.inclusions.length > 0 ? tourData.inclusions : [''],
-            exclusions: tourData.exclusions.length > 0 ? tourData.exclusions : [''],
-            notes: tourData.notes.length > 0 ? tourData.notes : [''],
-            disclaimers: tourData.disclaimers.length > 0 ? tourData.disclaimers : [''],
+            inclusions: tourData.inclusions?.length > 0 ? tourData.inclusions : [''],
+            exclusions: tourData.exclusions?.length > 0 ? tourData.exclusions : [''],
+            notes: tourData.notes?.length > 0 ? tourData.notes : [''],
+            disclaimers: tourData.disclaimers?.length > 0 ? tourData.disclaimers : [''],
           });
         } else {
           toast({ variant: 'destructive', title: 'Error', description: 'Tour not found.' });
@@ -269,7 +269,7 @@ export default function EditTourPage() {
                             <FormField control={form.control} name={`itinerary.${index}.activity`} render={({ field }) => (<FormItem><FormLabel>Activity</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
                         <FormField control={form.control} name={`itinerary.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name={`itinerary.${index}.iconName`} render={({ field }) => (<FormItem><FormLabel>Icon Name (from lucide-react) (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></Item>)} />
+                        <FormField control={form.control} name={`itinerary.${index}.iconName`} render={({ field }) => (<FormItem><FormLabel>Icon Name (from lucide-react) (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <Button type="button" variant="destructive" size="sm" onClick={() => removeItinerary(index)} disabled={itineraryFields.length <= 1}><Trash2 className="mr-2"/> Remove Stop</Button>
                     </div>
                 ))}
