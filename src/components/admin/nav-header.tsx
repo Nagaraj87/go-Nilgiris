@@ -3,44 +3,89 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Lock, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, LogOut, ExternalLink } from 'lucide-react';
+import { Home, Lock, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, LogOut, ExternalLink, Plane } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { NotificationBell } from '../notification-bell';
 import { useAuth } from '@/context/auth-context';
+import React from 'react';
 
 export function NavHeader() {
   const { logout } = useAuth();
+  const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+  
   const navLinks = [
+    { href: "/admin", label: "Dashboard", icon: Home },
+    { href: "/admin/edit-tour/new", label: "New Tour", icon: Plane },
     { href: "/admin/availability", label: "Availability", icon: ShieldOff },
+    { href: "/admin/notifications", label: "Notifications", icon: Bell },
+    { href: "/admin#tour-management-section", label: "Tours", icon: Plane },
     { href: "/admin#pricing-section", label: "Pricing", icon: Tag },
     { href: "/admin#contact-section", label: "Contact", icon: Phone },
     { href: "/admin#gallery-section", label: "Gallery", icon: GalleryHorizontal },
-    { href: "/admin/notifications", label: "Notifications", icon: Bell },
-  ]
+    { href: "/admin#credentials-section", label: "Credentials", icon: Lock },
+  ];
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
-        <p className="font-bold">Admin Panel</p>
-        <nav className="hidden md:flex items-center gap-2">
-            {navLinks.map(({href, label, icon: Icon}) => (
-                <Button variant="ghost" asChild key={label}>
-                    <Link href={href}>
-                        <Icon className="mr-2 h-4 w-4"/>
-                        {label}
-                    </Link>
-                </Button>
-            ))}
-             <NotificationBell />
-             <Button variant="outline" asChild>
-                <Link href="/" target="_blank">
-                    <ExternalLink className="mr-2 h-4 w-4"/>
-                    Go to Site
-                </Link>
-            </Button>
-            <Button variant="outline" onClick={logout}>
-                <LogOut className="mr-2 h-4 w-4"/>
-                Logout
-            </Button>
+        <Link href="/admin" className="font-bold">Admin Panel</Link>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-1">
+          <Button variant="ghost" asChild>
+              <Link href="/admin">
+                  <Home className="mr-2 h-4 w-4"/> Dashboard
+              </Link>
+          </Button>
+          <Button variant="ghost" asChild>
+              <Link href="/admin/availability">
+                  <ShieldOff className="mr-2 h-4 w-4"/> Availability
+              </Link>
+          </Button>
+          <NotificationBell />
+          <Button variant="outline" asChild>
+            <Link href="/" target="_blank">
+                <ExternalLink className="mr-2 h-4 w-4"/>Go to Site
+            </Link>
+          </Button>
+          <Button variant="outline" onClick={logout}>
+            <LogOut className="mr-2 h-4 w-4"/>Logout
+          </Button>
         </nav>
+        
+        {/* Mobile Navigation */}
+        <div className="md:hidden flex items-center gap-2">
+            <NotificationBell />
+            <Button variant="outline" size="icon" asChild>
+                <Link href="/" target="_blank"><ExternalLink/></Link>
+            </Button>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="outline" size="icon"><Menu/></Button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                    <SheetHeader>
+                        <SheetTitle>Admin Menu</SheetTitle>
+                    </SheetHeader>
+                    <nav className="flex flex-col gap-4 mt-8">
+                      {navLinks.map(({ href, label, icon: Icon }) => (
+                          <Link
+                              key={href}
+                              href={href}
+                              className="flex items-center gap-3 rounded-md p-2 text-lg font-medium hover:bg-muted"
+                              onClick={() => setIsSheetOpen(false)}
+                          >
+                            <Icon className="h-5 w-5" />
+                            {label}
+                          </Link>
+                      ))}
+                      <Button variant="outline" onClick={() => { logout(); setIsSheetOpen(false); }}>
+                        <LogOut className="mr-2 h-4 w-4"/>Logout
+                      </Button>
+                    </nav>
+                </SheetContent>
+            </Sheet>
+        </div>
       </div>
     </header>
   );
