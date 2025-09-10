@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/co
 import { NotificationBell } from '../notification-bell';
 import { useAuth } from '@/context/auth-context';
 import React from 'react';
+import { ScrollArea } from '../ui/scroll-area';
 
 export function NavHeader() {
   const { logout } = useAuth();
@@ -63,26 +64,28 @@ export function NavHeader() {
                 <SheetTrigger asChild>
                     <Button variant="outline" size="icon"><Menu/></Button>
                 </SheetTrigger>
-                <SheetContent side="right">
+                <SheetContent side="right" className="flex flex-col">
                     <SheetHeader>
                         <SheetTitle>Admin Menu</SheetTitle>
                     </SheetHeader>
-                    <nav className="flex flex-col gap-4 mt-8">
-                      {navLinks.map(({ href, label, icon: Icon }) => (
-                          <Link
-                              key={href}
-                              href={href}
-                              className="flex items-center gap-3 rounded-md p-2 text-lg font-medium hover:bg-muted"
-                              onClick={() => setIsSheetOpen(false)}
-                          >
-                            <Icon className="h-5 w-5" />
-                            {label}
-                          </Link>
-                      ))}
-                      <Button variant="outline" onClick={() => { logout(); setIsSheetOpen(false); }}>
+                     <ScrollArea className="flex-grow">
+                        <nav className="flex flex-col gap-4 pt-4 pr-4">
+                        {navLinks.map(({ href, label, icon: Icon }) => (
+                            <Link
+                                key={href}
+                                href={href}
+                                className="flex items-center gap-3 rounded-md p-2 text-lg font-medium hover:bg-muted"
+                                onClick={() => setIsSheetOpen(false)}
+                            >
+                                <Icon className="h-5 w-5" />
+                                {label}
+                            </Link>
+                        ))}
+                        </nav>
+                     </ScrollArea>
+                      <Button variant="outline" onClick={() => { logout(); setIsSheetOpen(false); }} className="mt-auto">
                         <LogOut className="mr-2 h-4 w-4"/>Logout
                       </Button>
-                    </nav>
                 </SheetContent>
             </Sheet>
         </div>
