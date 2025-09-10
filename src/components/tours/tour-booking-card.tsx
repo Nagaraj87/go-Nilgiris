@@ -8,16 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Check, X, Info } from 'lucide-react';
+import type { TourPackage } from "@/types";
 
 type TourBookingCardProps = {
-    tourPackageData: {
-      slug: string;
-      name: string;
-      inclusions: string[];
-      exclusions: string[];
-      notes: string[];
-      price: number;
-    }
+    tourPackageData: TourPackage;
 }
 
 export function TourBookingCard({ tourPackageData }: TourBookingCardProps) {

@@ -24,15 +24,6 @@ export default async function TourPackagePage({ params }: { params: { slug: stri
     notFound();
   }
 
-  const tourPackageForBookingCard = {
-    slug: tourPackage.slug,
-    name: tourPackage.name,
-    inclusions: tourPackage.inclusions,
-    exclusions: tourPackage.exclusions,
-    notes: tourPackage.notes,
-    price: tourPackage.price,
-  };
-
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <div className="grid lg:grid-cols-5 gap-12">
@@ -47,7 +38,7 @@ export default async function TourPackagePage({ params }: { params: { slug: stri
 
         <div className="lg:col-span-2">
             <div className="sticky top-24">
-                <TourBookingCard tourPackageData={tourPackageForBookingCard} />
+                <TourBookingCard tourPackageData={tourPackage} />
             </div>
         </div>
       </div>
