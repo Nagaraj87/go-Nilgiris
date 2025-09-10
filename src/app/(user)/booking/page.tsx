@@ -4,6 +4,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useEffect, useMemo, useState, useRef } from 'react';
+import Script from 'next/script';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -61,6 +62,7 @@ function BookingFlow() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pricePerSeat, setPricePerSeat] = useState<number | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isRazorpayReady, setIsRazorpayReady] = useState(false);
   
   const [blockedSeats, setBlockedSeats] = useState<number[]>([]);
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
@@ -186,7 +188,7 @@ function BookingFlow() {
   };
 
   const processPayment = async () => {
-    if (!tourPackage) return;
+    if (!tourPackage || !isRazorpayReady) return;
     setIsSubmitting(true);
     
     const orderResult = await createPaymentOrder(totalAmount);
@@ -251,20 +253,25 @@ function BookingFlow() {
 
   const handleCopyToAll = () => {
     const firstPassenger = form.getValues('passengers.0');
-    if (!firstPassenger) return;
+    if (!firstPassenger?.name || !firstPassenger?.age || !firstPassenger?.phone) {
+        toast({ variant: "destructive", title: "Incomplete Details", description: "Please fill all details for the first passenger before copying." });
+        return;
+    }
 
     const currentPassengers = form.getValues('passengers');
     const newPassengers = currentPassengers.map((passenger, index) => {
         if (index === 0) return passenger;
         return { 
             ...passenger, 
+            name: firstPassenger.name,
+            age: firstPassenger.age,
             phone: firstPassenger.phone,
         };
     });
     
     form.setValue('passengers', newPassengers, { shouldValidate: true, shouldDirty: true });
 
-    toast({ title: "Details Copied", description: "Phone number from the first passenger has been copied to all others." });
+    toast({ title: "Details Copied", description: "Name, Age, and Phone from the first passenger have been copied to all others." });
   }
 
   const handleSeatSelect = (seat: any, isSelected: boolean) => {
@@ -302,7 +309,11 @@ function BookingFlow() {
 
   return (
     <div className="container mx-auto max-w-4xl py-12">
-        <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
+        <Script
+            id="razorpay-checkout-js"
+            src="https://checkout.razorpay.com/v1/checkout.js"
+            onLoad={() => setIsRazorpayReady(true)}
+        />
       <div className="flex items-start justify-between mb-8">
         {steps.map((s, index) => (
           <React.Fragment key={s.num}>
@@ -411,9 +422,9 @@ function BookingFlow() {
                 <CardDescription>Enter details for each passenger and select your seats.</CardDescription>
                  {memberCount > 1 && (
                     <div className="pt-2">
-                        <Button type="button" size="sm" variant="outline" onClick={handleCopyToAll} className="gap-1">
-                            <Copy size={12}/>
-                            Copy first passenger's phone
+                        <Button type="button" size="sm" variant="outline" onClick={handleCopyToAll}>
+                            <Copy className="mr-2 h-4 w-4"/>
+                            Copy first passenger's details to all
                         </Button>
                     </div>
                 )}
@@ -468,11 +479,11 @@ function BookingFlow() {
                         </div>
                      </div>
                 </CardContent>
-                <CardFooter className="flex-wrap justify-between gap-4">
-                    <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
-                    <Button onClick={processPayment} disabled={isSubmitting}>
+                <CardFooter className="flex flex-col sm:flex-row sm:justify-between w-full gap-4">
+                    <Button variant="outline" onClick={() => setStep(2)} className="w-full sm:w-auto"><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
+                    <Button onClick={processPayment} disabled={isSubmitting || !isRazorpayReady} className="w-full sm:w-auto">
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CreditCard className="mr-2 h-4 w-4"/>}
-                        Pay Now
+                        {isRazorpayReady ? 'Pay Now' : 'Loading Gateway...'}
                     </Button>
                 </CardFooter>
             </Card>
