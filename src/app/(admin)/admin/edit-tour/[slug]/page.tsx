@@ -269,7 +269,7 @@ export default function EditTourPage() {
                             <FormField control={form.control} name={`itinerary.${index}.activity`} render={({ field }) => (<FormItem><FormLabel>Activity</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
                         <FormField control={form.control} name={`itinerary.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name={`itinerary.${index}.iconName`} render={({ field }) => (<FormItem><FormLabel>Icon Name (from lucide-react) (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name={`itinerary.${index}.iconName`} render={({ field }) => (<FormItem><FormLabel>Icon Name (from lucide-react) (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></Item>)} />
                         <Button type="button" variant="destructive" size="sm" onClick={() => removeItinerary(index)} disabled={itineraryFields.length <= 1}><Trash2 className="mr-2"/> Remove Stop</Button>
                     </div>
                 ))}
