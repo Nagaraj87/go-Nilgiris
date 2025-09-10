@@ -43,10 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const credentials = await getAdminCredentials();
       if (!credentials.password || !password) {
-        return false; // No stored password or no password provided
+        return false; // No stored password hash or no password provided
       }
       
       const usernameMatch = credentials.username === username;
+      // Securely compare the provided password with the stored hash
       const passwordMatch = await bcrypt.compare(password, credentials.password);
       
       if (usernameMatch && passwordMatch) {
@@ -55,7 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData);
         return true;
       }
-      return false;
+      
+      return false; // Return false if credentials do not match
     } catch (error) {
       console.error("Login failed:", error);
       return false;
