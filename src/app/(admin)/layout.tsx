@@ -2,7 +2,7 @@
 "use client";
 
 import { useAuth, AuthProvider } from '@/context/auth-context';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { NavHeader } from '@/components/admin/nav-header';
@@ -13,13 +13,23 @@ import { ThemeProvider } from '@/components/theme-provider';
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
+
+    const isLoginPage = pathname === '/login';
 
     useEffect(() => {
-        if (!loading && !user) {
+        // If we are not loading, not on the login page, and have no user, redirect to login.
+        if (!loading && !user && !isLoginPage) {
             router.push('/login');
         }
-    }, [user, loading, router]);
+    }, [user, loading, router, isLoginPage]);
 
+    // If it's the login page, just render it without the auth check wrapper.
+    if (isLoginPage) {
+        return <>{children}</>;
+    }
+
+    // For all other admin pages, show loading screen until user is verified.
     if (loading || !user) {
         return (
             <div className="flex justify-center items-center h-screen">
