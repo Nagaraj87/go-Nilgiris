@@ -45,12 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const credentials = await getAdminCredentials();
       
       const usernameMatch = credentials.username === username;
-      // Ensure password and credentials.password exist before comparing
+      
       if (!password || !credentials.password) {
         return false;
       }
       
-      // Securely compare the provided password with the stored hash
       const passwordMatch = await bcrypt.compare(password, credentials.password);
       
       if (usernameMatch && passwordMatch) {

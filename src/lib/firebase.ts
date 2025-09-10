@@ -347,17 +347,7 @@ export const getAdminCredentials = async (): Promise<AdminCredentials> => {
     const docSnap = await getDoc(ADMIN_DOC_REF);
     
     if (docSnap.exists()) {
-        let creds = docSnap.data() as AdminCredentials;
-        
-        // Self-healing: If password is not hashed, hash it and update the DB.
-        // This handles manual edits or legacy unhashed passwords.
-        if (creds.password && !isHashed(creds.password)) {
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(creds.password, salt);
-            creds.password = hashedPassword;
-            await setDoc(ADMIN_DOC_REF, creds, { merge: true });
-        }
-        
+        const creds = docSnap.data() as AdminCredentials;
         return creds;
     } else {
         // Create default credentials if they don't exist
