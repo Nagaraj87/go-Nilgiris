@@ -49,7 +49,7 @@ export function CredentialsManagement() {
 
         setSaving(true);
         try {
-            const updatedCredentials: AdminCredentials = {
+            const updatedCredentials: Partial<AdminCredentials> = {
                 username: credentials.username,
             };
             // Only include the password if a new one is provided
@@ -62,7 +62,11 @@ export function CredentialsManagement() {
             toast({ title: "Credentials Updated", description: "Your login details have been saved." });
             setNewPassword('');
             setConfirmPassword('');
-            setIsPasswordHashed(true); // Assume it's now hashed
+            // After saving, re-fetch to get the latest state including the new hash
+            const freshData = await getAdminCredentials();
+            setCredentials(freshData);
+            setIsPasswordHashed(freshData.password ? freshData.password.startsWith('$2a$') : false);
+
         } catch (error) {
             toast({ variant: "destructive", title: "Update Failed", description: "Could not save credentials." });
         } finally {
@@ -132,7 +136,7 @@ export function CredentialsManagement() {
                         disabled={saving || !newPassword}
                     />
                 </div>
-                <Button onClick={handleSaveChanges} disabled={saving}>
+                <Button onClick={handleSaveChanges} disabled={saving || !credentials.username}>
                     {saving ? <Loader2 className="animate-spin" /> : "Save Changes"}
                 </Button>
             </div>

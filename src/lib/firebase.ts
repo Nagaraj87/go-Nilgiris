@@ -370,11 +370,19 @@ export const getAdminCredentials = async (): Promise<AdminCredentials> => {
     }
 }
 
-export const updateAdminCredentials = async(credentials: AdminCredentials) => {
-    const dataToUpdate: Partial<AdminCredentials> = {username: credentials.username};
+export const updateAdminCredentials = async(credentials: Partial<AdminCredentials>) => {
+    const dataToUpdate: Partial<AdminCredentials> = {};
+    
+    if (credentials.username) {
+        dataToUpdate.username = credentials.username;
+    }
+
     if(credentials.password && credentials.password.length > 0) {
         const salt = await bcrypt.genSalt(10);
         dataToUpdate.password = await bcrypt.hash(credentials.password, salt);
     }
-    await setDoc(ADMIN_DOC_REF, dataToUpdate, {merge: true});
+    
+    if (Object.keys(dataToUpdate).length > 0) {
+      await setDoc(ADMIN_DOC_REF, dataToUpdate, {merge: true});
+    }
 }
