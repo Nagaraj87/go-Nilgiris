@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { NavHeader } from '@/components/admin/nav-header';
-
+import '../globals.css';
+import { Toaster } from '@/components/ui/toaster';
+import { ThemeProvider } from '@/components/theme-provider';
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
@@ -44,8 +46,25 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <AuthProvider>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
-    </AuthProvider>
+     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body>
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>
+                <AdminLayoutContent>{children}</AdminLayoutContent>
+            </AuthProvider>
+            <Toaster />
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }
