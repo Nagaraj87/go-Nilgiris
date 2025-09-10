@@ -21,12 +21,6 @@ export function NavHeader() {
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
         <p className="font-bold">Admin Panel</p>
         <nav className="hidden md:flex items-center gap-2">
-             <Button variant="ghost" asChild>
-                <Link href="/">
-                    <Home className="mr-2 h-4 w-4"/>
-                    Home
-                </Link>
-            </Button>
             {navLinks.map(({href, label, icon: Icon}) => (
                 <Button variant="ghost" asChild key={label}>
                     <Link href={href}>
