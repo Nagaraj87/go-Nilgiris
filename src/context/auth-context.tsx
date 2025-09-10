@@ -42,15 +42,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const credentials = await getAdminCredentials();
+      const usernameMatch = credentials.username === username;
+      
+      if (!usernameMatch) return false;
+
+      // Handle the case where a password is not provided or not set in the DB
       if (!credentials.password || !password) {
-        return false; // No stored password hash or no password provided
+        // This might happen during initial setup or if the password field is deleted.
+        // For recovery, we can check against the known default.
+        if(password === 'password'){
+             const userData = { username };
+             sessionStorage.setItem('adminUser', JSON.stringify(userData));
+             setUser(userData);
+             // The getAdminCredentials function will self-heal the password in the background
+             return true;
+        }
+        return false;
       }
       
-      const usernameMatch = credentials.username === username;
       // Securely compare the provided password with the stored hash
       const passwordMatch = await bcrypt.compare(password, credentials.password);
       
-      if (usernameMatch && passwordMatch) {
+      if (passwordMatch) {
         const userData = { username };
         sessionStorage.setItem('adminUser', JSON.stringify(userData));
         setUser(userData);

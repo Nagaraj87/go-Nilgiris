@@ -14,12 +14,13 @@ import type { AdminCredentials } from "@/types";
 
 export function CredentialsManagement() {
     const { toast } = useToast();
-    const [credentials, setCredentials] = useState<AdminCredentials>({ username: '' });
+    const [credentials, setCredentials] = useState<AdminCredentials>({ username: '', password: '' });
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isPasswordHashed, setIsPasswordHashed] = useState(true);
 
     useEffect(() => {
         const fetchCredentials = async () => {
@@ -27,8 +28,9 @@ export function CredentialsManagement() {
             setError(null);
             try {
                 const data = await getAdminCredentials();
-                // We only fetch the username to display, not the password hash
-                setCredentials({ username: data.username });
+                setCredentials(data);
+                // A simple check to see if the password from DB is a bcrypt hash
+                setIsPasswordHashed(data.password ? data.password.startsWith('$2a$') : false);
             } catch (err) {
                 console.error(err);
                 setError("Could not load current credentials.");
@@ -44,25 +46,23 @@ export function CredentialsManagement() {
             toast({ variant: "destructive", title: "Passwords do not match" });
             return;
         }
-        
-        if (newPassword && newPassword.length < 6) {
-             toast({ variant: "destructive", title: "Password too short", description: "Password must be at least 6 characters long." });
-            return;
-        }
 
         setSaving(true);
         try {
             const updatedCredentials: AdminCredentials = {
                 username: credentials.username,
             };
+            // Only include the password if a new one is provided
             if (newPassword) {
                 updatedCredentials.password = newPassword;
             }
             
             await updateAdminCredentials(updatedCredentials);
+            
             toast({ title: "Credentials Updated", description: "Your login details have been saved." });
             setNewPassword('');
             setConfirmPassword('');
+            setIsPasswordHashed(true); // Assume it's now hashed
         } catch (error) {
             toast({ variant: "destructive", title: "Update Failed", description: "Could not save credentials." });
         } finally {
@@ -92,6 +92,15 @@ export function CredentialsManagement() {
         }
         return (
             <div className="space-y-4">
+                 {!isPasswordHashed && (
+                     <Alert variant="destructive">
+                        <ShieldAlert className="h-4 w-4" />
+                        <AlertTitle>Security Warning</AlertTitle>
+                        <AlertDescription>
+                           Your password is not hashed. This is a major security risk. Please set a new password immediately to secure your account.
+                        </AlertDescription>
+                     </Alert>
+                 )}
                 <div>
                     <Label htmlFor="username">Username</Label>
                     <Input

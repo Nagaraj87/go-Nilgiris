@@ -1,5 +1,4 @@
 
-
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -351,16 +350,18 @@ export const getAdminCredentials = async (): Promise<AdminCredentials> => {
         let creds = docSnap.data() as AdminCredentials;
         
         // Self-healing: If password is not hashed, hash it and update the DB.
+        // This handles manual edits or legacy unhashed passwords.
         if (creds.password && !isHashed(creds.password)) {
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(creds.password, salt);
             creds.password = hashedPassword;
-            await setDoc(ADMIN_DOC_REF, creds);
+            await setDoc(ADMIN_DOC_REF, creds, { merge: true });
         }
         
         return creds;
     } else {
         // Create default credentials if they don't exist
+        console.log("Admin credentials not found, creating defaults...");
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash('password', salt);
         const defaultCreds: AdminCredentials = { username: 'admin', password: hashedPassword };
@@ -377,4 +378,3 @@ export const updateAdminCredentials = async(credentials: AdminCredentials) => {
     }
     await setDoc(ADMIN_DOC_REF, dataToUpdate, {merge: true});
 }
-
