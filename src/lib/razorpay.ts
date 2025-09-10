@@ -27,11 +27,8 @@ export const createOrder = async (amount: number) => {
     receipt: `receipt_${randomBytes(10).toString('hex')}`,
   };
 
-  try {
-    const order = await razorpay.orders.create(options);
-    return order;
-  } catch (error) {
-    console.error('Razorpay order creation failed:', error);
-    throw new Error('Could not create payment order.');
-  }
+  
+  const order = await razorpay.orders.create(options);
+  return order;
+
 };

@@ -21,10 +21,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { SeatChart } from '@/components/seat-chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
-import { getBlockedSeatsForDate, getOccupiedSeatsForDate, getPackagePrice, getTourPackageBySlug, saveBooking } from '@/lib/firebase';
-import { createOrder } from '@/lib/razorpay';
+import { getBlockedSeatsForDate, getOccupiedSeatsForDate, getPackagePrice, getTourPackageBySlug } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import type { TourPackage } from '@/types';
+import { createPaymentOrder, saveSuccessfulBooking } from './actions';
 
 
 const passengerSchema = z.object({
@@ -187,62 +187,64 @@ function BookingFlow() {
     if (!tourPackage) return;
     setIsSubmitting(true);
     
-    try {
-        const order = await createOrder(totalAmount);
-        
-        const options = {
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
-            amount: order.amount,
-            currency: order.currency,
-            name: 'Go Nilgiris',
-            description: `Booking for ${tourPackage.name}`,
-            order_id: order.id,
-            handler: async (response: any) => {
-                const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-                const { packageSlug, passengers } = form.getValues();
-
-                const bookingData = {
-                  bookingId,
-                  packageSlug,
-                  memberCount,
-                  passengers,
-                  selectedSeats: selectedSeats.map(s => ({ number: s.number, price: s.price })),
-                  totalAmount,
-                  bookingDate: format(form.getValues('bookingDate'), "yyyy-MM-dd"),
-                  razorpayPaymentId: response.razorpay_payment_id,
-                  razorpayOrderId: response.razorpay_order_id,
-                  razorpaySignature: response.razorpay_signature,
-                };
-                
-                try {
-                    const dbId = await saveBooking(bookingData);
-                    router.push(`/booking/confirmation?id=${dbId}&bookingId=${bookingId}&package=${tourPackage.slug}`);
-                } catch(e) {
-                     toast({ variant: "destructive", title: "Booking Failed", description: "Payment was successful but we failed to save your booking. Please contact support." });
-                     setIsSubmitting(false);
-                }
-            },
-            prefill: {
-                name: form.getValues('passengers.0.name'),
-                contact: form.getValues('passengers.0.phone'),
-            },
-            theme: {
-                color: "#166534"
-            }
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.on('payment.failed', function (response: any){
-            toast({ variant: "destructive", title: "Payment Failed", description: response.error.description });
-            setIsSubmitting(false);
-        });
-        rzp.open();
-
-    } catch (error) {
-        console.error("Failed to create order:", error);
-        toast({ variant: "destructive", title: "Error", description: "Could not initiate payment. Please try again." });
+    const orderResult = await createPaymentOrder(totalAmount);
+    
+    if (!orderResult.success || !orderResult.order) {
+        toast({ variant: "destructive", title: "Error", description: orderResult.error || "Could not initiate payment." });
         setIsSubmitting(false);
+        return;
     }
+
+    const { order } = orderResult;
+        
+    const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Go Nilgiris',
+        description: `Booking for ${tourPackage.name}`,
+        order_id: order.id,
+        handler: async (response: any) => {
+            const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+            const { packageSlug, passengers } = form.getValues();
+
+            const bookingData = {
+              bookingId,
+              packageSlug,
+              memberCount,
+              passengers,
+              selectedSeats: selectedSeats.map(s => ({ number: s.number, price: s.price })),
+              totalAmount,
+              bookingDate: format(form.getValues('bookingDate'), "yyyy-MM-dd"),
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
+            };
+            
+            const saveResult = await saveSuccessfulBooking(bookingData);
+
+            if (saveResult.success && saveResult.dbId) {
+                router.push(`/booking/confirmation?id=${saveResult.dbId}&bookingId=${bookingId}&package=${tourPackage.slug}`);
+            } else {
+                 toast({ variant: "destructive", title: "Booking Failed", description: saveResult.error || "Payment was successful but we failed to save your booking. Please contact support." });
+                 setIsSubmitting(false);
+            }
+        },
+        prefill: {
+            name: form.getValues('passengers.0.name'),
+            contact: form.getValues('passengers.0.phone'),
+        },
+        theme: {
+            color: "#166534"
+        }
+    };
+
+    const rzp = new (window as any).Razorpay(options);
+    rzp.on('payment.failed', function (response: any){
+        toast({ variant: "destructive", title: "Payment Failed", description: response.error.description });
+        setIsSubmitting(false);
+    });
+    rzp.open();
   };
 
   const handleCopyToAll = () => {
@@ -252,7 +254,6 @@ function BookingFlow() {
     const currentPassengers = form.getValues('passengers');
     const newPassengers = currentPassengers.map((passenger, index) => {
         if (index === 0) return passenger;
-        // Keep name, but copy phone and gender
         return { 
             ...passenger, 
             phone: firstPassenger.phone,
