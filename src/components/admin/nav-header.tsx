@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Lock, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, LogOut } from 'lucide-react';
+import { Home, Lock, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, LogOut, ExternalLink } from 'lucide-react';
 import { NotificationBell } from '../notification-bell';
 import { useAuth } from '@/context/auth-context';
 
@@ -30,6 +30,12 @@ export function NavHeader() {
                 </Button>
             ))}
              <NotificationBell />
+             <Button variant="outline" asChild>
+                <Link href="/" target="_blank">
+                    <ExternalLink className="mr-2 h-4 w-4"/>
+                    Go to Site
+                </Link>
+            </Button>
             <Button variant="outline" onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4"/>
                 Logout
