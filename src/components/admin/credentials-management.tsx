@@ -20,7 +20,6 @@ export function CredentialsManagement() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isPasswordHashed, setIsPasswordHashed] = useState(true);
 
     useEffect(() => {
         const fetchCredentials = async () => {
@@ -29,8 +28,6 @@ export function CredentialsManagement() {
             try {
                 const data = await getAdminCredentials();
                 setCredentials(data);
-                // A simple check to see if the password from DB is a bcrypt hash
-                setIsPasswordHashed(data.password ? data.password.startsWith('$2a$') : false);
             } catch (err) {
                 console.error(err);
                 setError("Could not load current credentials.");
@@ -52,9 +49,11 @@ export function CredentialsManagement() {
             const updatedCredentials: Partial<AdminCredentials> = {
                 username: credentials.username,
             };
-            // Only include the password if a new one is provided
+            
             if (newPassword) {
                 updatedCredentials.password = newPassword;
+            } else {
+                updatedCredentials.password = credentials.password; // Keep the old one if not changing
             }
             
             await updateAdminCredentials(updatedCredentials);
@@ -62,10 +61,10 @@ export function CredentialsManagement() {
             toast({ title: "Credentials Updated", description: "Your login details have been saved." });
             setNewPassword('');
             setConfirmPassword('');
-            // After saving, re-fetch to get the latest state including the new hash
+            
+            // Re-fetch to get the latest state
             const freshData = await getAdminCredentials();
             setCredentials(freshData);
-            setIsPasswordHashed(freshData.password ? freshData.password.startsWith('$2a$') : false);
 
         } catch (error) {
             toast({ variant: "destructive", title: "Update Failed", description: "Could not save credentials." });
@@ -96,15 +95,13 @@ export function CredentialsManagement() {
         }
         return (
             <div className="space-y-4">
-                 {!isPasswordHashed && (
-                     <Alert variant="destructive">
-                        <ShieldAlert className="h-4 w-4" />
-                        <AlertTitle>Security Warning</AlertTitle>
-                        <AlertDescription>
-                           Your password is not hashed. This is a major security risk. Please set a new password immediately to secure your account.
-                        </AlertDescription>
-                     </Alert>
-                 )}
+                 <Alert variant="destructive">
+                    <ShieldAlert className="h-4 w-4" />
+                    <AlertTitle>Security Warning</AlertTitle>
+                    <AlertDescription>
+                       Your password is not being hashed and is stored in plain text. This is a significant security risk. It is highly recommended to implement password hashing in a production environment.
+                    </AlertDescription>
+                 </Alert>
                 <div>
                     <Label htmlFor="username">Username</Label>
                     <Input

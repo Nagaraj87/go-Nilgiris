@@ -39,10 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password?: string) => {
     setLoading(true);
     try {
-      if (!password) {
-          return false;
-      }
-      
       const isValid = await verifyAdminCredentials(username, password);
       
       if (isValid) {

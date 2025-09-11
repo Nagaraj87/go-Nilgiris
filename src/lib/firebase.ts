@@ -5,7 +5,6 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import type { TourPackage, Booking, ContactInfo, GalleryImage, AdminCredentials } from '@/types';
-import bcrypt from 'bcryptjs';
 
 const firebaseConfig = {
   projectId: 'nilgiri-explorer',
@@ -349,41 +348,26 @@ export const getAdminCredentials = async (): Promise<AdminCredentials> => {
     } else {
         // Create default credentials if they don't exist
         console.log("Admin credentials not found, creating defaults...");
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('password', salt);
-        const defaultCreds: AdminCredentials = { username: 'admin', password: hashedPassword };
+        const defaultCreds: AdminCredentials = { username: 'admin', password: 'password' };
         await setDoc(ADMIN_DOC_REF, defaultCreds);
         return defaultCreds;
     }
 }
 
 export const updateAdminCredentials = async(credentials: Partial<AdminCredentials>) => {
-    const dataToUpdate: Partial<AdminCredentials> = {};
-    
-    if (credentials.username) {
-        dataToUpdate.username = credentials.username;
-    }
-
-    if(credentials.password && credentials.password.length > 0) {
-        const salt = await bcrypt.genSalt(10);
-        dataToUpdate.password = await bcrypt.hash(credentials.password, salt);
-    }
-    
-    if (Object.keys(dataToUpdate).length > 0) {
-      await setDoc(ADMIN_DOC_REF, dataToUpdate, {merge: true});
-    }
+    await setDoc(ADMIN_DOC_REF, credentials, {merge: true});
 }
 
 export const verifyAdminCredentials = async (username: string, password?: string): Promise<boolean> => {
   try {
     const credentials = await getAdminCredentials();
     
-    const usernameMatch = credentials.username === username;
     if (!password || !credentials.password) {
       return false;
     }
     
-    const passwordMatch = await bcrypt.compare(password, credentials.password);
+    const usernameMatch = credentials.username === username;
+    const passwordMatch = credentials.password === password;
     
     return usernameMatch && passwordMatch;
   } catch (error) {
