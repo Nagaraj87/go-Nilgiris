@@ -1,4 +1,6 @@
 
+'use server';
+
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -371,3 +373,21 @@ export const updateAdminCredentials = async(credentials: Partial<AdminCredential
       await setDoc(ADMIN_DOC_REF, dataToUpdate, {merge: true});
     }
 }
+
+export const verifyAdminCredentials = async (username: string, password?: string): Promise<boolean> => {
+  try {
+    const credentials = await getAdminCredentials();
+    
+    const usernameMatch = credentials.username === username;
+    if (!password || !credentials.password) {
+      return false;
+    }
+    
+    const passwordMatch = await bcrypt.compare(password, credentials.password);
+    
+    return usernameMatch && passwordMatch;
+  } catch (error) {
+    console.error("Error verifying credentials:", error);
+    return false;
+  }
+};

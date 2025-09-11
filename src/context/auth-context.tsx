@@ -2,9 +2,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getAdminCredentials } from '@/lib/firebase';
-import type { AdminCredentials } from '@/types';
-import bcrypt from 'bcryptjs';
+import { verifyAdminCredentials } from '@/lib/firebase';
 
 type AuthContextType = {
   user: { username: string } | null;
@@ -41,17 +39,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password?: string) => {
     setLoading(true);
     try {
-      const credentials = await getAdminCredentials();
-      
-      const usernameMatch = credentials.username === username;
-      if (!password || !credentials.password) {
-        return false;
+      if (!password) {
+          return false;
       }
       
-      // Use bcryptjs to compare passwords
-      const passwordMatch = await bcrypt.compare(password, credentials.password);
+      const isValid = await verifyAdminCredentials(username, password);
       
-      if (usernameMatch && passwordMatch) {
+      if (isValid) {
         const userData = { username };
         sessionStorage.setItem('adminUser', JSON.stringify(userData));
         setUser(userData);
@@ -70,6 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     sessionStorage.removeItem('adminUser');
     setUser(null);
+    // Optionally redirect to login page
+    if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+    }
   };
 
   return (
