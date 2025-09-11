@@ -53,7 +53,9 @@ export function CredentialsManagement() {
             if (newPassword) {
                 updatedCredentials.password = newPassword;
             } else {
-                updatedCredentials.password = credentials.password; // Keep the old one if not changing
+                // If not changing password, ensure the existing one is preserved.
+                // This is critical for the initial save after self-healing.
+                updatedCredentials.password = credentials.password;
             }
             
             await updateAdminCredentials(updatedCredentials);
@@ -62,7 +64,7 @@ export function CredentialsManagement() {
             setNewPassword('');
             setConfirmPassword('');
             
-            // Re-fetch to get the latest state
+            // Re-fetch to get the latest state including the new hash for display (if needed)
             const freshData = await getAdminCredentials();
             setCredentials(freshData);
 
