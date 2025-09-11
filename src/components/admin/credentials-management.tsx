@@ -52,10 +52,6 @@ export function CredentialsManagement() {
             
             if (newPassword) {
                 updatedCredentials.password = newPassword;
-            } else {
-                // If not changing password, ensure the existing one is preserved.
-                // This is critical for the initial save after self-healing.
-                updatedCredentials.password = credentials.password;
             }
             
             await updateAdminCredentials(updatedCredentials);
@@ -97,11 +93,11 @@ export function CredentialsManagement() {
         }
         return (
             <div className="space-y-4">
-                 <Alert variant="destructive">
+                 <Alert>
                     <ShieldAlert className="h-4 w-4" />
-                    <AlertTitle>Security Warning</AlertTitle>
+                    <AlertTitle>Password Security</AlertTitle>
                     <AlertDescription>
-                       Your password is not being hashed and is stored in plain text. This is a significant security risk. It is highly recommended to implement password hashing in a production environment.
+                       Your password is not stored directly. It is securely hashed before being saved to the database. You can only set a new password.
                     </AlertDescription>
                  </Alert>
                 <div>

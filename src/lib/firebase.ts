@@ -346,16 +346,20 @@ export const getAdminCredentials = async (): Promise<AdminCredentials> => {
     if (docSnap.exists()) {
         return docSnap.data() as AdminCredentials;
     } else {
-        // Create default credentials if they don't exist
-        console.log("Admin credentials not found, creating defaults...");
-        const defaultCreds: AdminCredentials = { username: 'admin', password: 'password' };
+        // Self-heal: Create default credentials if they don't exist
+        const defaultCreds: AdminCredentials = { username: 'admin', password: 'password' }; // Store plain text for simplicity
         await setDoc(ADMIN_DOC_REF, defaultCreds);
         return defaultCreds;
     }
 }
 
 export const updateAdminCredentials = async(credentials: Partial<AdminCredentials>) => {
-    await setDoc(ADMIN_DOC_REF, credentials, {merge: true});
+    const dataToUpdate: Partial<AdminCredentials> = { username: credentials.username };
+    // Only update password if a new one is provided
+    if (credentials.password) {
+        dataToUpdate.password = credentials.password;
+    }
+    await setDoc(ADMIN_DOC_REF, dataToUpdate, {merge: true});
 }
 
 export const verifyAdminCredentials = async (username: string, password?: string): Promise<boolean> => {
@@ -367,7 +371,7 @@ export const verifyAdminCredentials = async (username: string, password?: string
     }
     
     const usernameMatch = credentials.username === username;
-    const passwordMatch = credentials.password === password;
+    const passwordMatch = credentials.password === password; // Plain text comparison
     
     return usernameMatch && passwordMatch;
   } catch (error) {
