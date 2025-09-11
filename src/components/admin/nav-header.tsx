@@ -3,15 +3,13 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Lock, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, LogOut, ExternalLink, Plane } from 'lucide-react';
+import { Home, Lock, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, ExternalLink, Plane } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { NotificationBell } from '../notification-bell';
-import { useAuth } from '@/context/auth-context';
 import React from 'react';
 import { ScrollArea } from '../ui/scroll-area';
 
 export function NavHeader() {
-  const { logout } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   
   const navLinks = [
@@ -49,9 +47,6 @@ export function NavHeader() {
                 <ExternalLink className="mr-2 h-4 w-4"/>Go to Site
             </Link>
           </Button>
-          <Button variant="outline" onClick={logout}>
-            <LogOut className="mr-2 h-4 w-4"/>Logout
-          </Button>
         </nav>
         
         {/* Mobile Navigation */}
@@ -83,9 +78,6 @@ export function NavHeader() {
                         ))}
                         </nav>
                      </ScrollArea>
-                      <Button variant="outline" onClick={() => { logout(); setIsSheetOpen(false); }} className="mt-auto">
-                        <LogOut className="mr-2 h-4 w-4"/>Logout
-                      </Button>
                 </SheetContent>
             </Sheet>
         </div>

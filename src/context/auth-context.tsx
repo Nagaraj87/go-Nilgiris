@@ -1,73 +1,29 @@
 
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { verifyAdminCredentials } from '@/lib/firebase';
+import { createContext, useContext, ReactNode } from 'react';
 
+// Since login is removed, we provide a dummy context.
 type AuthContextType = {
   user: { username: string } | null;
   loading: boolean;
-  login: (username: string, password?: string) => Promise<boolean>;
+  login: () => Promise<boolean>;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<{ username: string } | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for a session on initial load
-    const checkSession = () => {
-      setLoading(true);
-      try {
-        const storedUser = sessionStorage.getItem('adminUser');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
-      } catch (error) {
-        console.error("Failed to parse user from session storage", error);
-        sessionStorage.removeItem('adminUser');
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkSession();
-  }, []);
-
-  const login = async (username: string, password?: string) => {
-    setLoading(true);
-    try {
-      const isValid = await verifyAdminCredentials(username, password);
-      
-      if (isValid) {
-        const userData = { username };
-        sessionStorage.setItem('adminUser', JSON.stringify(userData));
-        setUser(userData);
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error("Login failed:", error);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    sessionStorage.removeItem('adminUser');
-    setUser(null);
-    // Optionally redirect to login page
-    if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-    }
+  const value = { 
+    user: { username: 'admin' }, 
+    loading: false, 
+    login: async () => true, 
+    logout: () => {} 
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,14 +5,12 @@ import Link from 'next/link';
 import { DeerLogo } from '@/components/icons';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Home, Lock, Menu, Bell } from 'lucide-react';
+import { Home, Lock, Menu } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
 
 export function Header() {
   const pathname = usePathname();
-  const { user } = useAuth();
   const isAdminPage = pathname.startsWith('/admin');
   
   if (isAdminPage) {
@@ -39,7 +37,7 @@ export function Header() {
               </Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link href={user ? "/admin" : "/login"}>
+              <Link href="/admin">
                 <Lock className="mr-2 h-4 w-4" />
                 Admin
               </Link>
@@ -73,7 +71,7 @@ export function Header() {
                     <Home className="h-5 w-5" />
                     <span>Home</span>
                   </Link>
-                  <Link href={user ? "/admin" : "/login"} className="flex items-center space-x-2 text-lg font-medium">
+                  <Link href="/admin" className="flex items-center space-x-2 text-lg font-medium">
                     <Lock className="h-5 w-5" />
                     <span>Admin</span>
                   </Link>
