@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Lock, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, ExternalLink, Plane } from 'lucide-react';
+import { Home, Lock, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, ExternalLink, Plane, PlusCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { NotificationBell } from '../notification-bell';
 import React from 'react';
@@ -34,7 +34,7 @@ export function NavHeader() {
         <nav className="hidden md:flex items-center gap-1">
           <Button variant="ghost" asChild>
               <Link href="/admin">
-                  <Home className="mr-2 h-4 w-4"/> Dashboard
+                  <Plane className="mr-2 h-4 w-4"/> Dashboard
               </Link>
           </Button>
           <Button variant="ghost" asChild>
