@@ -64,12 +64,12 @@ export function NavHeader() {
                         <SheetTitle>Admin Menu</SheetTitle>
                     </SheetHeader>
                      <ScrollArea className="flex-grow">
-                        <nav className="flex flex-col gap-4 pt-4 pr-4">
+                        <nav className="flex flex-col gap-1 pt-4 pr-4">
                         {navLinks.map(({ href, label, icon: Icon }) => (
                             <Link
                                 key={href}
                                 href={href}
-                                className="flex items-center gap-3 rounded-md p-2 text-lg font-medium hover:bg-muted"
+                                className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium hover:bg-muted"
                                 onClick={() => setIsSheetOpen(false)}
                             >
                                 <Icon className="h-5 w-5" />
