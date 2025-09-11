@@ -339,16 +339,11 @@ export const updateContactInfo = async (data: ContactInfo) => {
 // Admin Credentials
 const ADMIN_DOC_REF = doc(db, 'site_config', 'admin_credentials');
 
-const isHashed = (password: string) => {
-    return password && password.startsWith('$2a$');
-}
-
 export const getAdminCredentials = async (): Promise<AdminCredentials> => {
     const docSnap = await getDoc(ADMIN_DOC_REF);
     
     if (docSnap.exists()) {
-        const creds = docSnap.data() as AdminCredentials;
-        return creds;
+        return docSnap.data() as AdminCredentials;
     } else {
         // Create default credentials if they don't exist
         console.log("Admin credentials not found, creating defaults...");

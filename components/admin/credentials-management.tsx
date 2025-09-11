@@ -46,14 +46,24 @@ export function CredentialsManagement() {
 
         setSaving(true);
         try {
-            const updatedCredentials = {
+            const updatedCredentials: Partial<AdminCredentials> = {
                 username: credentials.username,
-                password: newPassword || credentials.password,
             };
+            
+            if (newPassword) {
+                updatedCredentials.password = newPassword;
+            }
+            
             await updateAdminCredentials(updatedCredentials);
+            
             toast({ title: "Credentials Updated", description: "Your login details have been saved." });
             setNewPassword('');
             setConfirmPassword('');
+            
+            // Re-fetch to get the latest state including the new hash for display (if needed)
+            const freshData = await getAdminCredentials();
+            setCredentials(freshData);
+
         } catch (error) {
             toast({ variant: "destructive", title: "Update Failed", description: "Could not save credentials." });
         } finally {
@@ -83,11 +93,11 @@ export function CredentialsManagement() {
         }
         return (
             <div className="space-y-4">
-                 <Alert variant="destructive">
+                 <Alert>
                     <ShieldAlert className="h-4 w-4" />
-                    <AlertTitle>Security Warning</AlertTitle>
+                    <AlertTitle>Password Security</AlertTitle>
                     <AlertDescription>
-                       For demonstration purposes, the password is not hashed. In a production environment, always use a secure password hashing method.
+                       Your password is not stored directly. It is securely hashed before being saved to the database. You can only set a new password.
                     </AlertDescription>
                  </Alert>
                 <div>
@@ -121,7 +131,7 @@ export function CredentialsManagement() {
                         disabled={saving || !newPassword}
                     />
                 </div>
-                <Button onClick={handleSaveChanges} disabled={saving}>
+                <Button onClick={handleSaveChanges} disabled={saving || !credentials.username}>
                     {saving ? <Loader2 className="animate-spin" /> : "Save Changes"}
                 </Button>
             </div>

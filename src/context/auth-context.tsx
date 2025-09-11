@@ -41,15 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password?: string) => {
     setLoading(true);
     try {
-      // getAdminCredentials will self-heal if the doc is missing
       const credentials = await getAdminCredentials();
       
       const usernameMatch = credentials.username === username;
-      
       if (!password || !credentials.password) {
         return false;
       }
       
+      // Use bcryptjs to compare passwords
       const passwordMatch = await bcrypt.compare(password, credentials.password);
       
       if (usernameMatch && passwordMatch) {
