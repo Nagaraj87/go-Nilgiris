@@ -13,8 +13,9 @@ export function NavHeader() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   
   const navLinks = [
-    { href: "/admin", label: "Dashboard", icon: Home },
-    { href: "/admin/edit-tour/new", label: "New Tour", icon: Plane },
+    { href: "/", label: "Home", icon: Home },
+    { href: "/admin", label: "Dashboard", icon: Plane },
+    { href: "/admin/edit-tour/new", label: "New Tour", icon: PlusCircle },
     { href: "/admin/availability", label: "Availability", icon: ShieldOff },
     { href: "/admin/notifications", label: "Notifications", icon: Bell },
     { href: "/admin#tour-management-section", label: "Tours", icon: Plane },
