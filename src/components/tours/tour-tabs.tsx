@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { TourPackage } from "@/types";
+import type { TourPackage, GalleryImage } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { TourGallery } from "./tour-gallery";
@@ -11,9 +11,10 @@ import { useMemo } from "react";
 
 type TourTabsProps = {
     tourPackage: TourPackage;
+    galleryImages: GalleryImage[];
 }
 
-export function TourTabs({ tourPackage }: TourTabsProps) {
+export function TourTabs({ tourPackage, galleryImages }: TourTabsProps) {
 
     const hydratedItinerary = useMemo(() => {
         return tourPackage.itinerary.map(item => {
@@ -49,7 +50,7 @@ export function TourTabs({ tourPackage }: TourTabsProps) {
                 </div>
             </TabsContent>
             <TabsContent value="gallery" className="mt-6">
-               <TourGallery slug={tourPackage.slug} />
+               <TourGallery images={galleryImages} />
             </TabsContent>
             <TabsContent value="overview" className="mt-6">
               <Accordion type="single" collapsible className="w-full">

@@ -3,22 +3,29 @@ import { notFound } from 'next/navigation';
 import { TourHeader } from '@/components/tours/tour-header';
 import { TourTabs } from '@/components/tours/tour-tabs';
 import { TourBookingCard } from '@/components/tours/tour-booking-card';
-import { getTourPackageBySlug, getTourPackages } from '@/lib/firebase';
+import { getTourPackageBySlug, getTourPackages, getPackagePrice, getGalleryImages } from '@/lib/firebase';
 import type { TourPackage } from '@/types';
 
 
-async function getTourData(slug: string): Promise<TourPackage | null> {
+async function getTourData(slug: string) {
     const tourData = await getTourPackageBySlug(slug);
     if (!tourData) {
-        return null;
+        return { tourPackage: null, price: null, galleryImages: [] };
     }
-    return tourData;
+    
+    // Fetch price and gallery images in parallel
+    const [price, galleryImages] = await Promise.all([
+      getPackagePrice(slug),
+      getGalleryImages(slug)
+    ]);
+    
+    return { tourPackage: tourData, price, galleryImages };
 }
 
 
 export default async function TourPackagePage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  const tourPackage = await getTourData(slug);
+  const { tourPackage, price, galleryImages } = await getTourData(slug);
 
   if (!tourPackage) {
     notFound();
@@ -33,12 +40,12 @@ export default async function TourPackagePage({ params }: { params: { slug: stri
             overview={tourPackage.overview} 
             disclaimers={tourPackage.disclaimers} 
            />
-          <TourTabs tourPackage={tourPackage} />
+          <TourTabs tourPackage={tourPackage} galleryImages={galleryImages} />
         </div>
 
         <div className="lg:col-span-2">
             <div className="sticky top-24">
-                <TourBookingCard tourPackageData={tourPackage} />
+                <TourBookingCard tourPackageData={tourPackage} price={price} />
             </div>
         </div>
       </div>

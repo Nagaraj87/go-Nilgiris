@@ -40,9 +40,9 @@ export default async function TicketPage({ params }: { params: { id: string } })
                         <div className="text-left">
                             <div className="flex items-center gap-2">
                                 <DeerLogo className="h-8 w-8 text-primary" />
-                                <span className="text-xl font-bold">Go Nilgiris</span>
+                                <span className="text-xl font-bold">Go Nilgris</span>
                             </div>
-                            <p className="text-xs text-muted-foreground">A GoKotagiri Tourism Venture</p>
+                            <p className="text-xs text-muted-foreground">A GoNilgris Tourism Venture</p>
                         </div>
                         <div className="text-right">
                              <p className="font-bold text-lg text-primary">E-TICKET</p>

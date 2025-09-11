@@ -1,65 +1,21 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import type { GalleryImage, TourPackage } from '@/types';
-import { getGalleryImages } from '@/lib/firebase';
+import type { GalleryImage } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ImageIcon, AlertCircle, Loader2 } from 'lucide-react';
+import { ImageIcon } from 'lucide-react';
 
 
 type TourGalleryProps = {
-    slug: string;
+    images: GalleryImage[];
 }
 
-export function TourGallery({ slug }: TourGalleryProps) {
-    const [images, setImages] = useState<GalleryImage[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+export function TourGallery({ images }: TourGalleryProps) {
 
-    useEffect(() => {
-        if (!slug) return;
-        
-        const fetchGallery = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const fetchedImages = await getGalleryImages(slug);
-                setImages(fetchedImages as GalleryImage[]);
-            } catch (err) {
-                console.error("Failed to fetch gallery images", err);
-                setError("Gallery images could not be loaded. Please check back later.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchGallery();
-    }, [slug]);
-
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center w-full aspect-video rounded-lg bg-muted/50">
-                <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                <p className="mt-4 text-muted-foreground">Loading Gallery...</p>
-            </div>
-        )
-    }
-
-    if (error) {
-        return (
-             <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Gallery Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
-        )
-    }
-
-    if (images.length === 0) {
+    if (!images || images.length === 0) {
         return (
             <Alert>
                 <ImageIcon className="h-4 w-4" />
