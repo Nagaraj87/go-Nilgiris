@@ -6,8 +6,21 @@ import { NavHeader } from '@/components/admin/nav-header';
 import '../globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
+import { notFound } from 'next/navigation';
+import { useEffect } from 'react';
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
+
+    useEffect(() => {
+        if (process.env.NODE_ENV === 'production') {
+            notFound();
+        }
+    }, []);
+
+    if (process.env.NODE_ENV === 'production') {
+        return null;
+    }
+
     return (
         <>
             <NavHeader />
