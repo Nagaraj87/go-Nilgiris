@@ -8,7 +8,7 @@ import { CheckCircle2, Loader2 } from 'lucide-react';
 type TourCardProps = {
     pkg: TourPackage;
     price: number | null;
-    loading: boolean;
+    loading?: boolean; // Made optional
 }
 
 export function TourCard({ pkg, price, loading }: TourCardProps) {
