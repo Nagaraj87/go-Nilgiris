@@ -1,33 +1,13 @@
 
-"use client";
-
-import { AuthProvider } from '@/context/auth-context';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { NavHeader } from '@/components/admin/nav-header';
-import '../globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
-import { notFound } from 'next/navigation';
-import { useEffect } from 'react';
-
-function AdminLayoutContent({ children }: { children: React.ReactNode }) {
-
-    useEffect(() => {
-        if (process.env.NODE_ENV === 'production') {
-            notFound();
-        }
-    }, []);
-
-    if (process.env.NODE_ENV === 'production') {
-        return null;
-    }
-
-    return (
-        <>
-            <NavHeader />
-            {children}
-        </>
-    );
-}
+import '../globals.css';
+import { AUTH_COOKIE_NAME } from '@/lib/constants';
+import { AuthProvider } from '@/context/auth-context';
 
 
 export default function AdminLayout({
@@ -35,6 +15,19 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+    // If we're in a production environment, don't render the admin panel.
+    if (process.env.NODE_ENV === 'production') {
+        notFound();
+    }
+    
+    const cookieStore = cookies();
+    const authToken = cookieStore.get(AUTH_COOKIE_NAME);
+    const isAuthenticated = !!authToken?.value;
+    
+    if (!isAuthenticated) {
+        redirect('/login');
+    }
+
   return (
      <html lang="en" suppressHydrationWarning>
       <head>
@@ -49,8 +42,9 @@ export default function AdminLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AuthProvider>
-                <AdminLayoutContent>{children}</AdminLayoutContent>
+            <AuthProvider isAuthenticated={isAuthenticated}>
+                <NavHeader />
+                {children}
             </AuthProvider>
             <Toaster />
         </ThemeProvider>

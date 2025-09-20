@@ -11,10 +11,10 @@ import { usePathname } from 'next/navigation';
 
 export function Header() {
   const pathname = usePathname();
-  const isAdminPage = pathname.startsWith('/admin');
+  const isAdminRelatedPage = pathname.startsWith('/admin') || pathname.startsWith('/login');
   
-  if (isAdminPage) {
-    return null; // The admin layout will render its own header
+  if (isAdminRelatedPage) {
+    return null; // The admin layout will render its own header or nothing
   }
 
   return (
@@ -23,7 +23,7 @@ export function Header() {
         <Link href="/" className="mr-6 flex items-center space-x-2">
             <DeerLogo className="h-6 w-6 text-primary" />
             <span className="font-bold sm:inline-block">
-            Go Nilgiris
+            Go Nilgris
             </span>
         </Link>
 
@@ -37,7 +37,7 @@ export function Header() {
               </Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link href="/admin">
+              <Link href="/login">
                 <Lock className="mr-2 h-4 w-4" />
                 Admin
               </Link>
@@ -61,7 +61,7 @@ export function Header() {
                     <Link href="/" className="flex items-center space-x-2">
                       <DeerLogo className="h-6 w-6 text-primary" />
                       <span className="font-bold">
-                        Go Nilgiris
+                        Go Nilgris
                       </span>
                     </Link>
                   </SheetTitle>
@@ -71,7 +71,7 @@ export function Header() {
                     <Home className="h-5 w-5" />
                     <span>Home</span>
                   </Link>
-                  <Link href="/admin" className="flex items-center space-x-2 text-lg font-medium">
+                  <Link href="/login" className="flex items-center space-x-2 text-lg font-medium">
                     <Lock className="h-5 w-5" />
                     <span>Admin</span>
                   </Link>

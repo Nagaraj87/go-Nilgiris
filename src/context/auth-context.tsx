@@ -1,26 +1,28 @@
 
 "use client";
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 
-// Since login is removed, we provide a dummy context.
 type AuthContextType = {
-  user: { username: string } | null;
-  loading: boolean;
-  login: () => Promise<boolean>;
-  logout: () => void;
+  isAuthenticated: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ 
+    children, 
+    isAuthenticated: initialIsAuthenticated 
+}: { 
+    children: ReactNode, 
+    isAuthenticated: boolean 
+}) {
+  const [isAuthenticated, setIsAuthenticated] = useState(initialIsAuthenticated);
 
-  const value = { 
-    user: { username: 'admin' }, 
-    loading: false, 
-    login: async () => true, 
-    logout: () => {} 
-  };
+  useEffect(() => {
+    setIsAuthenticated(initialIsAuthenticated);
+  }, [initialIsAuthenticated]);
+  
+  const value = { isAuthenticated };
 
   return (
     <AuthContext.Provider value={value}>

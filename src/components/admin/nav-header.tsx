@@ -2,15 +2,27 @@
 "use client";
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Home, Lock, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, ExternalLink, Plane, PlusCircle } from 'lucide-react';
+import { Home, Lock, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, Plane, PlusCircle, LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { NotificationBell } from '../notification-bell';
 import React from 'react';
 import { ScrollArea } from '../ui/scroll-area';
+import { logoutAction } from '@/app/(admin)/login/actions';
+import { useToast } from '@/hooks/use-toast';
 
 export function NavHeader() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+      await logoutAction();
+      toast({ title: "Logged Out", description: "You have been successfully logged out." });
+      router.push('/login');
+      router.refresh();
+  }
   
   const navLinks = [
     { href: "/", label: "Home", icon: Home },
@@ -48,6 +60,10 @@ export function NavHeader() {
                 <ExternalLink className="mr-2 h-4 w-4"/>Go to Site
             </Link>
           </Button>
+           <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <LogOut />
+              <span className="sr-only">Log Out</span>
+            </Button>
         </nav>
         
         {/* Mobile Navigation */}
@@ -79,6 +95,11 @@ export function NavHeader() {
                         ))}
                         </nav>
                      </ScrollArea>
+                    <div className="mt-auto border-t pt-4">
+                         <Button variant="outline" className="w-full" onClick={handleLogout}>
+                            <LogOut className="mr-2" /> Log Out
+                        </Button>
+                    </div>
                 </SheetContent>
             </Sheet>
         </div>
