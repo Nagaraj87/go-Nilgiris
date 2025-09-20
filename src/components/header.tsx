@@ -37,7 +37,7 @@ export function Header() {
               </Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link href="/login">
+              <Link href="/admin">
                 <Lock className="mr-2 h-4 w-4" />
                 Admin
               </Link>
@@ -71,7 +71,7 @@ export function Header() {
                     <Home className="h-5 w-5" />
                     <span>Home</span>
                   </Link>
-                  <Link href="/login" className="flex items-center space-x-2 text-lg font-medium">
+                  <Link href="/admin" className="flex items-center space-x-2 text-lg font-medium">
                     <Lock className="h-5 w-5" />
                     <span>Admin</span>
                   </Link>

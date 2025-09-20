@@ -1,13 +1,9 @@
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { NavHeader } from '@/components/admin/nav-header';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import '../globals.css';
-import { AUTH_COOKIE_NAME } from '@/lib/constants';
-import { AuthProvider } from '@/context/auth-context';
 
 
 export default function AdminLayout({
@@ -18,14 +14,6 @@ export default function AdminLayout({
     // If we're in a production environment, don't render the admin panel.
     if (process.env.NODE_ENV === 'production') {
         notFound();
-    }
-    
-    const cookieStore = cookies();
-    const authToken = cookieStore.get(AUTH_COOKIE_NAME);
-    const isAuthenticated = !!authToken?.value;
-    
-    if (!isAuthenticated) {
-        redirect('/login');
     }
 
   return (
@@ -42,10 +30,8 @@ export default function AdminLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AuthProvider isAuthenticated={isAuthenticated}>
-                <NavHeader />
-                {children}
-            </AuthProvider>
+            <NavHeader />
+            {children}
             <Toaster />
         </ThemeProvider>
       </body>

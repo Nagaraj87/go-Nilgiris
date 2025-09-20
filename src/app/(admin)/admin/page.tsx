@@ -4,7 +4,6 @@ import { ContactManagement } from "@/components/admin/contact-management";
 import { PriceManagement } from "@/components/admin/price-management";
 import { GalleryManagement } from "@/components/admin/gallery-management";
 import { TourManagement } from "@/components/admin/tour-management";
-import { CredentialsManagement } from "@/components/admin/credentials-management";
 
 
 export default function AdminPage() {
@@ -26,9 +25,6 @@ export default function AdminPage() {
         </div>
         <div id="pricing-section">
           <PriceManagement />
-        </div>
-         <div id="credentials-section">
-          <CredentialsManagement />
         </div>
       </div>
     </div>
