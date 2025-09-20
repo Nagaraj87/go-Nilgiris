@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -16,8 +17,8 @@ export function GalleryManagement() {
     const [selectedPackage, setSelectedPackage] = useState<string>('');
     const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [loadingTours, setLoadingTours] = useState(true);
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
         getTourPackages().then(packages => {
@@ -31,20 +32,14 @@ export function GalleryManagement() {
 
     useEffect(() => {
         if (!selectedPackage) return;
-        const fetchGallery = async () => {
+        
+        startTransition(async () => {
             setLoading(true);
-            setError(null);
-            try {
-                const images = await getGalleryImages(selectedPackage);
-                setGalleryImages(images as GalleryImage[]);
-            } catch (err) {
-                console.error("Failed to fetch gallery images", err);
-                setError("Failed to fetch gallery images. Please select another package or try again.");
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchGallery();
+            const images = await getGalleryImages(selectedPackage);
+            setGalleryImages(images as GalleryImage[]);
+            setLoading(false);
+        });
+
     }, [selectedPackage]);
 
     const handleImageAdded = (newImage: GalleryImage) => {
@@ -56,7 +51,7 @@ export function GalleryManagement() {
     };
 
     const renderContent = () => {
-        if (loading) {
+        if (loading || isPending) {
             return (
                  <div className="flex items-center justify-center h-48">
                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -64,15 +59,6 @@ export function GalleryManagement() {
                         <span>Loading gallery...</span>
                     </div>
                 </div>
-            )
-        }
-        if (error) {
-            return (
-                <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
             )
         }
         if (galleryImages.length > 0) {

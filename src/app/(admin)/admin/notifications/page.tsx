@@ -1,12 +1,10 @@
 
-'use client';
 
-import { useEffect, useState, useMemo } from 'react';
 import { getTodaysAndTomorrowsBookings, getTourPackages } from '@/lib/firebase';
 import type { Booking, TourPackage } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, AlertCircle, Bell } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -25,108 +23,71 @@ type GroupedBookings = {
   };
 };
 
-export default function NotificationsPage() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [tourPackages, setTourPackages] = useState<TourPackage[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchBookings = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [bookingData, packageData] = await Promise.all([
-            getTodaysAndTomorrowsBookings(),
-            getTourPackages()
-        ]);
-        bookingData.sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime());
-        setBookings(bookingData as Booking[]);
-        setTourPackages(packageData);
-      } catch (err) {
-        console.error('Failed to fetch upcoming bookings:', err);
-        setError('Could not load upcoming bookings. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBookings();
-  }, []);
-
-  const groupedBookings = useMemo(() => {
+function groupBookings(bookings: Booking[], tourPackages: TourPackage[]): GroupedBookings {
     const groups: GroupedBookings = {};
-
     bookings.forEach((booking) => {
-      const dateKey = format(new Date(booking.bookingDate), 'yyyy-MM-dd');
-      const tourPackage = tourPackages.find(p => p.slug === booking.packageSlug);
-      if (!tourPackage) return;
+        const dateKey = format(new Date(booking.bookingDate), 'yyyy-MM-dd');
+        const tourPackage = tourPackages.find(p => p.slug === booking.packageSlug);
+        if (!tourPackage) return;
 
-      if (!groups[dateKey]) {
+        if (!groups[dateKey]) {
         groups[dateKey] = {};
-      }
-      if (!groups[dateKey][booking.packageSlug]) {
+        }
+        if (!groups[dateKey][booking.packageSlug]) {
         groups[dateKey][booking.packageSlug] = {
-          tourName: tourPackage.name,
-          passengers: [],
+            tourName: tourPackage.name,
+            passengers: [],
         };
-      }
+        }
 
-      const seats = booking.selectedSeats.map(s => s.number).join(', ');
-      booking.passengers.forEach(passenger => {
+        const seats = booking.selectedSeats.map(s => s.number).join(', ');
+        booking.passengers.forEach(passenger => {
         groups[dateKey][booking.packageSlug].passengers.push({
-          bookingDate: format(new Date(booking.bookingDate), 'dd MMM yyyy'),
-          name: passenger.name,
-          phone: passenger.phone,
-          age: passenger.age,
-          seats: seats,
+            bookingDate: format(new Date(booking.bookingDate), 'dd MMM yyyy'),
+            name: passenger.name,
+            phone: passenger.phone,
+            age: passenger.age,
+            seats: seats,
         });
-      });
+        });
     });
-
     return groups;
-  }, [bookings, tourPackages]);
+}
+
+const getDateLabel = (dateStr: string) => {
+    const date = new Date(dateStr);
+    if(isToday(date)) return "Today's Manifest";
+    if(isTomorrow(date)) return "Tomorrow's Manifest";
+    return format(date, 'PPP');
+}
+
+export default async function NotificationsPage() {
+  const [bookingData, packageData] = await Promise.all([
+      getTodaysAndTomorrowsBookings(),
+      getTourPackages()
+  ]);
+  bookingData.sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime());
   
-  const getDateLabel = (dateStr: string) => {
-      const date = new Date(dateStr);
-      if(isToday(date)) return "Today's Manifest";
-      if(isTomorrow(date)) return "Tomorrow's Manifest";
-      return format(date, 'PPP');
-  }
+  const groupedBookings = groupBookings(bookingData as Booking[], packageData);
+  const dateKeys = Object.keys(groupedBookings).sort();
 
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="mt-4 text-muted-foreground">Loading upcoming bookings...</p>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      );
-    }
-    
-    const dateKeys = Object.keys(groupedBookings).sort();
-    
-    if (dateKeys.length === 0) {
-      return (
+  return (
+    <div className="container mx-auto max-w-6xl py-12">
+      <div className="flex items-center gap-2 mb-4">
+        <Bell className="text-primary h-8 w-8" />
+        <h1 className="text-3xl font-bold">Upcoming Bookings</h1>
+      </div>
+      <p className="text-muted-foreground mb-8">
+        Grouped passenger lists for today and tomorrow. Use these manifests to coordinate with your team.
+      </p>
+      
+      {dateKeys.length === 0 ? (
         <Alert>
           <Bell className="h-4 w-4" />
           <AlertTitle>All Clear!</AlertTitle>
           <AlertDescription>There are no bookings for today or tomorrow.</AlertDescription>
         </Alert>
-      );
-    }
-
-    return (
+      ) : (
         <div className="space-y-8">
             {dateKeys.map(date => (
                 <div key={date}>
@@ -167,19 +128,7 @@ export default function NotificationsPage() {
                 </div>
             ))}
         </div>
-    );
-  };
-
-  return (
-    <div className="container mx-auto max-w-6xl py-12">
-      <div className="flex items-center gap-2 mb-4">
-        <Bell className="text-primary h-8 w-8" />
-        <h1 className="text-3xl font-bold">Upcoming Bookings</h1>
-      </div>
-      <p className="text-muted-foreground mb-8">
-        Grouped passenger lists for today and tomorrow. Use these manifests to coordinate with your team.
-      </p>
-      {renderContent()}
+      )}
     </div>
   );
 }
