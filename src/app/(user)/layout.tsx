@@ -8,8 +8,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Go Nilgiris',
-  description: 'Explore the Nilgiris with Ease – Ooty, Coonoor, Mudhumalai & More!',
+  title: 'Go Nilgris | Ooty & Coonoor Tour Packages',
+  description: 'Explore the Nilgiris with Ease. Book curated bus tours to Ooty, Coonoor, Mudhumalai, Pykara, and more. Your perfect Nilgiri adventure starts here!',
 };
 
 export default function RootLayout({

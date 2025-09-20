@@ -5,7 +5,28 @@ import { TourTabs } from '@/components/tours/tour-tabs';
 import { TourBookingCard } from '@/components/tours/tour-booking-card';
 import { getTourPackageBySlug, getTourPackages, getPackagePrice, getGalleryImages } from '@/lib/firebase';
 import type { TourPackage } from '@/types';
+import type { Metadata } from 'next';
 
+type Props = {
+  params: { slug: string }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const slug = params.slug;
+  const tourPackage = await getTourPackageBySlug(slug);
+
+  if (!tourPackage) {
+    return {
+      title: 'Tour Not Found',
+      description: 'The tour you are looking for does not exist.',
+    }
+  }
+
+  return {
+    title: `${tourPackage.name} | Go Nilgris`,
+    description: tourPackage.overview,
+  }
+}
 
 async function getTourData(slug: string) {
     const tourData = await getTourPackageBySlug(slug);
