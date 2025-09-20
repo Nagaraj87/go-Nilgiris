@@ -1,5 +1,4 @@
 
-
 import { BookingsManagement } from "@/components/admin/bookings-management";
 import { ContactManagement } from "@/components/admin/contact-management";
 import { PriceManagement } from "@/components/admin/price-management";
