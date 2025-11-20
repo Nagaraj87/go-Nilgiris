@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, Plane, PlusCircle, ExternalLink } from 'lucide-react';
+import { Home, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, Plane, PlusCircle, ExternalLink, BookOpenCheck } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { NotificationBell } from '../notification-bell';
 import React from 'react';
@@ -13,7 +13,8 @@ export function NavHeader() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
 
   const navLinks = [
-    { href: "/", label: "Home", icon: Home },
+    { href: "/", label: "Home", icon: Home, target: "_blank" },
+    { href: "/project-documentation.html", label: "Documentation", icon: BookOpenCheck, target: "_blank" },
     { href: "/admin", label: "Dashboard", icon: Plane },
     { href: "/admin/edit-tour/new", label: "New Tour", icon: PlusCircle },
     { href: "/admin/availability", label: "Availability", icon: ShieldOff },
@@ -42,6 +43,11 @@ export function NavHeader() {
               </Link>
           </Button>
           <NotificationBell />
+           <Button variant="ghost" asChild>
+            <Link href="/project-documentation.html" target="_blank">
+                <BookOpenCheck className="mr-2 h-4 w-4"/> Documentation
+            </Link>
+          </Button>
           <Button variant="outline" asChild>
             <Link href="/" target="_blank">
                 <ExternalLink className="mr-2 h-4 w-4"/>Go to Site
@@ -52,9 +58,6 @@ export function NavHeader() {
         {/* Mobile Navigation */}
         <div className="md:hidden flex items-center gap-2">
             <NotificationBell />
-            <Button variant="outline" size="icon" asChild>
-                <Link href="/" target="_blank"><ExternalLink/></Link>
-            </Button>
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
                     <Button variant="outline" size="icon"><Menu/></Button>
@@ -65,10 +68,11 @@ export function NavHeader() {
                     </SheetHeader>
                      <ScrollArea className="flex-grow">
                         <nav className="flex flex-col gap-1 pt-4 pr-4">
-                        {navLinks.map(({ href, label, icon: Icon }) => (
+                        {navLinks.map(({ href, label, icon: Icon, target }) => (
                             <Link
                                 key={href}
                                 href={href}
+                                target={target}
                                 className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium hover:bg-muted"
                                 onClick={() => setIsSheetOpen(false)}
                             >
