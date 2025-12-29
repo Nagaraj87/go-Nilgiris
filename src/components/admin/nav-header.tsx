@@ -14,7 +14,7 @@ export function NavHeader() {
 
   const navLinks = [
     { href: "/", label: "Home", icon: Home, target: "_blank" },
-    { href: "/admin/documentation-viewer", label: "Documentation", icon: BookOpenCheck, target: "" },
+    { href: "/admin/documentation", label: "Documentation", icon: BookOpenCheck, target: "" },
     { href: "/admin", label: "Dashboard", icon: Plane },
     { href: "/admin/edit-tour/new", label: "New Tour", icon: PlusCircle },
     { href: "/admin/availability", label: "Availability", icon: ShieldOff },
@@ -44,7 +44,7 @@ export function NavHeader() {
           </Button>
           <NotificationBell />
            <Button variant="ghost" asChild>
-            <Link href="/admin/documentation-viewer">
+            <Link href="/admin/documentation">
                 <BookOpenCheck className="mr-2 h-4 w-4"/> Documentation
             </Link>
           </Button>
