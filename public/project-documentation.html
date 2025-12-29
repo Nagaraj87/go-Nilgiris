@@ -9,337 +9,381 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #333;
         }
-        .prose {
-            max-width: 80ch;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap');
+        h1, h2, h3, h4 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            color: #166534; /* Primary Color */
         }
-        .prose h1 {
-            @apply text-4xl font-bold mb-4 border-b pb-2;
+        h1 { font-size: 2.5rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        h2 { font-size: 2rem; margin-top: 2.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1rem;}
+        h3 { font-size: 1.5rem; margin-top: 2rem; margin-bottom: 0.75rem; }
+        h4 { font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #15803d; }
+        code {
+            font-family: 'Source Code Pro', monospace;
+            background-color: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
         }
-        .prose h2 {
-            @apply text-3xl font-bold mt-12 mb-4 border-b pb-2;
+        pre {
+            background-color: #1f2937;
+            color: #d1d5db;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
         }
-        .prose h3 {
-            @apply text-2xl font-semibold mt-8 mb-4;
+        pre code {
+            background-color: transparent;
+            padding: 0;
         }
-        .prose h4 {
-            @apply text-xl font-semibold mt-6 mb-3;
+        .container {
+            max-width: 1024px;
+            margin: auto;
+            padding: 2rem;
         }
-        .prose a {
-            @apply text-blue-600 hover:underline;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
         }
-        .prose code {
-            @apply bg-gray-100 text-red-600 rounded px-1.5 py-1 text-sm;
+        th, td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem;
+            text-align: left;
         }
-        .prose pre > code {
-            @apply block whitespace-pre-wrap p-4 rounded-lg;
+        th {
+            background-color: #f9fafb;
         }
-        .prose blockquote {
-            @apply border-l-4 border-gray-300 pl-4 italic text-gray-600;
-        }
-        .prose table {
-            @apply w-full table-auto border-collapse;
-        }
-        .prose th, .prose td {
-            @apply border p-2 text-left;
-        }
-        .prose th {
-            @apply bg-gray-50;
+        .color-swatch {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.25rem;
+            border: 1px solid #ccc;
         }
     </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-50 text-gray-800">
-    <div class="container mx-auto p-4 sm:p-8">
-        <article class="prose lg:prose-xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-            <h1>Go Nilgris: Technical Website Documentation</h1>
-            <p class="text-lg text-gray-600">A complete technical deep-dive into the Go Nilgris tour booking website. This document details the architecture, data flow, technology stack, and core functionalities.</p>
+<body class="bg-gray-50">
+    <div class="container">
+        <h1>Go Nilgris: Technical Documentation</h1>
+        <p class="text-gray-600">A comprehensive guide to the Go Nilgris tour booking website. This document details the architecture, data flow, styling, and core functionalities.</p>
 
-            <!-- ====================================================================== -->
-            <!-- 1. Project Overview -->
-            <!-- ====================================================================== -->
-            <h2>1. Project Overview</h2>
+        <!-- Core Technologies -->
+        <h2>1. Core Technologies</h2>
+        <p>The application is built on a modern, robust tech stack designed for performance, security, and scalability.</p>
+        <ul>
+            <li><strong>Next.js 15:</strong> The React framework for production. It enables features like Server Components, Server Actions, and Static Site Generation (SSG).</li>
+            <li><strong>React 18:</strong> The core library for building user interfaces.</li>
+            <li><strong>Firebase:</strong> Used as the backend-as-a-service.
+                <ul>
+                    <li><strong>Firestore:</strong> A NoSQL document database for all application data (tours, bookings, etc.).</li>
+                </ul>
+            </li>
+            <li><strong>Tailwind CSS:</strong> A utility-first CSS framework for rapid and consistent styling.</li>
+            <li><strong>ShadCN/UI:</strong> A collection of beautifully designed and accessible UI components built on top of Radix UI and Tailwind CSS.</li>
+            <li><strong>Razorpay:</strong> The payment gateway for processing online tour bookings securely.</li>
+            <li><strong>Lucide React:</strong> A library of simply beautiful and consistent icons.</li>
+            <li><strong>React Hook Form & Zod:</strong> For robust, type-safe form validation and management.</li>
+        </ul>
 
-            <h3>1.1. Purpose</h3>
-            <p>Go Nilgris is a full-stack web application designed for a tour operator in the Nilgiris region. It allows customers to browse tour packages, check availability, and book tours online. It also includes a comprehensive, locally-run admin panel for managing all aspects of the business, including tours, bookings, pricing, and site content.</p>
-
-            <h3>1.2. Technology Stack</h3>
-            <table>
-                <thead>
-                    <tr><th>Technology</th><th>Purpose</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td><strong>Next.js</strong></td><td>React framework for building the user interface. Uses the App Router for server-centric routing and rendering.</td></tr>
-                    <tr><td><strong>React</strong></td><td>Core library for building user interface components.</td></tr>
-                    <tr><td><strong>TypeScript</strong></td><td>Provides static typing for improved code quality and maintainability.</td></tr>
-                    <tr><td><strong>Tailwind CSS</strong></td><td>A utility-first CSS framework for styling the application.</td></tr>
-                    <tr><td><strong>ShadCN/UI</strong></td><td>A collection of accessible and customizable UI components built on Radix UI and Tailwind CSS.</td></tr>
-                    <tr><td><strong>Firebase (Firestore)</strong></td><td>A NoSQL cloud database used as the primary data store for all application data (tours, bookings, etc.).</td></tr>
-                    <tr><td><strong>Razorpay</strong></td><td>Payment gateway for securely processing online payments for bookings.</td></tr>
-                    <tr><td><strong>React Hook Form & Zod</strong></td><td>Used for robust and type-safe form validation and management.</td></tr>
-                </tbody>
-            </table>
-
-            <!-- ====================================================================== -->
-            <!-- 2. Project Structure -->
-            <!-- ====================================================================== -->
-            <h2>2. Project Structure</h2>
-            <p>The project follows a feature-colocated structure within the Next.js App Router paradigm. Below is an explanation of the key directories and files.</p>
-            <pre><code>
+        <!-- Project Structure -->
+        <h2>2. Project Structure</h2>
+        <p>The project follows the Next.js App Router paradigm, which organizes the application by routes.</p>
+        <pre><code>
 /
+|-- public/
+|   |-- project-documentation.html  (This file)
+|
 |-- src/
 |   |-- app/
-|   |   |-- (admin)/              # Route group for all admin-related pages.
-|   |   |   |-- admin/
-|   |   |   |   |-- page.tsx      # Main admin dashboard.
-|   |   |   |   |-- availability/ # Page to manage seat blocking.
-|   |   |   |   |-- edit-booking/ # Page to edit a specific booking.
-|   |   |   |   |-- edit-tour/    # Page to create/edit a tour package.
-|   |   |   |   |-- notifications/# Page to view upcoming booking manifests.
-|   |   |   |-- layout.tsx        # Layout for the admin section, contains security check.
-|   |   |-- (user)/               # Route group for all public-facing pages.
-|   |   |   |-- page.tsx          # The public homepage.
-|   |   |   |-- booking/          # The multi-step booking flow.
-|   |   |   |-- contact/          # Customer support contact page.
-|   |   |   |-- tours/            # Dynamic routes for individual tour details.
-|   /   |   |-- layout.tsx        # Root layout for the public site.
-|   |   |-- globals.css           # Global styles and Tailwind CSS theme variables.
-|   |   |-- error.tsx             # Global error boundary.
+|   |   |-- (admin)/                (Group for all admin-only routes)
+|   |   |   |-- admin/              (Admin dashboard pages)
+|   |   |   |-- layout.tsx          (Admin-specific layout, blocks production access)
+|   |   |
+|   |   |-- (user)/                 (Group for all public-facing routes)
+|   |   |   |-- booking/            (Booking flow, confirmation, and ticket pages)
+|   |   |   |-- contact/
+|   |   |   |-- tours/[slug]/       (Dynamic tour detail pages)
+|   |   |   |-- layout.tsx          (Main public layout with header and footer)
+|   |   |   |-- page.tsx            (The homepage)
+|   |   |
+|   |   |-- globals.css             (Global styles and Tailwind directives)
+|   |   |-- layout.tsx              (Root layout)
+|   |   |-- error.tsx               (Global error boundary)
+|   |
 |   |-- components/
-|   |   |-- admin/                # React components specific to the admin panel.
-|   |   |-- booking/              # Components used in the booking flow.
-|   |   |-- home/                 # Components for the homepage (Hero, Tours section).
-|   |   |-- tours/                # Components for the tour details page.
-|   |   |-- ui/                   # ShadCN UI components (Button, Card, etc.).
-|   |   |-- header.tsx            # Site-wide header for the user site.
-|   |   |-- footer.tsx            # Site-wide footer.
+|   |   |-- admin/                  (React components for the admin dashboard)
+|   |   |-- booking/                (Components for the booking process)
+|   |   |-- home/                   (Components for the homepage)
+|   |   |-- tours/                  (Components for the tour details pages)
+|   |   |-- ui/                     (ShadCN UI components like Button, Card, etc.)
+|   |   |-- footer.tsx
+|   |   |-- header.tsx
+|   |   |-- theme-provider.tsx      (Handles light/dark/custom themes)
+|   |
 |   |-- lib/
-|   |   |-- firebase.ts           # Core file for all Firebase database interactions.
-|   |   |-- razorpay.ts           # Server-side functions for interacting with Razorpay API.
-|   |   |-- utils.ts              # Utility functions (e.g., `cn` for Tailwind classes).
+|   |   |-- firebase.ts             (All Firebase Firestore interaction logic)
+|   |   |-- razorpay.ts             (Razorpay order creation logic)
+|   |   |-- utils.ts                (Utility functions like cn for classnames)
+|   |
 |   |-- types/
-|   |   |-- index.ts              # Centralized TypeScript type definitions for the project.
-|-- firebase.json                 # Firebase configuration for Firestore rules.
-|-- firestore.rules               # Security rules for the Firestore database.
-|-- next.config.ts                # Next.js configuration file.
-|-- tailwind.config.ts            # Tailwind CSS configuration file.
-|-- package.json                  # Project dependencies and scripts.
-            </code></pre>
+|   |   |-- index.ts                (All TypeScript type definitions for the project)
+|
+|-- firebase.json                   (Firebase configuration for Firestore rules)
+|-- firestore.rules                 (Security rules for the Firestore database)
+|-- next.config.ts                  (Next.js configuration file)
+|-- tailwind.config.ts              (Tailwind CSS theme configuration)
+        </code></pre>
 
-            <!-- ====================================================================== -->
-            <!-- 3. Styling and UI -->
-            <!-- ====================================================================== -->
-            <h2>3. Styling and UI</h2>
-            <p>The application's look and feel is managed through a combination of Tailwind CSS for utility-first styling and ShadCN for pre-built, high-quality components.</p>
+        <!-- Styling, Fonts & Theming -->
+        <h2>3. Styling, Fonts & Theming</h2>
+        
+        <h3>3.1. Typography and Font</h3>
+        <p>The website uses the <strong>Inter</strong> font for all text, providing a clean, modern, and highly readable interface. The font is loaded from Google Fonts in the root layouts.</p>
+        
+        <h4>Font Loading (`src/app/(user)/layout.tsx`):</h4>
+        <pre><code>
+&lt;head&gt;
+    &lt;link rel="preconnect" href="https://fonts.googleapis.com" /&gt;
+    &lt;link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" /&gt;
+    &lt;link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" /&gt;
+&lt;/head&gt;
+        </code></pre>
+        <h4>Tailwind Configuration (`tailwind.config.ts`):</h4>
+        <pre><code>
+extend: {
+  fontFamily: {
+    sans: ['"Inter"', 'sans-serif'],
+    headline: ['"Inter"', 'sans-serif'],
+  },
+},
+        </code></pre>
 
-            <h4>3.1. Theming</h4>
-            <p>The color scheme and theming are controlled by CSS variables defined in <code>src/app/globals.css</code>. This file sets up different themes (light, dark, forest, sunset, etc.) by defining HSL color values for primary, secondary, background, foreground, and other semantic color properties. The active theme is managed by `next-themes`.</p>
-            <pre><code class="language-css">
-/* Example from src/app/globals.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+        <h3>3.2. Color Schemes & Theming</h3>
+        <p>The application features a robust theming system built with CSS variables, controlled via Tailwind CSS and `next-themes`. The primary theme is "Forest," characterized by natural greens. Several other themes are available via the theme toggler.</p>
+        <p>Themes are defined in <code>src/app/globals.css</code> using HSL color values for easy modification.</p>
+        
+        <h4>Default Theme (Light)</h4>
+        <table>
+            <thead><tr><th>Name</th><th>Swatch</th><th>HSL Value</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td>Background</td><td><div class="color-swatch" style="background-color: hsl(0 0% 100%)"></div></td><td><code>0 0% 100%</code></td><td>Main page background</td></tr>
+                <tr><td>Foreground</td><td><div class="color-swatch" style="background-color: hsl(224 71% 4%)"></div></td><td><code>224 71% 4%</code></td><td>Main text color</td></tr>
+                <tr><td>Primary</td><td><div class="color-swatch" style="background-color: hsl(122 41% 39%)"></div></td><td><code>122 41% 39%</code></td><td>Primary interactive elements (buttons, links)</td></tr>
+                <tr><td>Primary Fg</td><td><div class="color-swatch" style="background-color: hsl(120 100% 98%)"></div></td><td><code>120 100% 98%</code></td><td>Text on primary elements</td></tr>
+                <tr><td>Accent</td><td><div class="color-swatch" style="background-color: hsl(47 100% 69%)"></div></td><td><code>47 100% 69%</code></td><td>Highlight color (e.g., "Book Now" buttons)</td></tr>
+                <tr><td>Destructive</td><td><div class="color-swatch" style="background-color: hsl(0 84.2% 60.2%)"></div></td><td><code>0 84.2% 60.2%</code></td><td>Destructive actions (e.g., delete buttons)</td></tr>
+            </tbody>
+        </table>
 
-@layer base {
-  :root,
-  [data-theme='light'] {
-    --background: 0 0% 100%;
-    --foreground: 224 71% 4%;
-    --card: 0 0% 100%;
-    --primary: 122 41% 39%;
-    --primary-foreground: 120 100% 98%;
-    --secondary: 60 40% 90%;
-    --accent: 47 100% 69%;
-    --destructive: 0 84.2% 60.2%;
-    --border: 60 20% 85%;
-    --input: 60 20% 88%;
-    --ring: 122 41% 39%;
-    --radius: 0.5rem;
-  }
+        <!-- Database (Firestore) -->
+        <h2>4. Database Deep Dive (Firebase Firestore)</h2>
+        <p>All application data is stored in Firebase Firestore. The file <code>src/lib/firebase.ts</code> contains all functions for interacting with the database. These are designed as Server Actions for maximum security and performance.</p>
 
-  .dark,
-  [data-theme='dark'] {
-    --background: 224 71% 4%;
-    --foreground: 60 56% 91%;
-    --card: 224 71% 6%;
-    --primary: 122 41% 45%;
-    /* ... other dark theme variables */
-  }
+        <h3>4.1. Firestore Collections</h3>
+        
+        <h4>Collection: `tour_packages`</h4>
+        <p>Stores the main details for each tour package. The document ID is the URL-friendly slug.</p>
+        <ul>
+            <li><strong>Schema:</strong> See <code>TourPackage</code> in <code>src/types/index.ts</code>.</li>
+            <li><strong>Fields:</strong> <code>name</code>, <code>slug</code>, <code>duration</code>, <code>overview</code>, <code>inclusions</code>, <code>exclusions</code>, <code>notes</code>, <code>disclaimers</code>, <code>itinerary</code>, <code>faqs</code>.</li>
+        </ul>
+        <pre><code>
+// Fetch all tour packages
+// Used on: Homepage, Admin Dashboard
+export const getTourPackages = async (): Promise<TourPackage[]> => {
+    const tourPackagesCol = collection(db, 'tour_packages');
+    const snapshot = await getDocs(tourPackagesCol);
+    return snapshot.docs.map(doc => ({...doc.data(), id: doc.id } as TourPackage));
 }
-            </code></pre>
-            <p>These variables are consumed by Tailwind's configuration in <code>tailwind.config.ts</code>, allowing use of classes like `bg-background` and `text-primary`.</p>
 
-            <h4>3.2. Fonts</h4>
-            <p>The "Inter" font is used throughout the site. It is loaded from Google Fonts in the root layouts (<code>src/app/(user)/layout.tsx</code> and <code>src/app/(admin)/layout.tsx</code>) to ensure it is available on all pages.</p>
-
-            <h4>3.3. UI Components</h4>
-            <p>Components from ShadCN/UI are located in <code>src/components/ui</code>. These are not installed as a typical library but are part of the source code, making them fully customizable. App-specific components that compose these UI primitives are located in other subdirectories of <code>src/components</code>.</p>
-
-
-            <!-- ====================================================================== -->
-            <!-- 4. Data Flow and Firebase -->
-            <!-- ====================================================================== -->
-            <h2>4. Data Flow and Firebase</h2>
-            <p>Firebase Firestore is the single source of truth for the application's data. All interactions with the database are centralized in <code>src/lib/firebase.ts</code>. This file contains server-side functions for creating, reading, updating, and deleting data.</p>
-
-            <h4>4.1. Firestore Data Model</h4>
-            <p>Firestore is organized into several top-level collections:</p>
-            <table>
-                <thead>
-                    <tr><th>Collection</th><th>Purpose</th><th>Document ID</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td><code>tour_packages</code></td><td>Stores all details about a tour package, except for price.</td><td>URL-friendly slug (e.g., "ooty-coonoor-tour").</td></tr>
-                    <tr><td><code>packages</code></td><td>Stores only the price of each tour package. Separated for quick price lookups.</td><td>URL-friendly slug (e.g., "ooty-coonoor-tour").</td></tr>
-                    <tr><td><code>bookings</code></td><td>Contains records of every booking made by customers.</td><td>Auto-generated by Firestore.</td></tr>
-                    <tr><td><code>gallery</code></td><td>Stores URLs and metadata for images associated with tour packages.</td><td>Auto-generated by Firestore.</td></tr>
-                    <tr><td><code>availability</code></td><td>Stores manually blocked seats for a specific tour on a specific date.</td><td>Composite ID: <code>{packageSlug}_{yyyy-MM-dd}</code>.</td></tr>
-                    <tr><td><code>site_config</code></td><td>Stores site-wide configuration like contact numbers.</td><td>Singleton document ID (e.g., "contact").</td></tr>
-                </tbody>
-            </table>
-
-            <h4>4.2. Data Fetching Strategy</h4>
-            <p>The application heavily utilizes Next.js Server Components to fetch data. This means that for most pages, data is fetched on the server before the page is sent to the client's browser. This improves performance and reduces the amount of client-side JavaScript.</p>
-            <blockquote><strong>Example:</strong> The tour details page (<code>src/app/(user)/tours/[slug]/page.tsx</code>) is a Server Component. It fetches the tour package details, its price, and its gallery images in parallel on the server and then passes this data as props to its child components.</blockquote>
-            <pre><code class="language-javascript">
-// Simplified example from src/app/(user)/tours/[slug]/page.tsx
-
-import { getTourPackageBySlug, getPackagePrice, getGalleryImages } from '@/lib/firebase';
-
-async function getTourData(slug: string) {
-    const tourData = await getTourPackageBySlug(slug);
-    if (!tourData) {
-        return { tourPackage: null, price: null, galleryImages: [] };
-    }
+// Create or update a tour package
+// Used in: Admin > Edit Tour Page
+export const createOrUpdateTourPackage = async (tourData: Omit<TourPackage, 'id' | 'gallery'>) => {
+    const docRef = doc(db, 'tour_packages', tourData.slug);
+    const priceDocRef = doc(db, 'packages', tourData.slug);
     
-    // Fetch price and gallery images in parallel
-    const [price, galleryImages] = await Promise.all([
-      getPackagePrice(slug),
-      getGalleryImages(slug)
-    ]);
+    const { price, ...tourPackageData } = tourData;
+
+    const batch = writeBatch(db);
     
-    return { tourPackage: tourData, price, galleryImages };
+    batch.set(docRef, tourPackageData, { merge: true });
+    batch.set(priceDocRef, { slug: tourData.slug, price: price }, { merge: true });
+    
+    await batch.commit();
 }
+        </code></pre>
 
-export default async function TourPackagePage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
-  const { tourPackage, price, galleryImages } = await getTourData(slug);
-
-  if (!tourPackage) {
-    notFound();
+        <h4>Collection: `bookings`</h4>
+        <p>Stores every booking made by customers.</p>
+        <ul>
+            <li><strong>Schema:</strong> See <code>Booking</code> in <code>src/types/index.ts</code>.</li>
+            <li><strong>Fields:</strong> <code>bookingId</code>, <code>packageSlug</code>, <code>bookingDate</code>, <code>memberCount</code>, <code>totalAmount</code>, <code>passengers</code>, <code>selectedSeats</code>, <code>razorpayPaymentId</code>.</li>
+        </ul>
+        <pre><code>
+// Save a new booking after successful payment
+// Used in: Booking Page (Payment Handler)
+export const saveBooking = async (bookingData: Omit<Booking, 'id'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'bookings'), bookingData);
+    return docRef.id;
+  } catch (e) {
+    throw new Error('Could not save booking');
   }
-
-  return (
-    // ... JSX uses the fetched data
-    &lt;TourHeader name={tourPackage.name} ... /&gt;
-    &lt;TourTabs tourPackage={tourPackage} galleryImages={galleryImages} /&gt;
-    &lt;TourBookingCard tourPackageData={tourPackage} price={price} /&gt;
-  );
-}
-            </code></pre>
-
-            <h4>4.3. Data Mutation Strategy (Server Actions)</h4>
-            <p>Data creation, updates, and deletions are handled using Next.js Server Actions. These are functions defined on the server (marked with `'use server'`) that can be called directly from client-side components, typically during form submissions. This eliminates the need for manual API endpoint creation.</p>
-            <blockquote><strong>Example:</strong> The booking process uses a server action <code>saveSuccessfulBooking</code> to write the booking details to Firestore after a successful payment.</blockquote>
-            <pre><code class="language-javascript">
-// From src/app/(user)/booking/actions.ts
-'use server';
-
-import { saveBooking as saveBookingToDb } from '@/lib/firebase';
-import type { Booking } from '@/types';
-
-export async function saveSuccessfulBooking(bookingData: Omit<Booking, 'id'>) {
-    try {
-        const dbId = await saveBookingToDb(bookingData);
-        return { success: true, dbId };
-    } catch (e) {
-        console.error('Error saving booking to Firestore:', e);
-        return { success: false, error: '...' };
-    }
-}
-
-// Called from the client-side Razorpay payment handler
-const options = {
-    // ...
-    handler: async (response: any) => {
-        const bookingData = { /* ... construct booking data ... */ };
-        const saveResult = await saveSuccessfulBooking(bookingData); // Server Action call
-        if (saveResult.success) {
-            router.push(`/booking/confirmation?id=${saveResult.dbId}...`);
-        }
-    }
 };
-            </code></pre>
 
-            <h4>4.4. Firebase Security Rules</h4>
-            <p>The file <code>firestore.rules</code> defines the security model for the database, controlling who can read or write data to specific collections. Generally, public data (like tour packages) is world-readable, while write access is restricted. Bookings can be created by anyone but can only be managed by an authenticated admin.</p>
-            <pre><code>
-// From firestore.rules
-rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-  
-    // Tour packages should be publicly readable
-    match /tour_packages/{packageSlug} {
-      allow read: if true;
-      allow write: if request.auth != null; // For now, only authenticated (admin) can write
-    }
-
-    // Bookings can be created by anyone, but only read/updated/deleted by an admin
-    match /bookings/{bookingId} {
-      allow create: if true;
-      allow read, update, delete: if request.auth != null;
-    }
-    
-    // ... other rules
-  }
+// Get all bookings
+// Used in: Admin > Bookings Management
+export const getBookings = async (): Promise<Booking[]> => {
+    const querySnapshot = await getDocs(collection(db, "bookings"));
+    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+    // Sort by most recent date
+    bookings.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
+    return bookings;
 }
-            </code></pre>
+        </code></pre>
 
-            <!-- ====================================================================== -->
-            <!-- 5. Key Functionalities -->
-            <!-- ====================================================================== -->
-            <h2>5. Key Functionalities</h2>
+        <h4>Collection: `availability`</h4>
+        <p>Stores seats that are manually blocked by an admin for a specific tour on a specific date. The document ID is a composite key: <code>{packageSlug}_{yyyy-MM-dd}</code>.</p>
+        <ul>
+            <li><strong>Schema:</strong> <code>{ blockedSeats: number[] }</code></li>
+        </ul>
+        <pre><code>
+// Get manually blocked and booked seats for a date
+// Used in: Booking Page, Admin Availability Page
+export const getAvailabilityForDate = async (packageSlug: string, date: string): Promise<{ blocked: number[], occupied: number[] }> => {
+    if (!packageSlug || !date) return { blocked: [], occupied: [] };
+    const [blockedSeats, occupiedSeats] = await Promise.all([
+        getBlockedSeatsForDate(packageSlug, date),
+        getOccupiedSeatsForDate(packageSlug, date)
+    ]);
+    return { blocked: blockedSeats, occupied: occupiedSeats };
+}
+        </code></pre>
 
-            <h4>5.1. Tour Booking Flow</h4>
-            <p>The booking process is a multi-step flow handled by the component at <code>src/app/(user)/booking/page.tsx</code>.</p>
-            <ol>
-                <li><strong>Step 1: Details Selection:</strong> User selects a booking date and the number of passengers. The component fetches seat availability for the selected date in parallel.</li>
-                <li><strong>Step 2: Passenger Info & Seat Selection:</strong> The user fills out details for each passenger and selects seats from an interactive seat chart. The total price is calculated in real-time.</li>
-                <li><strong>Step 3: Payment:</strong> The user confirms the details and proceeds to payment. A server action (<code>createPaymentOrder</code>) is called to create an order with Razorpay. The Razorpay checkout modal is then displayed.</li>
-                <li><strong>Confirmation:</strong> Upon successful payment, Razorpay's `handler` function is invoked. This function calls another server action (<code>saveSuccessfulBooking</code>) to save the complete booking record to Firestore. The user is then redirected to a confirmation page with their unique booking ID.</li>
-            </ol>
+        <h4>Other Collections:</h4>
+        <ul>
+            <li><strong>`gallery`</strong>: Stores image URLs for tour galleries, linked by `packageSlug`.</li>
+            <li><strong>`packages`</strong>: Stores the price for each tour, separate from the main tour data to allow for quick price lookups.</li>
+            <li><strong>`site_config`</strong>: Stores site-wide settings, like contact information.</li>
+        </ul>
 
-            <h4>5.2. Admin Panel</h4>
-            <p>The admin panel is a powerful, locally-run dashboard for managing the site. It is located under the <code>src/app/(admin)</code> route group.</p>
-            <blockquote>
-                <strong>Critical Security Feature:</strong> The entire admin panel is disabled in production environments. The layout file <code>src/app/(admin)/layout.tsx</code> contains a check that prevents it from rendering if <code>process.env.NODE_ENV === 'production'</code>. This ensures the admin panel is never exposed on the live website.
-            </blockquote>
-            <pre><code class="language-javascript">
-// from src/app/(admin)/layout.tsx
-import { notFound } from 'next/navigation';
+        <!-- User Functionality -->
+        <h2>5. User Functionality: The Booking Flow</h2>
+        <p>The customer journey is designed to be a simple, 3-step process.</p>
+        <ol class="list-decimal list-inside space-y-2">
+            <li><strong>Step 1: Booking Details.</strong> The user selects a tour date and the number of passengers. The page fetches availability for that date in parallel to enable/disable the date picker if a day is fully booked.</li>
+            <li><strong>Step 2: Passenger Info & Seat Selection.</strong> The user fills in details for each passenger and selects seats from the interactive `SeatChart` component. The total price is calculated in real-time.</li>
+            <li><strong>Step 3: Payment.</strong> The user confirms the details and clicks "Pay Now".
+                <ul class="list-disc list-inside ml-4">
+                    <li>An order is created with Razorpay via the `createPaymentOrder` Server Action.</li>
+                    <li>The Razorpay checkout modal opens.</li>
+                    <li>On successful payment, the handler function (`processPayment`) is called.</li>
+                    <li>The `saveSuccessfulBooking` Server Action is invoked to save the final booking to Firestore.</li>
+                    <li>The user is redirected to the `booking/confirmation` page.</li>
+                </ul>
+            </li>
+        </ol>
 
+        <h4>Payment Logic (`src/app/(user)/booking/page.tsx`):</h4>
+        <pre><code>
+const processPayment = async () => {
+    if (!tourPackage || !isRazorpayReady) return;
+    setIsSubmitting(true);
+    
+    // 1. Create a Razorpay order on the server
+    const orderResult = await createPaymentOrder(totalAmount);
+    
+    if (!orderResult.success || !orderResult.order) { /* ... handle error ... */ }
+
+    const { order } = orderResult;
+        
+    const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.id,
+        handler: async (response: any) => { // 2. This runs after successful payment
+            const bookingId = \`NE-\${Math.random().toString(36).substr(2, 9).toUpperCase()}\`;
+            
+            const bookingData = { /* ... assemble booking data ... */ };
+            
+            // 3. Save the booking to Firestore via a Server Action
+            const saveResult = await saveSuccessfulBooking(bookingData);
+
+            if (saveResult.success) { // 4. Redirect to confirmation
+                router.push(\`/booking/confirmation?id=\${saveResult.dbId}...\`);
+            } else { /* ... handle save error ... */ }
+        },
+        // ... other options
+    };
+
+    const rzp = new (window as any).Razorpay(options);
+    rzp.open(); // 5. Open the payment modal
+};
+        </code></pre>
+
+        <!-- Admin Functionality -->
+        <h2>6. Admin Panel Operations</h2>
+        <p>The admin panel is a local-only dashboard for managing the website, protected from public access in production environments.</p>
+
+        <h4>Admin Protection (`src/app/(admin)/layout.tsx`)</h4>
+        <p>A simple but effective check in the admin layout prevents any of its child routes from rendering in a production environment, ensuring the entire section is inaccessible on the live site.</p>
+        <pre><code>
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     // If we're in a production environment, don't render the admin panel.
     if (process.env.NODE_ENV === 'production') {
         notFound();
     }
-    // ...
+
+    return ( /* ... layout JSX ... */ );
 }
-            </code></pre>
-            <p>The admin panel includes management sections for:</p>
-            <ul>
-                <li><strong>Tours:</strong> Create, read, and update tour packages.</li>
-                <li><strong>Bookings:</strong> View, search, edit, and delete all customer bookings.</li>
-                <li><strong>Gallery:</strong> Add or remove images for tour galleries.</li>
-                <li><strong>Pricing:</strong> Update the prices for each tour package.</li>
-                <li><strong>Availability:</strong> Manually block or unblock seats for any tour on any date.</li>
-                <li><strong>Notifications:</strong> View a passenger manifest for upcoming tours (today and tomorrow).</li>
-            </ul>
-        </article>
+        </code></pre>
+
+        <h3>6.1. Admin Sections</h3>
+        <p>The admin dashboard is composed of several server components that fetch data and pass it to client components for interaction.</p>
+        <ul>
+            <li><strong>Tour Management:</strong> Create, view, update, and delete tour packages. Forms use `react-hook-form` for stability.</li>
+            <li><strong>Bookings Management:</strong> View, search, and delete all customer bookings.</li>
+            <li><strong>Gallery Management:</strong> Add and remove images for tour-specific galleries.</li>
+            <li><strong>Contact Management:</strong> Update the WhatsApp and Call numbers displayed on the contact page.</li>
+            <li><strong>Pricing Management:</strong> Quickly update the price for any tour package.</li>
+            <li><strong>Availability Management:</strong> Manually block or unblock seats for any tour on any date.</li>
+        </ul>
+
+        <h4>Example: Price Update (`src/components/admin/price-management.tsx`)</h4>
+        <p>This component demonstrates the use of Server Components and Server Actions for a clean and efficient update process.</p>
+        <pre><code>
+// This is a Server Component, it fetches data directly.
+export async function PriceManagement() {
+    const [packagePrices, packages] = await Promise.all([getPackagePrices(), getTourPackages()]);
+    
+    const pricesMap: Record<string, number> = {};
+    packagePrices.forEach(p => { pricesMap[p.slug] = p.price; });
+
+    return (
+        <Card>
+            {/* ... card header ... */}
+            <CardContent className="space-y-4">
+                {packages.map(pkg => (
+                    // The form component receives the update function as a prop
+                    <PriceForm 
+                        key={pkg.slug}
+                        tourPackage={pkg}
+                        currentPrice={pricesMap[pkg.slug]}
+                        updatePackagePrice={updatePackagePrice} // This is a Server Action
+                    />
+                ))}
+            </CardContent>
+        </Card>
+    );
+}
+        </code></pre>
     </div>
 </body>
 </html>
