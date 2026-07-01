@@ -8,6 +8,8 @@ import { getTourPackageBySlug, getTourPackages, getPackagePrice, getGalleryImage
 import type { TourPackage } from '@/types';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 type Props = {
   params: Promise<{ slug: string }>
 }
@@ -74,10 +76,4 @@ export default async function TourPackagePage({ params }: Props) {
   );
 }
 
-// Generate static paths for all tour packages
-export async function generateStaticParams() {
-  const tourPackages = await getTourPackages();
-  return tourPackages.map((pkg) => ({
-    slug: pkg.slug,
-  }));
-}
+
