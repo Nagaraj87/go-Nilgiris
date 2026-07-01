@@ -118,6 +118,7 @@ function BookingFlow() {
   const [blockedSeats, setBlockedSeats] = useState<number[]>([]);
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [memberCountInput, setMemberCountInput] = useState<string>("1");
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -173,7 +174,12 @@ function BookingFlow() {
   const memberCount = form.watch('passengers').length;
   const bookingDate = form.watch('bookingDate');
 
+  useEffect(() => {
+    setMemberCountInput(fields.length.toString());
+  }, [fields.length]);
+
   const handleMemberCountChange = (newCountStr: string) => {
+    setMemberCountInput(newCountStr);
     const newCount = parseInt(newCountStr, 10);
     if (isNaN(newCount) || newCount < 1) {
       return;
@@ -456,7 +462,7 @@ function BookingFlow() {
                     id="member-count"
                     type="number"
                     min="1"
-                    value={memberCount}
+                    value={memberCountInput}
                     onChange={e => handleMemberCountChange(e.target.value)}
                     className="w-[240px]"
                   />
