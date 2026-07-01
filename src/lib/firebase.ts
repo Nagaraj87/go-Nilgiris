@@ -8,12 +8,12 @@ import type { TourPackage, Booking, ContactInfo, GalleryImage, AdminCredentials 
 import { hash, compare } from 'bcryptjs';
 
 const firebaseConfig = {
-  projectId: 'nilgiri-explorer',
-  appId: '1:379536738400:web:019de38a8bb5025ab7db05',
-  storageBucket: 'nilgiri-explorer.appspot.com',
-  apiKey: 'AIzaSyDAZjWPRX1pbM0CAC4QlZlH9eWBksqluE4',
-  authDomain: 'nil-explorer.firebaseapp.com',
-  messagingSenderId: '379536738400',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 if (!getApps().length) {
