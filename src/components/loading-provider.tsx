@@ -1,8 +1,19 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
+
+function RouteChangeListener({ setIsLoading }: { setIsLoading: (val: boolean) => void }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, [pathname, searchParams, setIsLoading]);
+
+  return null;
+}
 
 type LoadingContextType = {
   isLoading: boolean;
@@ -21,13 +32,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [message, setMessage] = useState("Loading...");
   const [estimatedTime, setEstimatedTime] = useState(3);
   
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
-  // Hide the loader automatically whenever the route finishes navigating
-  useEffect(() => {
-    setIsLoading(false);
-  }, [pathname, searchParams]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -52,6 +57,9 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+      <Suspense fallback={null}>
+        <RouteChangeListener setIsLoading={setIsLoading} />
+      </Suspense>
       {isLoading && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
           <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
