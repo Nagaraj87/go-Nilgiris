@@ -6,7 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { getBookingById, updateBooking } from '@/lib/firebase';
+import { getBookingById } from '@/lib/firebase';
+import { updateBookingAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,17 +31,6 @@ const editBookingSchema = z.object({
 });
 
 type EditBookingFormValues = z.infer<typeof editBookingSchema>;
-
-async function updateBookingAction(bookingId: string, data: EditBookingFormValues) {
-    'use server';
-    try {
-        await updateBooking(bookingId, { passengers: data.passengers });
-        return { success: true };
-    } catch (error) {
-        console.error('Failed to update booking:', error);
-        return { success: false, error: 'Failed to update booking.' };
-    }
-}
 
 
 export default function EditBookingPage() {
@@ -91,7 +81,7 @@ export default function EditBookingPage() {
 
   const onSubmit = async (data: EditBookingFormValues) => {
     setIsSubmitting(true);
-    const result = await updateBookingAction(bookingId, data);
+    const result = await updateBookingAction(bookingId, data.passengers);
     
     if (result.success) {
         toast({ title: 'Success', description: 'Booking updated successfully.' });

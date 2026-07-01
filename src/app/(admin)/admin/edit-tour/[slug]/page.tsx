@@ -7,7 +7,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { getTourPackageBySlug, createOrUpdateTourPackage, deleteTourPackage } from '@/lib/firebase';
-import { revalidatePath } from 'next/cache';
+import { revalidateTours } from '@/app/actions';
 import type { TourPackage } from '@/types';
 
 import { Button } from '@/components/ui/button';
@@ -130,9 +130,7 @@ export default function EditTourPage() {
 
     try {
       await createOrUpdateTourPackage(cleanedData);
-      revalidatePath('/tours');
-      revalidatePath('/');
-      revalidatePath(`/tours/${cleanedData.slug}`);
+      await revalidateTours();
       toast({ title: 'Success', description: `Tour package '${data.name}' has been ${isNewTour ? 'created' : 'updated'}.` });
       router.push('/admin/tours');
       router.refresh(); // To reflect changes in the admin table
@@ -149,8 +147,7 @@ export default function EditTourPage() {
     setIsSubmitting(true);
     try {
         await deleteTourPackage(slug);
-        revalidatePath('/tours');
-        revalidatePath('/');
+        await revalidateTours();
         toast({ title: 'Success', description: 'Tour package deleted.' });
         router.push('/admin/tours');
         router.refresh();
