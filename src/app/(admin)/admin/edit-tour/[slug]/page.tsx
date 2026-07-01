@@ -79,10 +79,10 @@ export default function EditTourPage() {
 
   const { fields: itineraryFields, append: appendItinerary, remove: removeItinerary } = useFieldArray({ control: form.control, name: "itinerary" });
   const { fields: faqsFields, append: appendFaq, remove: removeFaq } = useFieldArray({ control: form.control, name: "faqs" });
-  const { fields: inclusionsFields, append: appendInclusion, remove: removeInclusion } = useFieldArray({ control: form.control, name: "inclusions" });
-  const { fields: exclusionsFields, append: appendExclusion, remove: removeExclusion } = useFieldArray({ control: form.control, name: "exclusions" });
-  const { fields: notesFields, append: appendNote, remove: removeNote } = useFieldArray({ control: form.control, name: "notes" });
-  const { fields: disclaimersFields, append: appendDisclaimer, remove: removeDisclaimer } = useFieldArray({ control: form.control, name: "disclaimers" });
+  const { fields: inclusionsFields, append: appendInclusion, remove: removeInclusion } = useFieldArray({ control: form.control, name: "inclusions" as any }) as any;
+  const { fields: exclusionsFields, append: appendExclusion, remove: removeExclusion } = useFieldArray({ control: form.control, name: "exclusions" as any }) as any;
+  const { fields: notesFields, append: appendNote, remove: removeNote } = useFieldArray({ control: form.control, name: "notes" as any }) as any;
+  const { fields: disclaimersFields, append: appendDisclaimer, remove: removeDisclaimer } = useFieldArray({ control: form.control, name: "disclaimers" as any }) as any;
 
 
   useEffect(() => {

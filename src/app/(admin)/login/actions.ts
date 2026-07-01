@@ -27,7 +27,8 @@ export async function loginAction(values: z.infer<typeof loginSchema>) {
     }
 
     // Set cookie
-    cookies().set(AUTH_COOKIE_NAME, 'true', {
+    const cookieStore = await cookies();
+    cookieStore.set(AUTH_COOKIE_NAME, 'true', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24, // 24 hours
@@ -42,5 +43,6 @@ export async function loginAction(values: z.infer<typeof loginSchema>) {
 }
 
 export async function logoutAction() {
-    cookies().delete(AUTH_COOKIE_NAME);
+    const cookieStore = await cookies();
+    cookieStore.delete(AUTH_COOKIE_NAME);
 }

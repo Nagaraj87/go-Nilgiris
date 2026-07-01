@@ -40,7 +40,10 @@ export function TourTabs({ slug, tourPackage, galleryImages }: TourTabsProps) {
                     {hydratedItinerary.map((item, index) => (
                         <div key={index} className="relative mb-8">
                             <div className="absolute left-0 top-1.5 -translate-x-1/2 w-6 h-6 rounded-full bg-background flex items-center justify-center">
-                                <item.icon className="h-4 w-4 text-primary" />
+                                {(() => {
+                                    const Icon = item.icon as any;
+                                    return <Icon className="h-4 w-4 text-primary" />;
+                                })()}
                             </div>
                             <div className="pl-8">
                                 <p className="font-bold text-primary">{item.time} - {item.activity}</p>

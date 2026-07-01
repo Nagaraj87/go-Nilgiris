@@ -5,12 +5,11 @@ import type { Booking } from '@/types';
 import { Cashfree, CFEnvironment } from "cashfree-pg";
 
 // Initialize Cashfree SDK instance
-const cashfree = new Cashfree();
-cashfree.XClientId = process.env.CASHFREE_APP_ID || '';
-cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || '';
-cashfree.XEnvironment = process.env.CASHFREE_ENVIRONMENT === "PRODUCTION" 
-    ? CFEnvironment.PRODUCTION 
-    : CFEnvironment.SANDBOX;
+const cashfree = new Cashfree(
+    process.env.CASHFREE_ENVIRONMENT === "PRODUCTION" ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
+    process.env.CASHFREE_APP_ID || '',
+    process.env.CASHFREE_SECRET_KEY || ''
+);
 
 export async function initiateCashfreePayment(bookingData: Omit<Booking, 'id'>, totalAmount: number) {
     try {

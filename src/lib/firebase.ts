@@ -276,3 +276,26 @@ export const createInitialAdmin = async (username: string, passwordPlain: string
         console.error("Error creating initial admin", e);
     }
 };
+
+export const getAdminCredentials = async (): Promise<AdminCredentials> => {
+    const querySnapshot = await getDocs(collection(db, 'admin_credentials'));
+    if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        return { username: doc.id, password: '' };
+    }
+    return { username: 'admin', password: '' };
+};
+
+export const updateAdminCredentials = async (credentials: Partial<AdminCredentials>) => {
+    if (!credentials.username) return;
+    
+    const docRef = doc(db, 'admin_credentials', credentials.username);
+    const updates: any = {};
+    
+    if (credentials.password) {
+        const { hash } = await import('bcryptjs');
+        updates.passwordHash = await hash(credentials.password, 10);
+    }
+    
+    await setDoc(docRef, updates, { merge: true });
+};

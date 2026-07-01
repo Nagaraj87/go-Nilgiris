@@ -76,7 +76,7 @@ function BookingFlow() {
     defaultValues: {
       packageSlug: packageSlugFromUrl || '',
       bookingDate: undefined,
-      passengers: [{ name: '', age: 0, gender: undefined, phone: '' }],
+      passengers: [{ name: '', age: 0, gender: undefined as any, phone: '' }],
     },
   });
 
@@ -118,7 +118,7 @@ function BookingFlow() {
     const currentCount = fields.length;
     if (newCount > currentCount) {
       for (let i = 0; i < newCount - currentCount; i++) {
-        append({ name: '', age: 0, gender: undefined, phone: '' });
+        append({ name: '', age: 0, gender: undefined as any, phone: '' });
       }
     } else if (newCount < currentCount) {
       for (let i = 0; i < currentCount - newCount; i++) {

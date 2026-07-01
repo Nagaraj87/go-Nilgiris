@@ -3,12 +3,11 @@ import { Cashfree, CFEnvironment } from "cashfree-pg";
 import { updateBooking } from '@/lib/firebase';
 import { revalidatePath } from 'next/cache';
 
-const cashfree = new Cashfree();
-cashfree.XClientId = process.env.CASHFREE_APP_ID || '';
-cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || '';
-cashfree.XEnvironment = process.env.CASHFREE_ENVIRONMENT === "PRODUCTION" 
-    ? CFEnvironment.PRODUCTION 
-    : CFEnvironment.SANDBOX;
+const cashfree = new Cashfree(
+    process.env.CASHFREE_ENVIRONMENT === "PRODUCTION" ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
+    process.env.CASHFREE_APP_ID || '',
+    process.env.CASHFREE_SECRET_KEY || ''
+);
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);

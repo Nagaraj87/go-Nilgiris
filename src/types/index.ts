@@ -11,7 +11,9 @@ export type FAQ = {
   answer: string;
 };
 
-export type TourPackage = {
+
+
+export interface TourPackage {
   id: string;
   slug: string;
   name: string;
