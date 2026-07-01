@@ -51,7 +51,7 @@ export function TourBookingCard({ tourPackageData, price }: TourBookingCardProps
                     </ul>
                 </div>
                 <Button asChild size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-base font-bold" disabled={loadingPrice} onClick={() => showLoader()}>
-                    <Link href={`/booking?package=${tourPackageData.slug}`} prefetch={true}>
+                    <Link href={`/booking?package=${tourPackageData.slug}`} prefetch={false}>
                         {loadingPrice ? <Loader2 className="animate-spin" /> : "Book Online"}
                     </Link>
                 </Button>

@@ -35,7 +35,7 @@ export function TourGallery({ slug, images }: TourGalleryProps) {
                 {images.map((image) => (
                     <CarouselItem key={image.id}>
                         <Card className="overflow-hidden">
-                            <Link href={`/tours/${slug}/image/${image.id}`} passHref scroll={false}>
+                            <Link href={`/tours/${slug}/image/${image.id}`} passHref scroll={false} prefetch={false}>
                                 <CardContent className="p-0 relative aspect-video cursor-pointer hover:opacity-90 transition-opacity">
                                     <Image
                                         src={image.url}

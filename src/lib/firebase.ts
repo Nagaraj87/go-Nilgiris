@@ -34,7 +34,8 @@ export const getTourPackages = async (): Promise<TourPackage[]> => {
 
 export const getTourPackageBySlug = async (slug: string): Promise<TourPackage | null> => {
     if (!slug) return null;
-    const docRef = doc(db, 'tour_packages', slug);
+    const decodedSlug = decodeURIComponent(slug);
+    const docRef = doc(db, 'tour_packages', decodedSlug);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -217,8 +218,10 @@ export const getPackagePrices = async (): Promise<{ slug: string, price: number 
     return snapshot.docs.map(doc => doc.data() as { slug: string, price: number });
 };
 
-export const getPackagePrice = async (slug: string): Promise<number> => {
-    const docRef = doc(db, 'packages', slug);
+export const getPackagePrice = async (slug: string): Promise<number | null> => {
+    if (!slug) return null;
+    const decodedSlug = decodeURIComponent(slug);
+    const docRef = doc(db, 'packages', decodedSlug);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) return docSnap.data().price;
     
