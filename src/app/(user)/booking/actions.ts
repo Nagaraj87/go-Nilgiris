@@ -20,7 +20,9 @@ export async function initiateCashfreePayment(bookingData: Omit<Booking, 'id'>, 
         const dbId = await saveBooking({ ...bookingData, bookingId: transactionId });
 
         // The Server-to-Server / Client-Redirect callback URL 
-        const returnUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/cashfree/verify?order_id={order_id}&booking_id=${dbId}`;
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+            (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:9002');
+        const returnUrl = `${baseUrl}/api/cashfree/verify?order_id={order_id}&booking_id=${dbId}`;
 
         const request = {
             order_amount: totalAmount, // Cashfree takes amount in INR, not paise
@@ -51,7 +53,11 @@ export async function initiateCashfreePayment(bookingData: Omit<Booking, 'id'>, 
 
     } catch (error: any) {
         console.error("Failed to initiate Cashfree payment:", error?.response?.data || error);
-        return { success: false, error: 'Could not connect to payment gateway. Please try again.' };
+        const detail = error?.response?.data?.message || error?.message || '';
+        return { 
+            success: false, 
+            error: `Could not connect to payment gateway${detail ? `: ${detail}` : '. Please try again.'}` 
+        };
     }
 }
 
