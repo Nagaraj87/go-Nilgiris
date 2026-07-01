@@ -4,7 +4,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useEffect, useMemo, useState, useRef } from 'react';
-import Script from 'next/script';
+
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,13 +25,15 @@ import { useToast } from "@/hooks/use-toast";
 import { getPackagePrice, getTourPackageBySlug } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import type { TourPackage } from '@/types';
-import { createPaymentOrder, saveSuccessfulBooking, getAvailabilityForDate } from './actions';
+import { load } from '@cashfreepayments/cashfree-js';
+import { initiateCashfreePayment, getAvailabilityForDate } from './actions';
+import { useLoading } from '@/components/loading-provider';
 
 
 const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   age: z.coerce.number().min(1, 'Age must be at least 1').max(100),
-  gender: z.enum(['male', 'female', 'child'], { required_error: "Gender is required."}),
+  gender: z.enum(['male', 'female', 'child'], { required_error: "Gender is required." }),
   phone: z.string().regex(/^[0-9]{10}$/, 'Must be a valid 10-digit phone number'),
 });
 
@@ -50,20 +52,21 @@ function BookingFlow() {
   const searchParams = useSearchParams();
   const packageSlugFromUrl = searchParams.get('package');
   const { toast } = useToast();
-  
+
   const step2Ref = useRef<HTMLDivElement>(null);
   const step3Ref = useRef<HTMLDivElement>(null);
 
   const [tourPackage, setTourPackage] = useState<TourPackage | null>(null);
 
-  
+
   const [step, setStep] = useState(1);
   const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showLoader, hideLoader } = useLoading();
   const [pricePerSeat, setPricePerSeat] = useState<number | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [isRazorpayReady, setIsRazorpayReady] = useState(false);
-  
+  // Mock Payment State
+  const [isGatewayReady, setIsGatewayReady] = useState(true);
+
   const [blockedSeats, setBlockedSeats] = useState<number[]>([]);
   const [occupiedSeats, setOccupiedSeats] = useState<number[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
@@ -79,15 +82,24 @@ function BookingFlow() {
 
   useEffect(() => {
     if (packageSlugFromUrl) {
-        getTourPackageBySlug(packageSlugFromUrl).then(pkg => {
-            if (pkg) {
-                setTourPackage(pkg);
-                form.setValue('packageSlug', pkg.slug);
-            }
-        });
+      Promise.all([
+        getTourPackageBySlug(packageSlugFromUrl),
+        getPackagePrice(packageSlugFromUrl).catch(() => null)
+      ]).then(([pkg, fetchedPrice]) => {
+        if (pkg) {
+          setTourPackage(pkg);
+          form.setValue('packageSlug', pkg.slug);
+          
+          if (fetchedPrice !== null) {
+            setPricePerSeat(fetchedPrice);
+          } else {
+            setPricePerSeat(pkg.price);
+            toast({ variant: "destructive", title: "Error", description: "Could not fetch latest price. Using default." });
+          }
+        }
+      });
     }
-  }, [packageSlugFromUrl, form]);
-
+  }, [packageSlugFromUrl, form, toast]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -97,78 +109,68 @@ function BookingFlow() {
   const memberCount = form.watch('passengers').length;
   const bookingDate = form.watch('bookingDate');
 
-  useEffect(() => {
-    if (!tourPackage) return;
-    getPackagePrice(tourPackage.slug)
-        .then(price => setPricePerSeat(price))
-        .catch(() => {
-            setPricePerSeat(tourPackage.price);
-            toast({variant: "destructive", title: "Error", description: "Could not fetch latest price. Using default."})
-        })
-  }, [tourPackage, toast]);
-
   const handleMemberCountChange = (newCountStr: string) => {
     const newCount = parseInt(newCountStr, 10);
     if (isNaN(newCount) || newCount < 1) {
-        return;
+      return;
     }
-    
+
     const currentCount = fields.length;
     if (newCount > currentCount) {
-        for (let i = 0; i < newCount - currentCount; i++) {
-            append({ name: '', age: 0, gender: undefined, phone: '' });
-        }
+      for (let i = 0; i < newCount - currentCount; i++) {
+        append({ name: '', age: 0, gender: undefined, phone: '' });
+      }
     } else if (newCount < currentCount) {
-        for (let i = 0; i < currentCount - newCount; i++) {
-            remove(currentCount - 1 - i);
-        }
+      for (let i = 0; i < currentCount - newCount; i++) {
+        remove(currentCount - 1 - i);
+      }
     }
   };
 
 
   useEffect(() => {
-      if(bookingDate && tourPackage) {
-        setLoadingAvailability(true);
-        setSelectedSeats([]); // Reset seats on date change
-        const dateStr = format(bookingDate, "yyyy-MM-dd");
-        getAvailabilityForDate(tourPackage.slug, dateStr)
-            .then(({ blocked, occupied }) => {
-                setBlockedSeats(blocked || []);
-                setOccupiedSeats(occupied || []);
-            }).catch(err => {
-                console.error(err);
-                toast({ variant: "destructive", title: "Error", description: "Could not load seat availability." });
-            }).finally(() => {
-                setLoadingAvailability(false);
-            });
-      }
+    if (bookingDate && tourPackage) {
+      setLoadingAvailability(true);
+      setSelectedSeats([]); // Reset seats on date change
+      const dateStr = format(bookingDate, "yyyy-MM-dd");
+      getAvailabilityForDate(tourPackage.slug, dateStr)
+        .then(({ blocked, occupied }) => {
+          setBlockedSeats(blocked || []);
+          setOccupiedSeats(occupied || []);
+        }).catch(err => {
+          console.error(err);
+          toast({ variant: "destructive", title: "Error", description: "Could not load seat availability." });
+        }).finally(() => {
+          setLoadingAvailability(false);
+        });
+    }
   }, [bookingDate, tourPackage, toast]);
 
 
   const totalAmount = useMemo(() => {
     return selectedSeats.reduce((acc, seat) => acc + seat.price, 0);
   }, [selectedSeats]);
-  
+
   const processStep1 = async () => {
     const result = await form.trigger(['bookingDate']);
     if (!result || memberCount < 1) {
-        toast({variant: "destructive", title: "Incomplete Details", description: "Please select a date and number of members."})
-        return;
+      toast({ variant: "destructive", title: "Incomplete Details", description: "Please select a date and number of members." })
+      return;
     }
 
-    if(pricePerSeat === null){
-        toast({variant: "destructive", title: "Price not loaded", description: "Please wait for the price to load."});
-        return;
+    if (pricePerSeat === null) {
+      toast({ variant: "destructive", title: "Price not loaded", description: "Please wait for the price to load." });
+      return;
     }
-    
+
     setStep(2);
     setTimeout(() => step2Ref.current?.scrollIntoView({ behavior: 'smooth' }), 100);
   };
-  
+
   const processStep2 = async () => {
     const result = await form.trigger('passengers');
     if (!result) {
-       toast({
+      toast({
         variant: "destructive",
         title: "Passenger Details Incomplete",
         description: "Please fill in the details for all passengers.",
@@ -176,7 +178,7 @@ function BookingFlow() {
       return;
     }
     if (selectedSeats.length !== memberCount) {
-       toast({
+      toast({
         variant: "destructive",
         title: "Seat Selection Incomplete",
         description: `Please select seats for all ${memberCount} members.`,
@@ -188,87 +190,69 @@ function BookingFlow() {
   };
 
   const processPayment = async () => {
-    if (!tourPackage || !isRazorpayReady) return;
-    setIsSubmitting(true);
+    if (!tourPackage || !isGatewayReady) return;
     
-    const orderResult = await createPaymentOrder(totalAmount);
-    
-    if (!orderResult.success || !orderResult.order) {
-        toast({ variant: "destructive", title: "Error", description: orderResult.error || "Could not initiate payment." });
-        setIsSubmitting(false);
-        return;
-    }
+    showLoader("Connecting to secure payment gateway...");
 
-    const { order } = orderResult;
+    try {
+      const { packageSlug, passengers } = form.getValues();
+
+      const bookingData = {
+        bookingId: '', 
+        packageSlug,
+        memberCount,
+        passengers,
+        selectedSeats: selectedSeats.map(s => ({ number: s.number, price: s.price })),
+        totalAmount,
+        bookingDate: format(form.getValues('bookingDate'), "yyyy-MM-dd"),
+        paymentStatus: 'PENDING',
+      };
+
+      const result = await initiateCashfreePayment(bookingData as any, totalAmount);
+
+      if (result.success && result.payment_session_id) {
+        // Initialize Cashfree SDK
+        const cashfree = await load({
+            // Note: you should read this from env in production, but hardcoding for now based on env setup
+            mode: process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT === "PRODUCTION" ? "production" : "sandbox" 
+        });
+
+        // Launch checkout popup
+        cashfree.checkout({
+            paymentSessionId: result.payment_session_id
+        });
         
-    const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Go Nilgiris',
-        description: `Booking for ${tourPackage.name}`,
-        order_id: order.id,
-        handler: async (response: any) => {
-            const bookingId = `NE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-            const { packageSlug, passengers } = form.getValues();
-
-            const bookingData = {
-              bookingId,
-              packageSlug,
-              memberCount,
-              passengers,
-              selectedSeats: selectedSeats.map(s => ({ number: s.number, price: s.price })),
-              totalAmount,
-              bookingDate: format(form.getValues('bookingDate'), "yyyy-MM-dd"),
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpayOrderId: response.razorpay_order_id,
-              razorpaySignature: response.razorpay_signature,
-            };
-            
-            const saveResult = await saveSuccessfulBooking(bookingData);
-
-            if (saveResult.success && saveResult.dbId) {
-                router.push(`/booking/confirmation?id=${saveResult.dbId}&bookingId=${bookingId}&package=${tourPackage.slug}`);
-            } else {
-                 toast({ variant: "destructive", title: "Booking Failed", description: saveResult.error || "Payment was successful but we failed to save your booking. Please contact support." });
-                 setIsSubmitting(false);
-            }
-        },
-        prefill: {
-            name: form.getValues('passengers.0.name'),
-            contact: form.getValues('passengers.0.phone'),
-        },
-        theme: {
-            color: "#166534"
-        }
-    };
-
-    const rzp = new (window as any).Razorpay(options);
-    rzp.on('payment.failed', function (response: any){
-        toast({ variant: "destructive", title: "Payment Failed", description: response.error.description });
-        setIsSubmitting(false);
-    });
-    rzp.open();
+        // Note: We do not setIsSubmitting(false) here because Cashfree takes over the screen 
+        // and redirects to the return_url upon completion.
+      } else {
+        toast({ variant: "destructive", title: "Payment Failed", description: result.error || "Could not connect to payment gateway." });
+        hideLoader();
+      }
+    } catch (error) {
+      console.error("Error initiating Cashfree payment:", error);
+      toast({ variant: "destructive", title: "Error", description: "An unexpected error occurred. Please try again." });
+      hideLoader();
+    }
   };
 
   const handleCopyToAll = () => {
     const firstPassenger = form.getValues('passengers.0');
     if (!firstPassenger?.name || !firstPassenger?.age || !firstPassenger?.phone) {
-        toast({ variant: "destructive", title: "Incomplete Details", description: "Please fill all details for the first passenger before copying." });
-        return;
+      toast({ variant: "destructive", title: "Incomplete Details", description: "Please fill all details for the first passenger before copying." });
+      return;
     }
 
     const currentPassengers = form.getValues('passengers');
     const newPassengers = currentPassengers.map((passenger, index) => {
-        if (index === 0) return passenger;
-        return { 
-            ...passenger, 
-            name: firstPassenger.name,
-            age: firstPassenger.age,
-            phone: firstPassenger.phone,
-        };
+      if (index === 0) return passenger;
+      return {
+        ...passenger,
+        name: firstPassenger.name,
+        age: firstPassenger.age,
+        phone: firstPassenger.phone,
+      };
     });
-    
+
     form.setValue('passengers', newPassengers, { shouldValidate: true, shouldDirty: true });
 
     toast({ title: "Details Copied", description: "Name, Age, and Phone from the first passenger have been copied to all others." });
@@ -279,7 +263,7 @@ function BookingFlow() {
       setSelectedSeats(prev => prev.filter(s => s.id !== seat.id));
     } else {
       if (selectedSeats.length >= memberCount) {
-        toast({ title: "Selection limit reached", description: "You cannot select more seats than the number of members."});
+        toast({ title: "Selection limit reached", description: "You cannot select more seats than the number of members." });
         return;
       }
       setSelectedSeats(prev => [...prev, seat]);
@@ -292,7 +276,7 @@ function BookingFlow() {
     { num: 2, title: "Passenger Info & Seats" },
     { num: 3, title: "Payment" },
   ];
-  
+
   const isDateFullyBooked = useMemo(() => {
     if (loadingAvailability) return false;
     const totalBooked = new Set([...occupiedSeats, ...blockedSeats]).size;
@@ -309,11 +293,7 @@ function BookingFlow() {
 
   return (
     <div className="container mx-auto max-w-4xl py-12">
-        <Script
-            id="razorpay-checkout-js"
-            src="https://checkout.razorpay.com/v1/checkout.js"
-            onLoad={() => setIsRazorpayReady(true)}
-        />
+      {/* Removed Razorpay script injection */}
       <div className="flex items-start justify-between mb-8">
         {steps.map((s, index) => (
           <React.Fragment key={s.num}>
@@ -322,11 +302,11 @@ function BookingFlow() {
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg transition-colors",
                   step > s.num ? "bg-primary text-primary-foreground" :
-                  step === s.num ? "bg-accent text-accent-foreground" :
-                  "bg-muted text-muted-foreground"
+                    step === s.num ? "bg-accent text-accent-foreground" :
+                      "bg-muted text-muted-foreground"
                 )}
               >
-                {step > s.num ? <Ticket size={20}/> : s.num}
+                {step > s.num ? <Ticket size={20} /> : s.num}
               </div>
               <p className="text-xs sm:text-sm mt-2 text-center break-words">{s.title}</p>
             </div>
@@ -343,13 +323,13 @@ function BookingFlow() {
                 <CardDescription>Select your tour date and number of members for the "{tourPackage.name}".</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                 {pricePerSeat === null ? (
-                    <div className="space-y-2">
-                        <Skeleton className="h-6 w-1/4"/>
-                        <Skeleton className="h-10 w-[240px]"/>
-                    </div>
+                {pricePerSeat === null ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-6 w-1/4" />
+                    <Skeleton className="h-10 w-[240px]" />
+                  </div>
                 ) : (
-                     <p className="text-lg font-semibold">Price per seat: <span className="text-primary">₹{pricePerSeat.toLocaleString('en-IN')}</span> onwards</p>
+                  <p className="text-lg font-semibold">Price per seat: <span className="text-primary">₹{pricePerSeat.toLocaleString('en-IN')}</span> onwards</p>
                 )}
                 <FormField
                   control={form.control}
@@ -357,15 +337,15 @@ function BookingFlow() {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Booking Date</FormLabel>
-                       {isDateFullyBooked && bookingDate && (
-                          <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Fully Booked</AlertTitle>
-                            <AlertDescription>
-                              All seats for this date are blocked or booked. Please select another date.
-                            </AlertDescription>
-                          </Alert>
-                       )}
+                      {isDateFullyBooked && bookingDate && (
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertTitle>Fully Booked</AlertTitle>
+                          <AlertDescription>
+                            All seats for this date are blocked or booked. Please select another date.
+                          </AlertDescription>
+                        </Alert>
+                      )}
                       <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -376,16 +356,16 @@ function BookingFlow() {
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                           <Calendar 
-                             mode="single" 
-                             selected={field.value} 
-                             onSelect={(date) => {
-                               field.onChange(date);
-                               setIsDatePickerOpen(false);
-                             }} 
-                             disabled={disabledDates} 
-                             initialFocus 
-                           />
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                              setIsDatePickerOpen(false);
+                            }}
+                            disabled={disabledDates}
+                            initialFocus
+                          />
                         </PopoverContent>
                       </Popover>
                       <FormMessage />
@@ -393,23 +373,23 @@ function BookingFlow() {
                   )}
                 />
                 <div className="space-y-2">
-                    <Label htmlFor="member-count">Number of Members</Label>
-                    <Input
-                        id="member-count"
-                        type="number"
-                        min="1"
-                        value={memberCount}
-                        onChange={e => handleMemberCountChange(e.target.value)}
-                        className="w-[240px]"
-                    />
-                    <FormMessage>{form.formState.errors.passengers?.root?.message}</FormMessage>
+                  <Label htmlFor="member-count">Number of Members</Label>
+                  <Input
+                    id="member-count"
+                    type="number"
+                    min="1"
+                    value={memberCount}
+                    onChange={e => handleMemberCountChange(e.target.value)}
+                    className="w-[240px]"
+                  />
+                  <FormMessage>{form.formState.errors.passengers?.root?.message}</FormMessage>
                 </div>
               </CardContent>
               <CardFooter className="justify-end">
                 <Button onClick={processStep1} disabled={pricePerSeat === null || loadingAvailability}>
-                    {loadingAvailability ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                    {pricePerSeat === null ? 'Loading...' : 'Next'}
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                  {loadingAvailability ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {pricePerSeat === null ? 'Loading...' : 'Next'}
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardFooter>
             </Card>
@@ -420,72 +400,72 @@ function BookingFlow() {
               <CardHeader>
                 <CardTitle>Step 2: Passenger Details & Seat Selection</CardTitle>
                 <CardDescription>Enter details for each passenger and select your seats.</CardDescription>
-                 {memberCount > 1 && (
-                    <div className="pt-2">
-                        <Button type="button" size="sm" variant="outline" onClick={handleCopyToAll}>
-                            <Copy className="mr-2 h-4 w-4"/>
-                            Copy first passenger's details to all
-                        </Button>
-                    </div>
+                {memberCount > 1 && (
+                  <div className="pt-2">
+                    <Button type="button" size="sm" variant="outline" onClick={handleCopyToAll}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy first passenger's details to all
+                    </Button>
+                  </div>
                 )}
               </CardHeader>
               <CardContent className="space-y-8">
                 <div className="space-y-4">
                   {fields.map((field, index) => (
                     <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                        <Label className="font-bold">Passenger {index + 1}</Label>
-                        <PassengerFields form={form} index={index} />
+                      <Label className="font-bold">Passenger {index + 1}</Label>
+                      <PassengerFields form={form} index={index} />
                     </div>
                   ))}
                 </div>
-                
+
                 {loadingAvailability ? <Skeleton className="w-full h-96" /> : (
-                  <SeatChart 
-                    totalSeats={17} 
-                    seatsPerRow={4} 
-                    memberCount={memberCount} 
-                    selectedSeats={selectedSeats} 
-                    onSeatSelect={handleSeatSelect} 
+                  <SeatChart
+                    totalSeats={17}
+                    seatsPerRow={4}
+                    memberCount={memberCount}
+                    selectedSeats={selectedSeats}
+                    onSeatSelect={handleSeatSelect}
                     pricePerSeat={pricePerSeat}
                     occupiedSeats={occupiedSeats}
                     adminBlockedSeats={blockedSeats}
                   />
                 )}
-                
+
                 <div className="text-right text-2xl font-bold">Total: ₹{totalAmount.toLocaleString('en-IN')}</div>
               </CardContent>
               <CardFooter className="flex-wrap justify-between gap-4">
                 <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
-                <Button onClick={processStep2}><CreditCard className="mr-2 h-4 w-4"/> Proceed to Payment</Button>
+                <Button onClick={processStep2}><CreditCard className="mr-2 h-4 w-4" /> Proceed to Payment</Button>
               </CardFooter>
             </Card>
           )}
 
           {step === 3 && (
             <Card ref={step3Ref}>
-                <CardHeader>
-                    <CardTitle>Step 3: Confirm & Pay</CardTitle>
-                    <CardDescription>You are just one step away from confirming your adventure.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <div className="p-6 bg-muted rounded-lg space-y-4">
-                        <div className="flex justify-between items-center text-lg flex-wrap gap-2">
-                            <span className="font-semibold">{tourPackage.name} ({memberCount} x ₹{pricePerSeat})</span>
-                            <span className="font-bold text-xl sm:text-2xl whitespace-nowrap">₹{totalAmount.toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="text-sm text-muted-foreground border-t border-muted-foreground/20 pt-4 mt-4">
-                            <p><strong>Date:</strong> {bookingDate && format(bookingDate, 'PPP')}</p>
-                            <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
-                        </div>
-                     </div>
-                </CardContent>
-                <CardFooter className="flex flex-col sm:flex-row sm:justify-between w-full gap-4">
-                    <Button variant="outline" onClick={() => setStep(2)} className="w-full sm:w-auto"><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
-                    <Button onClick={processPayment} disabled={isSubmitting || !isRazorpayReady} className="w-full sm:w-auto">
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CreditCard className="mr-2 h-4 w-4"/>}
-                        {isRazorpayReady ? 'Pay Now' : 'Loading Gateway...'}
-                    </Button>
-                </CardFooter>
+              <CardHeader>
+                <CardTitle>Step 3: Confirm & Pay</CardTitle>
+                <CardDescription>You are just one step away from confirming your adventure.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-6 bg-muted rounded-lg space-y-4">
+                  <div className="flex justify-between items-center text-lg flex-wrap gap-2">
+                    <span className="font-semibold">{tourPackage.name} ({memberCount} x ₹{pricePerSeat})</span>
+                    <span className="font-bold text-xl sm:text-2xl whitespace-nowrap">₹{totalAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground border-t border-muted-foreground/20 pt-4 mt-4">
+                    <p><strong>Date:</strong> {bookingDate && format(bookingDate, 'PPP')}</p>
+                    <p><strong>Seats:</strong> {selectedSeats.map(s => s.number).join(', ')}</p>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col sm:flex-row sm:justify-between w-full gap-4">
+                <Button variant="outline" onClick={() => setStep(2)} className="w-full sm:w-auto"><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
+                <Button onClick={processPayment} disabled={!isGatewayReady} className="w-full sm:w-auto">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  {isGatewayReady ? 'Confirm Payment' : 'Loading Gateway...'}
+                </Button>
+              </CardFooter>
             </Card>
           )}
         </form>
@@ -495,9 +475,9 @@ function BookingFlow() {
 }
 
 const BookingPage = () => (
-    <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
-        <BookingFlow />
-    </Suspense>
+  <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+    <BookingFlow />
+  </Suspense>
 )
 
 export default BookingPage;

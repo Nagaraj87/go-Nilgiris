@@ -1,14 +1,14 @@
 
 export type ItineraryItem = {
-    time: string;
-    activity: string;
-    description: string;
-    iconName?: string;
+  time: string;
+  activity: string;
+  description: string;
+  iconName?: string;
 };
 
 export type FAQ = {
-    question: string;
-    answer: string;
+  question: string;
+  answer: string;
 };
 
 export type TourPackage = {
@@ -27,15 +27,15 @@ export type TourPackage = {
 };
 
 type Passenger = {
-    name: string;
-    age: number;
-    gender: 'male' | 'female' | 'child';
-    phone: string;
+  name: string;
+  age: number;
+  gender: 'male' | 'female' | 'child';
+  phone: string;
 }
 
 type SeatSelection = {
-    number: number;
-    price: number;
+  number: number;
+  price: number;
 }
 
 export type Booking = {
@@ -47,9 +47,8 @@ export type Booking = {
   totalAmount: number;
   passengers: Passenger[];
   selectedSeats: SeatSelection[];
-  razorpayPaymentId?: string;
-  razorpayOrderId?: string;
-  razorpaySignature?: string;
+  paymentStatus?: 'PENDING' | 'COMPLETED' | 'FAILED';
+  phonePeTransactionId?: string;
 };
 
 export type GalleryImage = {
@@ -61,13 +60,12 @@ export type GalleryImage = {
 };
 
 export type ContactInfo = {
-    whatsapp: string;
-    call: string;
+  whatsapp: string;
+  call: string;
 };
 
 export type AdminCredentials = {
-    username: string;
-    password?: string; // Password is a hash, and optional when updating only username
+  username: string;
+  password?: string; // Password is a hash, and optional when updating only username
 };
 
-    

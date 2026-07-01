@@ -1,9 +1,11 @@
 
+import { Suspense } from "react";
 import { BookingsManagement } from "@/components/admin/bookings-management";
 import { ContactManagement } from "@/components/admin/contact-management";
 import { PriceManagement } from "@/components/admin/price-management";
 import { GalleryManagement } from "@/components/admin/gallery-management";
 import { TourManagement } from "@/components/admin/tour-management";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 export default function AdminPage() {
@@ -12,19 +14,29 @@ export default function AdminPage() {
     <div className="container mx-auto max-w-7xl py-12">
       <div className="space-y-12">
          <div id="tour-management-section">
-          <TourManagement />
+          <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+            <TourManagement />
+          </Suspense>
         </div>
         <div id="bookings-section">
-          <BookingsManagement />
+          <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+            <BookingsManagement />
+          </Suspense>
         </div>
         <div id="gallery-section">
-          <GalleryManagement />
+          <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+            <GalleryManagement />
+          </Suspense>
         </div>
         <div id="contact-section">
-          <ContactManagement />
+          <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+            <ContactManagement />
+          </Suspense>
         </div>
         <div id="pricing-section">
-          <PriceManagement />
+          <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+            <PriceManagement />
+          </Suspense>
         </div>
       </div>
     </div>

@@ -12,22 +12,22 @@ import { usePathname } from 'next/navigation';
 export function Header() {
   const pathname = usePathname();
   const isAdminRelatedPage = pathname.startsWith('/admin') || pathname.startsWith('/login');
-  
+
   if (isAdminRelatedPage) {
     return null; // The admin layout will render its own header or nothing
   }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
+      <div suppressHydrationWarning className="container flex h-14 max-w-screen-2xl items-center justify-between">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-            <DeerLogo className="h-6 w-6 text-primary" />
-            <span className="font-bold sm:inline-block">
+          <DeerLogo className="h-6 w-6 text-primary" />
+          <span className="font-bold sm:inline-block">
             Go Nilgris
-            </span>
+          </span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div suppressHydrationWarning className="flex items-center gap-2">
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-2">
             <Button variant="ghost" asChild>
@@ -43,11 +43,11 @@ export function Header() {
               </Link>
             </Button>
           </nav>
-          
+
           <ThemeToggle />
 
           {/* Mobile Navigation */}
-          <div className="md:hidden">
+          <div suppressHydrationWarning className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon">

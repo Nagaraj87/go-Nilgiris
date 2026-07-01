@@ -246,3 +246,33 @@ export const getContactInfo = async (): Promise<ContactInfo> => {
 export const updateContactInfo = async (data: ContactInfo) => {
     await setDoc(doc(db, 'site_config', 'contact'), data, { merge: true });
 };
+
+// Admin Authentication
+export const verifyAdminCredentials = async (username: string, passwordPlain: string): Promise<boolean> => {
+    try {
+        const docRef = doc(db, 'admin_credentials', username);
+        const docSnap = await getDoc(docRef);
+        
+        if (!docSnap.exists()) return false;
+        
+        const data = docSnap.data();
+        const { compare } = await import('bcryptjs');
+        const isValid = await compare(passwordPlain, data.passwordHash);
+        
+        return isValid;
+    } catch (e) {
+        console.error("Error verifying admin credentials", e);
+        return false;
+    }
+};
+
+export const createInitialAdmin = async (username: string, passwordPlain: string) => {
+    try {
+        const { hash } = await import('bcryptjs');
+        const passwordHash = await hash(passwordPlain, 10);
+        await setDoc(doc(db, 'admin_credentials', username), { passwordHash });
+        console.log(`Admin user ${username} created successfully.`);
+    } catch (e) {
+        console.error("Error creating initial admin", e);
+    }
+};

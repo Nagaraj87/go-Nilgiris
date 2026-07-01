@@ -10,11 +10,12 @@ import { useMemo } from "react";
 
 
 type TourTabsProps = {
+    slug: string;
     tourPackage: TourPackage;
     galleryImages: GalleryImage[];
 }
 
-export function TourTabs({ tourPackage, galleryImages }: TourTabsProps) {
+export function TourTabs({ slug, tourPackage, galleryImages }: TourTabsProps) {
 
     const hydratedItinerary = useMemo(() => {
         return tourPackage.itinerary.map(item => {
@@ -50,7 +51,7 @@ export function TourTabs({ tourPackage, galleryImages }: TourTabsProps) {
                 </div>
             </TabsContent>
             <TabsContent value="gallery" className="mt-6">
-               <TourGallery images={galleryImages} />
+               <TourGallery slug={slug} images={galleryImages} />
             </TabsContent>
             <TabsContent value="overview" className="mt-6">
               <Accordion type="single" collapsible className="w-full">

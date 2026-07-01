@@ -1,4 +1,5 @@
 
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { TourHeader } from '@/components/tours/tour-header';
 import { TourTabs } from '@/components/tours/tour-tabs';
@@ -8,11 +9,11 @@ import type { TourPackage } from '@/types';
 import type { Metadata } from 'next';
 
 type Props = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const slug = params.slug;
+  const { slug } = await params;
   const tourPackage = await getTourPackageBySlug(slug);
 
   if (!tourPackage) {
@@ -28,25 +29,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-async function getTourData(slug: string) {
-    const tourData = await getTourPackageBySlug(slug);
-    if (!tourData) {
-        return { tourPackage: null, price: null, galleryImages: [] };
-    }
-    
-    // Fetch price and gallery images in parallel
-    const [price, galleryImages] = await Promise.all([
-      getPackagePrice(slug),
-      getGalleryImages(slug)
-    ]);
-    
-    return { tourPackage: tourData, price, galleryImages };
+async function TourTabsWrapper({ slug, tourPackage }: { slug: string, tourPackage: TourPackage }) {
+  const galleryImages = await getGalleryImages(slug);
+  return <TourTabs slug={slug} tourPackage={tourPackage} galleryImages={galleryImages} />;
+}
+
+async function BookingCardWrapper({ slug, tourPackage }: { slug: string, tourPackage: TourPackage }) {
+  const price = await getPackagePrice(slug);
+  return <TourBookingCard tourPackageData={tourPackage} price={price} />;
 }
 
 
-export default async function TourPackagePage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
-  const { tourPackage, price, galleryImages } = await getTourData(slug);
+export default async function TourPackagePage({ params }: Props) {
+  const { slug } = await params;
+  const tourPackage = await getTourPackageBySlug(slug);
 
   if (!tourPackage) {
     notFound();
@@ -61,12 +57,16 @@ export default async function TourPackagePage({ params }: { params: { slug: stri
             overview={tourPackage.overview} 
             disclaimers={tourPackage.disclaimers} 
            />
-          <TourTabs tourPackage={tourPackage} galleryImages={galleryImages} />
+          <Suspense fallback={<div className="h-64 animate-pulse bg-muted rounded-lg mt-8" />}>
+            <TourTabsWrapper slug={slug} tourPackage={tourPackage} />
+          </Suspense>
         </div>
 
         <div className="lg:col-span-2">
             <div className="sticky top-24">
-                <TourBookingCard tourPackageData={tourPackage} price={price} />
+                <Suspense fallback={<TourBookingCard tourPackageData={tourPackage} price={null} />}>
+                  <BookingCardWrapper slug={slug} tourPackage={tourPackage} />
+                </Suspense>
             </div>
         </div>
       </div>

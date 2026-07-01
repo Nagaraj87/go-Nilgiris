@@ -38,14 +38,15 @@ export function ImageGrid({ images, onImageDeleted }: ImageGridProps) {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {images.map(image => (
                     <div key={image.id} className="relative group">
-                        <Image 
-                            src={image.url} 
-                            alt={image.alt} 
-                            width={200} 
-                            height={150} 
+                        <Image
+                            src={image.url}
+                            alt={image.alt}
+                            width={200}
+                            height={150}
                             className="rounded-lg object-cover aspect-[4/3]"
+                            unoptimized
                             onError={(e) => e.currentTarget.src = 'https://picsum.photos/200/150'} // Fallback
-                         />
+                        />
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <Button variant="destructive" size="icon" onClick={() => setImageToDelete(image)}>
                                 <Trash2 />

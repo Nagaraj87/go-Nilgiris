@@ -7,6 +7,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { getTourPackageBySlug, createOrUpdateTourPackage, deleteTourPackage } from '@/lib/firebase';
+import { revalidatePath } from 'next/cache';
 import type { TourPackage } from '@/types';
 
 import { Button } from '@/components/ui/button';
@@ -129,8 +130,11 @@ export default function EditTourPage() {
 
     try {
       await createOrUpdateTourPackage(cleanedData);
+      revalidatePath('/tours');
+      revalidatePath('/');
+      revalidatePath(`/tours/${cleanedData.slug}`);
       toast({ title: 'Success', description: `Tour package '${data.name}' has been ${isNewTour ? 'created' : 'updated'}.` });
-      router.push('/admin');
+      router.push('/admin/tours');
       router.refresh(); // To reflect changes in the admin table
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to save tour package.' });
@@ -144,9 +148,11 @@ export default function EditTourPage() {
     if (isNewTour || !tour) return;
     setIsSubmitting(true);
     try {
-        await deleteTourPackage(tour.slug);
-        toast({ title: "Tour Deleted", description: `"${tour.name}" has been deleted.`});
-        router.push('/admin');
+        await deleteTourPackage(slug);
+        revalidatePath('/tours');
+        revalidatePath('/');
+        toast({ title: 'Success', description: 'Tour package deleted.' });
+        router.push('/admin/tours');
         router.refresh();
     } catch(e) {
         toast({ variant: "destructive", title: "Error", description: "Could not delete tour."});

@@ -1,5 +1,7 @@
+"use client";
 
 import Link from 'next/link';
+import { useLoading } from '@/components/loading-provider';
 import type { TourPackage } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +14,8 @@ type TourCardProps = {
 }
 
 export function TourCard({ pkg, price, loading }: TourCardProps) {
+    const { showLoader } = useLoading();
+
     return (
          <Card key={pkg.id} className="w-full transform transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
             <CardHeader>
@@ -47,7 +51,7 @@ export function TourCard({ pkg, price, loading }: TourCardProps) {
                 </ul>
             </CardContent>
             <CardFooter>
-                <Button asChild className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                <Button asChild className="w-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => showLoader()}>
                 <Link href={`/tours/${pkg.slug}`}>Book Now</Link>
                 </Button>
             </CardFooter>
