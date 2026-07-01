@@ -1,4 +1,4 @@
-import { getTourPackages } from './src/lib/firebase.ts';
+import { getTourPackages } from './src/lib/firebase';
 
 async function checkTours() {
   const tours = await getTourPackages();

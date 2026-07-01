@@ -23,6 +23,8 @@ import { SeatChart } from '@/components/seat-chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
 import { getPackagePrice, getTourPackageBySlug } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { clientDb } from '@/lib/firebase-client';
 import { cn } from '@/lib/utils';
 import type { TourPackage } from '@/types';
 import { load } from '@cashfreepayments/cashfree-js';
@@ -34,7 +36,53 @@ const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   age: z.coerce.number().min(1, 'Age must be at least 1').max(100),
   gender: z.enum(['male', 'female', 'child'], { required_error: "Gender is required." }),
-  phone: z.string().regex(/^[0-9]{10}$/, 'Must be a valid 10-digit phone number'),
+  phone: z.string(),
+  isForeign: z.boolean().default(false),
+  email: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.isForeign) {
+    if (!data.email) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Email is required for foreign tourists",
+        path: ["email"],
+      });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid email address",
+        path: ["email"],
+      });
+    }
+
+    if (!data.phone) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Contact number is required",
+        path: ["phone"],
+      });
+    } else if (!/^\+?[0-9]{7,15}$/.test(data.phone)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Must be a valid international number (7-15 digits)",
+        path: ["phone"],
+      });
+    }
+  } else {
+    if (!data.phone) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Contact number is required",
+        path: ["phone"],
+      });
+    } else if (!/^[0-9]{10}$/.test(data.phone)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Must be a valid 10-digit phone number",
+        path: ["phone"],
+      });
+    }
+  }
 });
 
 const bookingSchema = z.object({
@@ -76,30 +124,46 @@ function BookingFlow() {
     defaultValues: {
       packageSlug: packageSlugFromUrl || '',
       bookingDate: undefined,
-      passengers: [{ name: '', age: 0, gender: undefined as any, phone: '' }],
+      passengers: [{ name: '', age: 0, gender: undefined as any, phone: '', isForeign: false, email: '' }],
     },
   });
 
   useEffect(() => {
-    if (packageSlugFromUrl) {
-      Promise.all([
-        getTourPackageBySlug(packageSlugFromUrl),
-        getPackagePrice(packageSlugFromUrl).catch(() => null)
-      ]).then(([pkg, fetchedPrice]) => {
-        if (pkg) {
-          setTourPackage(pkg);
-          form.setValue('packageSlug', pkg.slug);
-          
-          if (fetchedPrice !== null) {
-            setPricePerSeat(fetchedPrice);
-          } else {
-            setPricePerSeat(pkg.price);
-            toast({ variant: "destructive", title: "Error", description: "Could not fetch latest price. Using default." });
-          }
+    if (!packageSlugFromUrl) return;
+
+    // Fetch initial package details and subscribe to real-time changes
+    const pkgDocRef = doc(clientDb, 'tour_packages', packageSlugFromUrl);
+    const unsubscribePkg = onSnapshot(pkgDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const pkg = { ...docSnap.data(), id: docSnap.id } as TourPackage;
+        setTourPackage(pkg);
+        form.setValue('packageSlug', pkg.slug);
+        
+        // If pricePerSeat is not set yet, fallback to default package price
+        setPricePerSeat((prev) => prev ?? pkg.price);
+      }
+    }, (error) => {
+      console.error("Error listening to tour package details in booking:", error);
+    });
+
+    // Subscribe to real-time price changes
+    const priceDocRef = doc(clientDb, 'packages', packageSlugFromUrl);
+    const unsubscribePrice = onSnapshot(priceDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (typeof data.price === 'number') {
+          setPricePerSeat(data.price);
         }
-      });
-    }
-  }, [packageSlugFromUrl, form, toast]);
+      }
+    }, (error) => {
+      console.error("Error listening to package price updates in booking:", error);
+    });
+
+    return () => {
+      unsubscribePkg();
+      unsubscribePrice();
+    };
+  }, [packageSlugFromUrl, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -118,7 +182,7 @@ function BookingFlow() {
     const currentCount = fields.length;
     if (newCount > currentCount) {
       for (let i = 0; i < newCount - currentCount; i++) {
-        append({ name: '', age: 0, gender: undefined as any, phone: '' });
+        append({ name: '', age: 0, gender: undefined as any, phone: '', isForeign: false, email: '' });
       }
     } else if (newCount < currentCount) {
       for (let i = 0; i < currentCount - newCount; i++) {
@@ -237,7 +301,7 @@ function BookingFlow() {
 
   const handleCopyToAll = () => {
     const firstPassenger = form.getValues('passengers.0');
-    if (!firstPassenger?.name || !firstPassenger?.age || !firstPassenger?.phone) {
+    if (!firstPassenger?.name || !firstPassenger?.age || !firstPassenger?.phone || (firstPassenger?.isForeign && !firstPassenger?.email)) {
       toast({ variant: "destructive", title: "Incomplete Details", description: "Please fill all details for the first passenger before copying." });
       return;
     }
@@ -250,15 +314,29 @@ function BookingFlow() {
         name: firstPassenger.name,
         age: firstPassenger.age,
         phone: firstPassenger.phone,
+        isForeign: firstPassenger.isForeign,
+        email: firstPassenger.email,
       };
     });
 
     form.setValue('passengers', newPassengers, { shouldValidate: true, shouldDirty: true });
 
-    toast({ title: "Details Copied", description: "Name, Age, and Phone from the first passenger have been copied to all others." });
+    toast({ title: "Details Copied", description: "Name, Age, Phone, and Nationality details from the first passenger have been copied to all others." });
   }
 
-  const handleSeatSelect = (seat: any, isSelected: boolean) => {
+  const handleSeatSelect = async (seat: any, isSelected: boolean) => {
+    if (!isSelected) {
+      const isValid = await form.trigger('passengers');
+      if (!isValid) {
+        toast({
+          variant: "destructive",
+          title: "Passenger Details Incomplete",
+          description: "Please fill in all passenger details (highlighted in red) before selecting seats.",
+        });
+        return;
+      }
+    }
+
     if (isSelected) {
       setSelectedSeats(prev => prev.filter(s => s.id !== seat.id));
     } else {
@@ -411,12 +489,21 @@ function BookingFlow() {
               </CardHeader>
               <CardContent className="space-y-8">
                 <div className="space-y-4">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                      <Label className="font-bold">Passenger {index + 1}</Label>
-                      <PassengerFields form={form} index={index} />
-                    </div>
-                  ))}
+                  {fields.map((field, index) => {
+                    const hasError = !!form.formState.errors.passengers?.[index];
+                    return (
+                      <div 
+                        key={field.id} 
+                        className={cn(
+                          "p-4 border rounded-lg space-y-4 transition-all duration-200", 
+                          hasError ? "border-destructive ring-1 ring-destructive/30 bg-destructive/5 shadow-[0_0_15px_rgba(239,68,68,0.05)]" : "border-border"
+                        )}
+                      >
+                        <Label className={cn("font-bold transition-colors", hasError && "text-destructive")}>Passenger {index + 1}</Label>
+                        <PassengerFields form={form} index={index} />
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {loadingAvailability ? <Skeleton className="w-full h-96" /> : (

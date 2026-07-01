@@ -22,7 +22,7 @@ export function NavHeader() {
   };
 
   const navLinks = [
-    { href: "/", label: "Home", icon: Home, target: "_blank" },
+    { href: "/", label: "Home", icon: Home, target: "" },
     { href: "/admin", label: "Dashboard", icon: Plane, target: "" },
     { href: "/admin/edit-tour/new", label: "New Tour", icon: PlusCircle, target: "" },
     { href: "/admin/availability", label: "Availability", icon: ShieldOff, target: "" },
@@ -41,6 +41,11 @@ export function NavHeader() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1">
           <Button variant="ghost" asChild>
+            <Link href="/" prefetch={true}>
+              <Home className="mr-2 h-4 w-4" /> Home
+            </Link>
+          </Button>
+          <Button variant="ghost" asChild>
             <Link href="/admin" prefetch={true}>
               <Plane className="mr-2 h-4 w-4" /> Dashboard
             </Link>
@@ -51,11 +56,6 @@ export function NavHeader() {
             </Link>
           </Button>
           <NotificationBell />
-          <Button variant="outline" asChild>
-            <Link href="/" target="_blank" prefetch={false}>
-              <ExternalLink className="mr-2 h-4 w-4" />Go to Site
-            </Link>
-          </Button>
           <Button variant="destructive" onClick={handleLogout} disabled={isLoggingOut}>
             <LogOut className="mr-2 h-4 w-4" />
             Logout

@@ -50,9 +50,14 @@ export function ContactForm({ contactInfo, updateContactInfo }: ContactFormProps
                 <Label htmlFor="whatsapp-number">WhatsApp Number</Label>
                 <Input
                     id="whatsapp-number"
-                    {...form.register("whatsapp")}
                     placeholder="e.g., 8248932947"
                     disabled={isPending}
+                    maxLength={10}
+                    {...form.register("whatsapp", {
+                      onChange: (e) => {
+                        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                      }
+                    })}
                 />
                 {form.formState.errors.whatsapp && <p className="text-destructive text-xs mt-1">{form.formState.errors.whatsapp.message}</p>}
             </div>
@@ -60,9 +65,14 @@ export function ContactForm({ contactInfo, updateContactInfo }: ContactFormProps
                 <Label htmlFor="call-number">Call Number</Label>
                 <Input
                     id="call-number"
-                    {...form.register("call")}
                     placeholder="e.g., 7418066906"
                     disabled={isPending}
+                    maxLength={10}
+                    {...form.register("call", {
+                      onChange: (e) => {
+                        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                      }
+                    })}
                 />
                  {form.formState.errors.call && <p className="text-destructive text-xs mt-1">{form.formState.errors.call.message}</p>}
             </div>

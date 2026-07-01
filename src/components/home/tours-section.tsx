@@ -1,5 +1,5 @@
 import { getPackagePrices, getTourPackages } from '@/lib/firebase';
-import { TourCard } from './tour-card';
+import { RealtimeTourList } from './realtime-tour-list';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle } from 'lucide-react';
 import type { TourPackage } from '@/types';
@@ -46,16 +46,10 @@ export async function ToursSection() {
             </div>
           )}
         </div>
-        <div suppressHydrationWarning className="mx-auto grid max-w-5xl items-start gap-8 py-12 sm:grid-cols-1 md:grid-cols-2 lg:gap-12">
-          {tourPackages.map((pkg) => (
-            <TourCard
-              key={pkg.id}
-              pkg={pkg}
-              price={prices[pkg.slug]}
-              loading={false}
-            />
-          ))}
-        </div>
+        <RealtimeTourList
+          initialPackages={tourPackages}
+          initialPrices={prices}
+        />
       </div>
     </section>
   )

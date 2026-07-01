@@ -33,6 +33,8 @@ type Passenger = {
   age: number;
   gender: 'male' | 'female' | 'child';
   phone: string;
+  isForeign?: boolean;
+  email?: string;
 }
 
 type SeatSelection = {

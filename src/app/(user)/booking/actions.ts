@@ -24,14 +24,38 @@ export async function initiateCashfreePayment(bookingData: Omit<Booking, 'id'>, 
             (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:9002');
         const returnUrl = `${baseUrl}/api/cashfree/verify?order_id={order_id}&booking_id=${dbId}`;
 
+        // Sanitize phone number for Cashfree to prevent payment gateway failures
+        let customerPhone = bookingData.passengers[0].phone || '';
+        const digitsOnly = customerPhone.replace(/[^0-9]/g, '');
+        
+        if (digitsOnly.length === 10) {
+            customerPhone = digitsOnly;
+        } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+            customerPhone = '+' + digitsOnly;
+        } else {
+            const cleaned = customerPhone.replace(/[^0-9+]/g, '');
+            if (cleaned.startsWith('+') && cleaned.length >= 8 && cleaned.length <= 16) {
+                customerPhone = cleaned;
+            } else if (digitsOnly.length >= 7 && digitsOnly.length <= 15) {
+                customerPhone = '+' + digitsOnly;
+            } else {
+                // Fallback to the default admin/support number to ensure payment never fails
+                customerPhone = '8248932947';
+            }
+        }
+
+        const email = bookingData.passengers[0].email?.trim();
+        const isValidEmail = email ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) : false;
+
         const request = {
             order_amount: totalAmount, // Cashfree takes amount in INR, not paise
             order_currency: "INR",
             order_id: transactionId,
             customer_details: {
                 customer_id: customerId,
-                customer_phone: bookingData.passengers[0].phone,
+                customer_phone: customerPhone,
                 customer_name: bookingData.passengers[0].name || "Guest",
+                ...(isValidEmail ? { customer_email: email } : {})
             },
             order_meta: {
                 return_url: returnUrl

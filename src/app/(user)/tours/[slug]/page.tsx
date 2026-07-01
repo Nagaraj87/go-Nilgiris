@@ -1,11 +1,7 @@
 
-import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { TourHeader } from '@/components/tours/tour-header';
-import { TourTabs } from '@/components/tours/tour-tabs';
-import { TourBookingCard } from '@/components/tours/tour-booking-card';
-import { getTourPackageBySlug, getTourPackages, getPackagePrice, getGalleryImages } from '@/lib/firebase';
-import type { TourPackage } from '@/types';
+import { RealtimeTourDetails } from '@/components/tours/realtime-tour-details';
+import { getTourPackageBySlug, getPackagePrice, getGalleryImages } from '@/lib/firebase';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -31,20 +27,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-async function TourTabsWrapper({ slug, tourPackage }: { slug: string, tourPackage: TourPackage }) {
-  const galleryImages = await getGalleryImages(slug);
-  return <TourTabs slug={slug} tourPackage={tourPackage} galleryImages={galleryImages} />;
-}
-
-async function BookingCardWrapper({ slug, tourPackage }: { slug: string, tourPackage: TourPackage }) {
-  const price = await getPackagePrice(slug);
-  return <TourBookingCard tourPackageData={tourPackage} price={price} />;
-}
-
-
 export default async function TourPackagePage({ params }: Props) {
   const { slug } = await params;
-  const tourPackage = await getTourPackageBySlug(slug);
+
+  const [tourPackage, price, galleryImages] = await Promise.all([
+    getTourPackageBySlug(slug),
+    getPackagePrice(slug).catch(() => null),
+    getGalleryImages(slug).catch(() => [])
+  ]);
 
   if (!tourPackage) {
     notFound();
@@ -52,28 +42,15 @@ export default async function TourPackagePage({ params }: Props) {
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-12">
-      <div className="grid lg:grid-cols-5 gap-12">
-        <div className="lg:col-span-3">
-          <TourHeader 
-            name={tourPackage.name} 
-            overview={tourPackage.overview} 
-            disclaimers={tourPackage.disclaimers} 
-           />
-          <Suspense fallback={<div className="h-64 animate-pulse bg-muted rounded-lg mt-8" />}>
-            <TourTabsWrapper slug={slug} tourPackage={tourPackage} />
-          </Suspense>
-        </div>
-
-        <div className="lg:col-span-2">
-            <div className="sticky top-24">
-                <Suspense fallback={<TourBookingCard tourPackageData={tourPackage} price={null} />}>
-                  <BookingCardWrapper slug={slug} tourPackage={tourPackage} />
-                </Suspense>
-            </div>
-        </div>
-      </div>
+      <RealtimeTourDetails
+        initialTourPackage={tourPackage}
+        initialPrice={price}
+        initialGalleryImages={galleryImages}
+        slug={slug}
+      />
     </div>
   );
 }
+
 
 
