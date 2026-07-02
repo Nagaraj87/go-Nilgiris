@@ -130,10 +130,10 @@ export function BookingsManagement() {
     // 2. Subheader details (date & filters)
     doc.setFontSize(8.5);
     doc.setTextColor(148, 163, 184); // Slate grey
-    const dateStr = new Date().toLocaleDateString("en-IN", {
+    const dateStr = new Date().toLocaleString("en-IN", {
       dateStyle: "long",
       timeStyle: "short",
-    } as any);
+    });
     doc.text(`Generated: ${dateStr}`, 15, 34);
 
     let filterText = "Active Filters: None";
