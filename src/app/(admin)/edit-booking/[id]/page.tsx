@@ -155,8 +155,22 @@ if (!booking) {
                       <div className="space-y-4">
                         {/* Grid containing Name, Age, Gender, and Contact Number */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-                          <FormField control={form.control} name={`passengers.${index}.name`} render={({ field }) => (
-                            <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                           <FormField control={form.control} name={`passengers.${index}.name`} render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Name</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  autoCapitalize="words"
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    const capitalized = val.replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+                                    field.onChange(capitalized);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
                           )} />
                           <FormField control={form.control} name={`passengers.${index}.age`} render={({ field }) => (
                             <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>

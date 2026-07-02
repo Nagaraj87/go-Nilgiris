@@ -24,7 +24,15 @@ function PassengerFieldsComponent({ form, index }: PassengerFieldsProps) {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input 
+                  {...field} 
+                  autoCapitalize="words"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const capitalized = val.replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+                    field.onChange(capitalized);
+                  }}
+                />
               </FormControl>
             </FormItem>
           )}
