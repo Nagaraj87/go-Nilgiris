@@ -20,6 +20,15 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
   },
+  async redirects() {
+    return [
+      {
+        source: '/tours',
+        destination: '/#tours',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
