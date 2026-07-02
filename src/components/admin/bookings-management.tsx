@@ -6,13 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Search, Loader2, Trash } from "lucide-react";
+import { AlertCircle, Search, Loader2, Trash, Download } from "lucide-react";
 import { BookingsTable } from "./bookings-table";
 import type { Booking } from "@/types";
 import { Button } from "../ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { format } from "date-fns";
 
 
 export function BookingsManagement() {
@@ -105,6 +108,132 @@ export function BookingsManagement() {
   // Flag to indicate if any filters are currently active
   const hasActiveFilters = searchQuery !== "" || selectedPackage !== "all" || selectedDate !== "";
 
+  // Generates and downloads a beautifully styled A4 PDF table of bookings matching active filters
+  const handleExportPDF = () => {
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    // 1. Title and Document Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(59, 136, 64); // Go Nilgiris Forest Green
+    doc.text("Go Nilgiris", 15, 22);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(71, 85, 105); // Charcoal grey
+    doc.setFont("helvetica", "normal");
+    doc.text("Booking Administration Report", 15, 28);
+
+    // 2. Subheader details (date & filters)
+    doc.setFontSize(8.5);
+    doc.setTextColor(148, 163, 184); // Slate grey
+    const dateStr = new Date().toLocaleDateString("en-IN", {
+      dateStyle: "long",
+      timeStyle: "short",
+    } as any);
+    doc.text(`Generated: ${dateStr}`, 15, 34);
+
+    let filterText = "Active Filters: None";
+    if (hasActiveFilters) {
+      const parts = [];
+      if (searchQuery) parts.push(`Query: "${searchQuery}"`);
+      if (selectedPackage !== "all") parts.push(`Package: ${formatPackageName(selectedPackage)}`);
+      if (selectedDate) parts.push(`Date: ${selectedDate}`);
+      filterText = `Active Filters: ${parts.join(" | ")}`;
+    }
+    doc.text(filterText, 15, 39);
+
+    // 3. Summary metrics card banner
+    const totalRevenue = filteredBookings.reduce((sum, b) => sum + b.totalAmount, 0);
+    const totalPassengers = filteredBookings.reduce((sum, b) => sum + b.memberCount, 0);
+
+    doc.setFillColor(248, 250, 252); // Soft light grey-blue background
+    doc.rect(15, 43, 180, 16, "F");
+    doc.setDrawColor(226, 232, 240); // Soft border
+    doc.rect(15, 43, 180, 16, "S");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(51, 65, 85);
+
+    doc.text(`Total Bookings: ${filteredBookings.length}`, 22, 53);
+    doc.text(`Total Seats/Members: ${totalPassengers}`, 80, 53);
+    doc.text(`Total Revenue: INR ${totalRevenue.toLocaleString("en-IN")}`, 140, 53);
+
+    // 4. AutoTable setup
+    const tableHeaders = [["Booking ID", "Tour Package", "Travel Date", "Seats", "Amount", "Primary Passenger"]];
+    
+    const tableRows = filteredBookings.map((b) => {
+      const primaryPassenger = b.passengers[0];
+      const passengerName = primaryPassenger ? primaryPassenger.name : "N/A";
+      const passengerPhone = primaryPassenger ? primaryPassenger.phone : "";
+      const passengerInfo = passengerPhone ? `${passengerName}\n(${passengerPhone})` : passengerName;
+      
+      let displayDate = b.bookingDate;
+      try {
+        displayDate = format(new Date(b.bookingDate), "dd MMM yyyy");
+      } catch (e) {}
+
+      return [
+        b.bookingId,
+        formatPackageName(b.packageSlug),
+        displayDate,
+        b.selectedSeats.map((s) => s.number).join(", "),
+        `INR ${b.totalAmount.toLocaleString("en-IN")}`,
+        passengerInfo,
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 65,
+      head: tableHeaders,
+      body: tableRows,
+      theme: "striped",
+      headStyles: {
+        fillColor: [59, 136, 64], // Brand green
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 9,
+        valign: "middle",
+        halign: "left"
+      },
+      bodyStyles: {
+        fontSize: 8.5,
+        textColor: [51, 65, 85],
+        valign: "middle"
+      },
+      columnStyles: {
+        0: { cellWidth: 36 }, // Booking ID
+        1: { cellWidth: 40 }, // Tour Package
+        2: { cellWidth: 24 }, // Travel Date
+        3: { cellWidth: 18 }, // Seats
+        4: { cellWidth: 24 }, // Amount
+        5: { cellWidth: 38 }, // Primary Passenger
+      },
+      margin: { left: 15, right: 15 },
+      didDrawPage: (data) => {
+        // Footer section
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(148, 163, 184); // Slate 400
+        
+        doc.text("Confidential - Go Nilgiris Administration Dashboard", 15, 287);
+        doc.text(`Page ${data.pageNumber}`, 185, 287);
+      }
+    });
+
+    // Save and download the PDF
+    doc.save(`go_nilgiris_bookings_${new Date().toISOString().slice(0, 10)}.pdf`);
+
+    toast({
+      title: "PDF Exported Successfully",
+      description: `Downloaded report containing ${filteredBookings.length} booking records.`,
+    });
+  };
+
   const renderContent = () => {
     if (loading) {
         return (
@@ -147,12 +276,19 @@ export function BookingsManagement() {
                     View all tour bookings. Use the search and filter options below to narrow results.
                 </CardDescription>
             </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary">{filteredBookings.length} booking(s)</Badge>
-             <Button variant="destructive" onClick={() => setIsDeleteAllOpen(true)} disabled={(bookings || []).length === 0}>
-                <Trash className="mr-2"/>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="secondary" className="h-9 px-3 text-sm">{filteredBookings.length} booking(s)</Badge>
+             
+             {/* PDF Export Button */}
+             <Button variant="outline" onClick={handleExportPDF} disabled={filteredBookings.length === 0} className="h-9">
+                <Download className="mr-2 h-4 w-4" />
+                Export PDF
+             </Button>
+
+             <Button variant="destructive" onClick={() => setIsDeleteAllOpen(true)} disabled={(bookings || []).length === 0} className="h-9">
+                <Trash className="mr-2 h-4 w-4"/>
                 Delete All
-            </Button>
+             </Button>
           </div>
         </div>
        
