@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -33,7 +33,6 @@ function PassengerFieldsComponent({ form, index }: PassengerFieldsProps) {
               <FormControl>
                 <Input {...field} />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -46,7 +45,6 @@ function PassengerFieldsComponent({ form, index }: PassengerFieldsProps) {
               <FormControl>
                 <Input type="number" {...field} />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -68,7 +66,6 @@ function PassengerFieldsComponent({ form, index }: PassengerFieldsProps) {
                   <SelectItem value="child">Child</SelectItem>
                 </SelectContent>
               </Select>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -96,7 +93,6 @@ function PassengerFieldsComponent({ form, index }: PassengerFieldsProps) {
                   }}
                 />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -145,7 +141,6 @@ function PassengerFieldsComponent({ form, index }: PassengerFieldsProps) {
                     {...field} 
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
