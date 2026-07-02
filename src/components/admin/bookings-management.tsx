@@ -108,7 +108,7 @@ export function BookingsManagement() {
   // Flag to indicate if any filters are currently active
   const hasActiveFilters = searchQuery !== "" || selectedPackage !== "all" || selectedDate !== "";
 
-  // Generates and downloads a beautifully styled A4 PDF table of bookings matching active filters
+  // Generates and downloads a beautifully styled A4 PDF table of bookings grouped package-wise
   const handleExportPDF = () => {
     const doc = new jsPDF({
       orientation: "portrait",
@@ -163,74 +163,149 @@ export function BookingsManagement() {
     doc.text(`Total Seats/Members: ${totalPassengers}`, 80, 53);
     doc.text(`Total Revenue: INR ${totalRevenue.toLocaleString("en-IN")}`, 140, 53);
 
-    // 4. AutoTable setup
-    const tableHeaders = [["Booking ID", "Tour Package", "Travel Date", "Seats", "Amount", "Primary Passenger"]];
-    
-    const tableRows = filteredBookings.map((b) => {
-      const primaryPassenger = b.passengers[0];
-      const passengerName = primaryPassenger ? primaryPassenger.name : "N/A";
-      const passengerPhone = primaryPassenger ? primaryPassenger.phone : "";
-      const passengerInfo = passengerPhone ? `${passengerName}\n(${passengerPhone})` : passengerName;
-      
-      let displayDate = b.bookingDate;
-      try {
-        displayDate = format(new Date(b.bookingDate), "dd MMM yyyy");
-      } catch (e) {}
-
-      return [
-        b.bookingId,
-        formatPackageName(b.packageSlug),
-        displayDate,
-        b.selectedSeats.map((s) => s.number).join(", "),
-        `INR ${b.totalAmount.toLocaleString("en-IN")}`,
-        passengerInfo,
-      ];
-    });
-
-    autoTable(doc, {
-      startY: 65,
-      head: tableHeaders,
-      body: tableRows,
-      theme: "striped",
-      headStyles: {
-        fillColor: [59, 136, 64], // Brand green
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-        fontSize: 9,
-        valign: "middle",
-        halign: "left"
-      },
-      bodyStyles: {
-        fontSize: 8.5,
-        textColor: [51, 65, 85],
-        valign: "middle"
-      },
-      columnStyles: {
-        0: { cellWidth: 36 }, // Booking ID
-        1: { cellWidth: 40 }, // Tour Package
-        2: { cellWidth: 24 }, // Travel Date
-        3: { cellWidth: 18 }, // Seats
-        4: { cellWidth: 24 }, // Amount
-        5: { cellWidth: 38 }, // Primary Passenger
-      },
-      margin: { left: 15, right: 15 },
-      didDrawPage: (data) => {
-        // Footer section
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7.5);
-        doc.setTextColor(148, 163, 184); // Slate 400
-        
-        doc.text("Confidential - Go Nilgiris Administration Dashboard", 15, 287);
-        doc.text(`Page ${data.pageNumber}`, 185, 287);
+    // 4. Group Bookings by Tour Package
+    const bookingsByPackage: Record<string, Booking[]> = {};
+    filteredBookings.forEach((b) => {
+      const pkgName = formatPackageName(b.packageSlug);
+      if (!bookingsByPackage[pkgName]) {
+        bookingsByPackage[pkgName] = [];
       }
+      bookingsByPackage[pkgName].push(b);
     });
+
+    let currentY = 66; // Starting Y coordinate below the summary card
+
+    // 5. Draw table for each package
+    Object.entries(bookingsByPackage).forEach(([pkgName, packageBookings]) => {
+      // Prevent overlapping text near bottom page boundary
+      if (currentY > 230) {
+        doc.addPage();
+        currentY = 20; // reset to top of new page
+      }
+
+      // Draw Package Section Title
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(59, 136, 64); // Brand green
+      doc.text(pkgName.toUpperCase(), 15, currentY);
+      currentY += 4; // Spacing below heading
+
+      const tableHeaders = [["Booking ID", "Travel Date", "Seats", "Amount", "Primary Passenger"]];
+      
+      const tableRows = packageBookings.map((b) => {
+        const primaryPassenger = b.passengers[0];
+        const passengerName = primaryPassenger ? primaryPassenger.name : "N/A";
+        const passengerPhone = primaryPassenger ? primaryPassenger.phone : "";
+        const passengerInfo = passengerPhone ? `${passengerName}\n(${passengerPhone})` : passengerName;
+        
+        let displayDate = b.bookingDate;
+        try {
+          displayDate = format(new Date(b.bookingDate), "dd MMM yyyy");
+        } catch (e) {}
+
+        return [
+          b.bookingId,
+          displayDate,
+          b.selectedSeats.map((s) => s.number).join(", "),
+          `INR ${b.totalAmount.toLocaleString("en-IN")}`,
+          passengerInfo,
+        ];
+      });
+
+      // Package-specific sub-totals
+      const pkgRevenue = packageBookings.reduce((sum, b) => sum + b.totalAmount, 0);
+      const pkgPassengers = packageBookings.reduce((sum, b) => sum + b.memberCount, 0);
+
+      // Append sub-total row to the end of rows
+      tableRows.push([
+        "Package Subtotal",
+        "",
+        `${pkgPassengers} seat(s)`,
+        `INR ${pkgRevenue.toLocaleString("en-IN")}`,
+        ""
+      ]);
+
+      autoTable(doc, {
+        startY: currentY,
+        head: tableHeaders,
+        body: tableRows,
+        theme: "striped",
+        headStyles: {
+          fillColor: [59, 136, 64], // Brand green
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: 8.5,
+          valign: "middle",
+          halign: "left"
+        },
+        bodyStyles: {
+          fontSize: 8,
+          textColor: [51, 65, 85],
+          valign: "middle"
+        },
+        // Bold the sub-total row
+        didParseCell: (data) => {
+          if (data.row.index === tableRows.length - 1) {
+            data.cell.styles.fontStyle = "bold";
+            data.cell.styles.textColor = [15, 23, 42]; // Slate 900
+            data.cell.styles.fillColor = [241, 245, 249]; // Slate 100
+          }
+        },
+        columnStyles: {
+          0: { cellWidth: 38 }, // Booking ID
+          1: { cellWidth: 32 }, // Travel Date
+          2: { cellWidth: 22 }, // Seats
+          3: { cellWidth: 30 }, // Amount
+          4: { cellWidth: 58 }, // Primary Passenger
+        },
+        margin: { left: 15, right: 15 },
+        didDrawPage: (data) => {
+          // Footer section
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(148, 163, 184); // Slate 400
+          
+          doc.text("Confidential - Go Nilgiris Administration Dashboard", 15, 287);
+          doc.text(`Page ${data.pageNumber}`, 185, 287);
+        }
+      });
+
+      // Advance Y position to continue drawing below the table
+      const finalY = (doc as any).lastAutoTable.finalY;
+      currentY = finalY + 12; // Spacing before the next package
+    });
+
+    // 6. Draw Overall Report Summary Box at the end of all tables
+    if (currentY > 250) {
+      doc.addPage();
+      currentY = 20;
+    }
+
+    doc.setFillColor(241, 245, 249); // Soft slate light-blue
+    doc.rect(15, currentY, 180, 18, "F");
+    doc.setDrawColor(203, 213, 225); // Slate border
+    doc.rect(15, currentY, 180, 18, "S");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(15, 23, 42); // Slate 900
+    doc.text("OVERALL SUMMARY TOTALS", 22, currentY + 7);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(
+      `Overall Bookings: ${filteredBookings.length}    |    Overall Seats Booked: ${totalPassengers}    |    Overall Revenue: INR ${totalRevenue.toLocaleString("en-IN")}`,
+      22,
+      currentY + 13
+    );
 
     // Save and download the PDF
     doc.save(`go_nilgiris_bookings_${new Date().toISOString().slice(0, 10)}.pdf`);
 
     toast({
       title: "PDF Exported Successfully",
-      description: `Downloaded report containing ${filteredBookings.length} booking records.`,
+      description: `Downloaded package-grouped report containing ${filteredBookings.length} bookings.`,
     });
   };
 
