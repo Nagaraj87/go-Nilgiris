@@ -73,10 +73,18 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                                 {booking.passengers.map((p, i) => (
                                     <div key={i} className="p-2 border rounded-md bg-muted/50">
-                                        <p className="font-semibold">{p.name}</p>
+                                        <p className="font-semibold">{booking.memberCount > 5 ? `${p.name} (Group Leader)` : p.name}</p>
                                         <p className="text-muted-foreground">Age: {p.age} | Gender: {p.gender}</p>
+                                        {p.phone && <p className="text-xs text-muted-foreground mt-1">Phone: {p.phone}</p>}
                                     </div>
                                 ))}
+                                {booking.alternativePhone && (
+                                    <div className="p-2 border rounded-md bg-muted/50 border-primary/20 bg-primary/5">
+                                        <p className="font-semibold text-primary">Alternative Contact Number</p>
+                                        <p className="text-muted-foreground text-xs">of another group member</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Phone: {booking.alternativePhone}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <Separator className="my-6" />

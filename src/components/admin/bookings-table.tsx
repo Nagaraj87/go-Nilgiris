@@ -80,9 +80,14 @@ export function BookingsTable({ bookings, onBookingDeleted, searchQuery }: Booki
                             <TableCell>
                                 {booking.passengers.map((p, i) => (
                                 <div key={i} className="text-xs whitespace-nowrap">
-                                    {p.name} ({p.age}, {p.gender}, {p.phone})
+                                    {booking.memberCount > 5 ? `${p.name} (Leader)` : p.name} ({p.age}, {p.gender}, {p.phone})
                                 </div>
                                 ))}
+                                {booking.alternativePhone && (
+                                <div className="text-xs whitespace-nowrap font-semibold text-primary mt-1 border-t border-dashed border-primary/20 pt-1">
+                                    Alt Phone: {booking.alternativePhone}
+                                </div>
+                                )}
                             </TableCell>
                             <TableCell className="text-right">
                                 <DropdownMenu>

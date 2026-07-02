@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { DeerLogo } from '@/components/icons';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Home, Lock, Menu } from 'lucide-react';
+import { Home, Lock, Menu, Phone } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 import { usePathname } from 'next/navigation';
 
@@ -34,6 +34,12 @@ export function Header() {
               <Link href="/">
                 <Home className="mr-2 h-4 w-4" />
                 Home
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/contact">
+                <Phone className="mr-2 h-4 w-4" />
+                Contact Us
               </Link>
             </Button>
             <Button variant="ghost" asChild>
@@ -70,6 +76,10 @@ export function Header() {
                   <Link href="/" className="flex items-center space-x-2 text-lg font-medium">
                     <Home className="h-5 w-5" />
                     <span>Home</span>
+                  </Link>
+                  <Link href="/contact" className="flex items-center space-x-2 text-lg font-medium">
+                    <Phone className="h-5 w-5" />
+                    <span>Contact Us</span>
                   </Link>
                   <Link href="/admin" className="flex items-center space-x-2 text-lg font-medium">
                     <Lock className="h-5 w-5" />

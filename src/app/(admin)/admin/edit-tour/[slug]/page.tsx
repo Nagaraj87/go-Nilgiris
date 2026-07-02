@@ -245,30 +245,38 @@ export default function EditTourPage() {
               <CardTitle>{isNewTour ? 'Create New Tour' : 'Edit Tour'}</CardTitle>
               <CardDescription>{isNewTour ? 'Fill out the details for your new tour package.' : `Editing: ${tour?.name}`}</CardDescription>
             </div>
-            {!isNewTour && tour && (
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="destructive"><Trash2 className="mr-2"/> Delete Tour</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the "{tour.name}" tour package.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            )}
+            <div className="flex items-center gap-2">
+              {!isNewTour && tour && (
+                <>
+                  <Button type="submit" form="edit-tour-form" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                  </Button>
+                  <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                          <Button variant="destructive"><Trash2 className="mr-2"/> Delete Tour</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                          <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the "{tour.name}" tour package.
+                              </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form id="edit-tour-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem><FormLabel>Tour Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>

@@ -36,53 +36,7 @@ const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   age: z.coerce.number().min(1, 'Age must be at least 1').max(100),
   gender: z.enum(['male', 'female', 'child'], { required_error: "Gender is required." }),
-  phone: z.string(),
-  isForeign: z.boolean().default(false),
-  email: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.isForeign) {
-    if (!data.email) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Email is required for foreign tourists",
-        path: ["email"],
-      });
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Invalid email address",
-        path: ["email"],
-      });
-    }
-
-    if (!data.phone) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Contact number is required",
-        path: ["phone"],
-      });
-    } else if (!/^\+?[0-9]{7,15}$/.test(data.phone)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Must be a valid international number (7-15 digits)",
-        path: ["phone"],
-      });
-    }
-  } else {
-    if (!data.phone) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Contact number is required",
-        path: ["phone"],
-      });
-    } else if (!/^[0-9]{10}$/.test(data.phone)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Must be a valid 10-digit phone number",
-        path: ["phone"],
-      });
-    }
-  }
+  phone: z.string().min(10, 'Must be a valid 10-digit phone number').max(10, 'Must be a valid 10-digit phone number').regex(/^[0-9]+$/, 'Must be a valid 10-digit phone number'),
 });
 
 const bookingSchema = z.object({
@@ -90,7 +44,25 @@ const bookingSchema = z.object({
   bookingDate: z.date({
     required_error: "A booking date is required.",
   }),
+  memberCount: z.coerce.number().min(1, "At least 1 member is required."),
   passengers: z.array(passengerSchema).min(1, "At least one passenger is required."),
+  alternativePhone: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.memberCount > 5) {
+    if (!data.alternativePhone) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Alternative contact number is required for groups > 5 members",
+        path: ["alternativePhone"],
+      });
+    } else if (!/^[0-9]{10}$/.test(data.alternativePhone)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Must be a valid 10-digit phone number",
+        path: ["alternativePhone"],
+      });
+    }
+  }
 });
 
 type BookingFormValues = z.infer<typeof bookingSchema>;
@@ -125,7 +97,9 @@ function BookingFlow() {
     defaultValues: {
       packageSlug: packageSlugFromUrl || '',
       bookingDate: undefined,
-      passengers: [{ name: '', age: 0, gender: undefined as any, phone: '', isForeign: false, email: '' }],
+      memberCount: 1,
+      passengers: [{ name: '', age: 0, gender: undefined as any, phone: '' }],
+      alternativePhone: '',
     },
   });
 
@@ -171,12 +145,12 @@ function BookingFlow() {
     name: 'passengers',
   });
 
-  const memberCount = form.watch('passengers').length;
+  const memberCount = form.watch('memberCount') || 1;
   const bookingDate = form.watch('bookingDate');
 
   useEffect(() => {
-    setMemberCountInput(fields.length.toString());
-  }, [fields.length]);
+    setMemberCountInput(memberCount.toString());
+  }, [memberCount]);
 
   const handleMemberCountChange = (newCountStr: string) => {
     setMemberCountInput(newCountStr);
@@ -185,14 +159,24 @@ function BookingFlow() {
       return;
     }
 
+    form.setValue('memberCount', newCount, { shouldValidate: true });
+
     const currentCount = fields.length;
-    if (newCount > currentCount) {
-      for (let i = 0; i < newCount - currentCount; i++) {
-        append({ name: '', age: 0, gender: undefined as any, phone: '', isForeign: false, email: '' });
+    if (newCount <= 5) {
+      if (newCount > currentCount) {
+        for (let i = 0; i < newCount - currentCount; i++) {
+          append({ name: '', age: 0, gender: undefined as any, phone: '' });
+        }
+      } else if (newCount < currentCount) {
+        for (let i = 0; i < currentCount - newCount; i++) {
+          remove(currentCount - 1 - i);
+        }
       }
-    } else if (newCount < currentCount) {
-      for (let i = 0; i < currentCount - newCount; i++) {
-        remove(currentCount - 1 - i);
+    } else {
+      if (currentCount > 1) {
+        for (let i = 0; i < currentCount - 1; i++) {
+          remove(currentCount - 1 - i);
+        }
       }
     }
   };
@@ -222,7 +206,7 @@ function BookingFlow() {
   }, [selectedSeats]);
 
   const processStep1 = async () => {
-    const result = await form.trigger(['bookingDate']);
+    const result = await form.trigger(['bookingDate', 'memberCount']);
     if (!result || memberCount < 1) {
       toast({ variant: "destructive", title: "Incomplete Details", description: "Please select a date and number of members." })
       return;
@@ -238,12 +222,12 @@ function BookingFlow() {
   };
 
   const processStep2 = async () => {
-    const result = await form.trigger('passengers');
+    const result = await form.trigger(['passengers', 'alternativePhone']);
     if (!result) {
       toast({
         variant: "destructive",
         title: "Passenger Details Incomplete",
-        description: "Please fill in the details for all passengers.",
+        description: "Please fill in the passenger and contact details correctly.",
       });
       return;
     }
@@ -265,7 +249,7 @@ function BookingFlow() {
     showLoader("Connecting to secure payment gateway...");
 
     try {
-      const { packageSlug, passengers } = form.getValues();
+      const { packageSlug, passengers, alternativePhone } = form.getValues();
 
       const bookingData = {
         bookingId: '', 
@@ -276,6 +260,7 @@ function BookingFlow() {
         totalAmount,
         bookingDate: format(form.getValues('bookingDate'), "yyyy-MM-dd"),
         paymentStatus: 'PENDING',
+        ...(alternativePhone ? { alternativePhone } : {}),
       };
 
       const result = await initiateCashfreePayment(bookingData as any, totalAmount, window.location.origin);
@@ -307,7 +292,7 @@ function BookingFlow() {
 
   const handleCopyToAll = () => {
     const firstPassenger = form.getValues('passengers.0');
-    if (!firstPassenger?.name || !firstPassenger?.age || !firstPassenger?.phone || (firstPassenger?.isForeign && !firstPassenger?.email)) {
+    if (!firstPassenger?.name || !firstPassenger?.age || !firstPassenger?.phone) {
       toast({ variant: "destructive", title: "Incomplete Details", description: "Please fill all details for the first passenger before copying." });
       return;
     }
@@ -320,24 +305,22 @@ function BookingFlow() {
         name: firstPassenger.name,
         age: firstPassenger.age,
         phone: firstPassenger.phone,
-        isForeign: firstPassenger.isForeign,
-        email: firstPassenger.email,
       };
     });
 
     form.setValue('passengers', newPassengers, { shouldValidate: true, shouldDirty: true });
 
-    toast({ title: "Details Copied", description: "Name, Age, Phone, and Nationality details from the first passenger have been copied to all others." });
+    toast({ title: "Details Copied", description: "Name, Age, and Phone details from the first passenger have been copied to all others." });
   }
 
   const handleSeatSelect = async (seat: any, isSelected: boolean) => {
     if (!isSelected) {
-      const isValid = await form.trigger('passengers');
+      const isValid = await form.trigger(['passengers', 'alternativePhone']);
       if (!isValid) {
         toast({
           variant: "destructive",
           title: "Passenger Details Incomplete",
-          description: "Please fill in all passenger details (highlighted in red) before selecting seats.",
+          description: "Please fill in all passenger and contact details (highlighted in red) before selecting seats.",
         });
         return;
       }
@@ -494,7 +477,7 @@ function BookingFlow() {
               <CardHeader>
                 <CardTitle>Step 2: Passenger Details & Seat Selection</CardTitle>
                 <CardDescription>Enter details for each passenger and select your seats.</CardDescription>
-                {memberCount > 1 && (
+                {memberCount > 1 && memberCount <= 5 && (
                   <div className="pt-2">
                     <Button type="button" size="sm" variant="outline" onClick={handleCopyToAll}>
                       <Copy className="mr-2 h-4 w-4" />
@@ -515,11 +498,41 @@ function BookingFlow() {
                           hasError ? "border-destructive ring-1 ring-destructive/30 bg-destructive/5 shadow-[0_0_15px_rgba(239,68,68,0.05)]" : "border-border"
                         )}
                       >
-                        <Label className={cn("font-bold transition-colors", hasError && "text-destructive")}>Passenger {index + 1}</Label>
+                        <Label className={cn("font-bold transition-colors", hasError && "text-destructive")}>
+                          {memberCount > 5 ? "Group Leader Details" : `Passenger ${index + 1}`}
+                        </Label>
                         <PassengerFields form={form} index={index} />
                       </div>
                     );
                   })}
+
+                  {memberCount > 5 && (
+                    <div className="p-4 border rounded-lg space-y-4 border-border">
+                      <Label className="font-bold">Alternative Contact Details</Label>
+                      <FormField
+                        control={form.control}
+                        name="alternativePhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Alternative Contact Number of another group member</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="tel" 
+                                placeholder="10-digit number"
+                                maxLength={10}
+                                {...field}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/[^0-9]/g, '');
+                                  field.onChange(val);
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {loadingAvailability ? <Skeleton className="w-full h-96" /> : (

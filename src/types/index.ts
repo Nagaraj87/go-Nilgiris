@@ -55,6 +55,7 @@ export type Booking = {
   selectedSeats: SeatSelection[];
   paymentStatus?: 'PENDING' | 'COMPLETED' | 'FAILED';
   phonePeTransactionId?: string;
+  alternativePhone?: string;
 };
 
 export type GalleryImage = {

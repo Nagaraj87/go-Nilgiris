@@ -8,9 +8,13 @@ export async function revalidateTours() {
     revalidatePath('/');
 }
 
-export async function updateBookingAction(bookingId: string, passengers: any[]) {
+export async function updateBookingAction(bookingId: string, passengers: any[], alternativePhone?: string) {
     try {
-        await updateBooking(bookingId, { passengers });
+        const updatedData: any = { passengers };
+        if (alternativePhone !== undefined) {
+            updatedData.alternativePhone = alternativePhone;
+        }
+        await updateBooking(bookingId, updatedData);
         return { success: true };
     } catch (error) {
         console.error('Failed to update booking:', error);

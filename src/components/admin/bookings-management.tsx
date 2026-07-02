@@ -296,7 +296,7 @@ export function BookingsManagement() {
             data.cell.styles.fillColor = [241, 245, 249]; // Slate 100
           }
         },
-        columnStyles: colStyles,
+        columnStyles: colStyles as any,
         margin: { left: 15, right: 15 },
         didDrawPage: (data) => {
           // Footer section

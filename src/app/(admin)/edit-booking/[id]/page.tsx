@@ -23,57 +23,20 @@ const passengerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   age: z.coerce.number().min(1, 'Age must be at least 1').max(100),
   gender: z.enum(['male', 'female', 'child']),
-  phone: z.string(),
-  isForeign: z.boolean().default(false),
-  email: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.isForeign) {
-    if (!data.email) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Email is required for foreign tourists",
-        path: ["email"],
-      });
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Invalid email address",
-        path: ["email"],
-      });
-    }
-
-    if (!data.phone) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Contact number is required",
-        path: ["phone"],
-      });
-    } else if (!/^\+?[0-9]{7,15}$/.test(data.phone)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Must be a valid international number (7-15 digits)",
-        path: ["phone"],
-      });
-    }
-  } else {
-    if (!data.phone) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Contact number is required",
-        path: ["phone"],
-      });
-    } else if (!/^[0-9]{10}$/.test(data.phone)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Must be a valid 10-digit phone number",
-        path: ["phone"],
-      });
-    }
-  }
+  phone: z.string().min(10, 'Must be a valid 10-digit phone number').max(10, 'Must be a valid 10-digit phone number').regex(/^[0-9]+$/, 'Must be a valid 10-digit phone number'),
 });
 
 const editBookingSchema = z.object({
   passengers: z.array(passengerSchema),
+  alternativePhone: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.alternativePhone && !/^[0-9]{10}$/.test(data.alternativePhone)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Must be a valid 10-digit phone number",
+      path: ["alternativePhone"],
+    });
+  }
 });
 
 type EditBookingFormValues = z.infer<typeof editBookingSchema>;
@@ -93,6 +56,7 @@ export default function EditBookingPage() {
     resolver: zodResolver(editBookingSchema),
     defaultValues: {
       passengers: [],
+      alternativePhone: '',
     },
   });
 
@@ -110,7 +74,10 @@ export default function EditBookingPage() {
         const bookingData = await getBookingById(bookingId);
         if (bookingData) {
           setBooking(bookingData as BookingType);
-          form.reset({ passengers: bookingData.passengers });
+          form.reset({ 
+            passengers: bookingData.passengers,
+            alternativePhone: bookingData.alternativePhone || '',
+          });
         } else {
           toast({ variant: 'destructive', title: 'Error', description: 'Booking not found.' });
           setBooking(null);
@@ -127,7 +94,7 @@ export default function EditBookingPage() {
 
   const onSubmit = async (data: EditBookingFormValues) => {
     setIsSubmitting(true);
-    const result = await updateBookingAction(bookingId, data.passengers);
+    const result = await updateBookingAction(bookingId, data.passengers, data.alternativePhone);
     
     if (result.success) {
         toast({ title: 'Success', description: 'Booking updated successfully.' });
@@ -182,10 +149,12 @@ if (!booking) {
                <div className="space-y-4">
                   {fields.map((field, index) => (
                     <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                      <Label className="font-bold">Passenger {index + 1}</Label>
+                      <Label className="font-bold">
+                        {booking && booking.memberCount > 5 ? "Group Leader Details" : `Passenger ${index + 1}`}
+                      </Label>
                       <div className="space-y-4">
-                        {/* Row 1: Core details */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Grid containing Name, Age, Gender, and Contact Number */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
                           <FormField control={form.control} name={`passengers.${index}.name`} render={({ field }) => (
                             <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                           )} />
@@ -210,67 +179,56 @@ if (!booking) {
                               <FormMessage />
                             </FormItem>
                           )} />
-                        </div>
-
-                        {/* Row 2: Contact, Nationality & Email */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-                          <FormField control={form.control} name={`passengers.${index}.phone`} render={({ field }) => {
-                            const isForeign = form.watch(`passengers.${index}.isForeign`);
-                            return (
-                              <FormItem>
-                                <FormLabel>Contact Number {isForeign ? "(Intl)" : ""}</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="tel" 
-                                    placeholder={isForeign ? "e.g., +15551234567" : "10-digit number"}
-                                    maxLength={isForeign ? 15 : 10}
-                                    {...field}
-                                    onChange={(e) => {
-                                      const filterRegex = isForeign ? /[^0-9+]/g : /[^0-9]/g;
-                                      const val = e.target.value.replace(filterRegex, '');
-                                      field.onChange(val);
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            );
-                          }} />
-
-                          <FormField control={form.control} name={`passengers.${index}.isForeign`} render={({ field }) => (
-                            <FormItem className="flex flex-row items-center space-x-2 space-y-0 rounded-md border p-3 h-10 bg-background shadow-sm">
+                          <FormField control={form.control} name={`passengers.${index}.phone`} render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Contact Number</FormLabel>
                               <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={(checked) => {
-                                    field.onChange(checked);
-                                    if (!checked) {
-                                      form.setValue(`passengers.${index}.email`, '');
-                                      const rawPhone = form.getValues(`passengers.${index}.phone`) || '';
-                                      form.setValue(`passengers.${index}.phone`, rawPhone.replace(/[^0-9]/g, '').slice(0, 10));
-                                    }
+                                <Input 
+                                  type="tel" 
+                                  placeholder="10-digit number"
+                                  maxLength={10}
+                                  {...field}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(/[^0-9]/g, '');
+                                    field.onChange(val);
                                   }}
                                 />
                               </FormControl>
-                              <FormLabel className="text-sm font-medium cursor-pointer">Foreign Tourist</FormLabel>
+                              <FormMessage />
                             </FormItem>
                           )} />
-
-                          {form.watch(`passengers.${index}.isForeign`) && (
-                            <FormField control={form.control} name={`passengers.${index}.email`} render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email Address</FormLabel>
-                                <FormControl>
-                                  <Input type="email" placeholder="passenger@example.com" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )} />
-                          )}
                         </div>
                       </div>
                     </div>
                   ))}
+
+                  {booking && booking.memberCount > 5 && (
+                    <div className="p-4 border rounded-lg space-y-4 border-border">
+                      <Label className="font-bold">Alternative Contact Details</Label>
+                      <FormField
+                        control={form.control}
+                        name="alternativePhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Alternative Contact Number of another group member</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="tel" 
+                                placeholder="10-digit number"
+                                maxLength={10}
+                                {...field}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/[^0-9]/g, '');
+                                  field.onChange(val);
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
               <div className="flex justify-end gap-4">
                 <Button type="button" variant="outline" onClick={() => router.push(`/admin`)}>
