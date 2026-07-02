@@ -5,7 +5,7 @@ import { useLoading } from '@/components/loading-provider';
 import type { TourPackage } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, Gift } from 'lucide-react';
 
 type TourCardProps = {
     pkg: TourPackage;
@@ -48,6 +48,12 @@ export function TourCard({ pkg, price, loading }: TourCardProps) {
                             )}
                         </div>
                         <span className="text-xs text-muted-foreground">onwards</span>
+                        {pkg.gift && (
+                            <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-accent/15 border border-accent/30 rounded-md text-accent-foreground text-xs font-semibold w-fit animate-pulse">
+                              <Gift className="w-3.5 h-3.5 text-accent shrink-0" />
+                              <span>Free Seasonal Gift: {pkg.gift}</span>
+                            </div>
+                        )}
                     </div>
                 )}
                 </div>

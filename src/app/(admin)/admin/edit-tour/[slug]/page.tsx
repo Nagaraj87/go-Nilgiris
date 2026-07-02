@@ -38,6 +38,7 @@ const tourPackageSchema = z.object({
   slug: z.string().min(3, "Slug must be at least 3 characters.").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens."),
   price: z.coerce.number().min(0, "Price must be a positive number."),
   discount: z.coerce.number().min(0, "Discount cannot be negative.").max(100, "Discount cannot exceed 100%").optional(),
+  gift: z.string().optional(),
   duration: z.string().min(1, "Duration is required."),
   overview: z.string().min(10, "Overview must be at least 10 characters."),
   inclusions: z.array(z.string()).min(1, "At least one inclusion is required."),
@@ -68,6 +69,7 @@ export default function EditTourPage() {
       slug: '',
       price: 0,
       discount: 0,
+      gift: '',
       duration: '',
       overview: '',
       inclusions: [''],
@@ -108,6 +110,7 @@ export default function EditTourPage() {
               slug: '',
               price: defaultTour.price || 0,
               discount: defaultTour.discount || 0,
+              gift: defaultTour.gift || '',
               duration: defaultTour.duration || '',
               overview: defaultTour.overview || '',
               inclusions: defaultTour.inclusions?.length > 0 ? defaultTour.inclusions : [''],
@@ -125,6 +128,7 @@ export default function EditTourPage() {
             form.reset({
               ...tourData,
               discount: tourData.discount || 0,
+              gift: tourData.gift || '',
               // Ensure array fields are not empty for the form
               inclusions: tourData.inclusions?.length > 0 ? tourData.inclusions : [''],
               exclusions: tourData.exclusions?.length > 0 ? tourData.exclusions : [''],
@@ -272,6 +276,17 @@ export default function EditTourPage() {
 
               <FormField control={form.control} name="slug" render={({ field }) => (
                 <FormItem><FormLabel>Slug (URL Identifier)</FormLabel><FormControl><Input {...field} disabled={!isNewTour} /></FormControl><FormDescription>URL-friendly, no spaces, e.g., "my-new-tour"</FormDescription><FormMessage /></FormItem>
+              )} />
+
+              <FormField control={form.control} name="gift" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Seasonal Gift / Special Offer (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="e.g., Free local tea packet, Complimentary chocolates" />
+                  </FormControl>
+                  <FormDescription>Convey a gift or special reward package offered to passengers during this season.</FormDescription>
+                  <FormMessage />
+                </FormItem>
               )} />
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

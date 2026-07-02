@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, X, Info, Loader2 } from 'lucide-react';
+import { Check, X, Info, Loader2, Gift } from 'lucide-react';
 import type { TourPackage } from "@/types";
 import React from 'react';
 import { useLoading } from '@/components/loading-provider';
@@ -45,6 +45,15 @@ export function TourBookingCard({ tourPackageData, price }: TourBookingCardProps
                             )}
                         </div>
                         <span className="text-sm font-normal text-muted-foreground">onwards</span>
+                        {tourPackageData.gift && (
+                            <div className="flex items-center gap-2.5 mt-3 p-3 bg-accent/10 border border-accent/25 rounded-lg text-accent-foreground text-xs font-semibold animate-pulse">
+                                <Gift className="h-5 w-5 text-accent shrink-0" />
+                                <div>
+                                    <span className="block text-[10px] uppercase tracking-wider text-accent-foreground/70 font-bold">Seasonal Gift Offer</span>
+                                    <span className="text-sm font-bold text-foreground">{tourPackageData.gift}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </CardHeader>

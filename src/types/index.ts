@@ -19,6 +19,7 @@ export interface TourPackage {
   name: string;
   price: number;
   discount?: number;
+  gift?: string; // Optional seasonal gift details
   duration: string;
   overview: string;
   inclusions: string[];
