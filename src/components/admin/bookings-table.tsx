@@ -46,8 +46,8 @@ export function BookingsTable({ bookings, onBookingDeleted, searchQuery }: Booki
 
     if (bookings.length === 0) {
         return (
-            <div className="h-24 text-center flex items-center justify-center">
-                {searchQuery ? "No bookings match your search." : "No bookings found. Start by making a booking on the main site."}
+            <div className="h-24 text-center flex items-center justify-center text-muted-foreground">
+                {searchQuery ? "No bookings match your active filters or search query." : "No bookings found. Start by making a booking on the main site."}
             </div>
         )
     }

@@ -1,8 +1,6 @@
-
-
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getBookings, deleteAllBookings as deleteAllBookingsFromDb } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +12,7 @@ import type { Booking } from "@/types";
 import { Button } from "../ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 export function BookingsManagement() {
@@ -21,6 +20,8 @@ export function BookingsManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPackage, setSelectedPackage] = useState("all");
+  const [selectedDate, setSelectedDate] = useState("");
   const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   const { toast } = useToast();
 
@@ -59,15 +60,50 @@ export function BookingsManagement() {
     }
   }
 
+  // Dynamically extract unique package slugs from all loaded bookings
+  const uniquePackages = useMemo(() => {
+    const pkgs = new Set<string>();
+    (bookings || []).forEach((b) => {
+      if (b.packageSlug) {
+        pkgs.add(b.packageSlug);
+      }
+    });
+    return Array.from(pkgs).sort();
+  }, [bookings]);
 
-  const filteredBookings = (bookings || []).filter(booking => {
-    const query = searchQuery.toLowerCase();
-    return (
+  // Format slug to a human-readable title (e.g. "ooty-coonoor-tour" -> "Ooty Coonoor Tour")
+  const formatPackageName = (slug: string) => {
+    return slug
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  // Perform simultaneous filtering
+  const filteredBookings = useMemo(() => {
+    return (bookings || []).filter((booking) => {
+      // 1. Text Search Filter
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        query === "" ||
         booking.bookingId.toLowerCase().includes(query) ||
         booking.packageSlug.toLowerCase().includes(query) ||
-        booking.passengers.some(p => p.name.toLowerCase().includes(query))
-    );
-  });
+        booking.passengers.some((p) => p.name.toLowerCase().includes(query));
+
+      // 2. Package Dropdown Filter
+      const matchesPackage =
+        selectedPackage === "all" || booking.packageSlug === selectedPackage;
+
+      // 3. Date Input Filter
+      const matchesDate =
+        selectedDate === "" || booking.bookingDate === selectedDate;
+
+      return matchesSearch && matchesPackage && matchesDate;
+    });
+  }, [bookings, searchQuery, selectedPackage, selectedDate]);
+
+  // Flag to indicate if any filters are currently active
+  const hasActiveFilters = searchQuery !== "" || selectedPackage !== "all" || selectedDate !== "";
 
   const renderContent = () => {
     if (loading) {
@@ -95,7 +131,7 @@ export function BookingsManagement() {
         <BookingsTable
             bookings={filteredBookings}
             onBookingDeleted={handleDeleteBooking}
-            searchQuery={searchQuery}
+            searchQuery={hasActiveFilters ? "active_filters" : ""}
         />
     )
   }
@@ -108,7 +144,7 @@ export function BookingsManagement() {
             <div className="flex-1">
                 <CardTitle>All Bookings</CardTitle>
                  <CardDescription>
-                    View all tour bookings. Use the search below to filter results.
+                    View all tour bookings. Use the search and filter options below to narrow results.
                 </CardDescription>
             </div>
           <div className="flex items-center gap-2">
@@ -120,15 +156,66 @@ export function BookingsManagement() {
           </div>
         </div>
        
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Search by Booking ID, package, or passenger name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-full"
-            disabled={loading || !!error}
-          />
+        {/* Search and Filters Row */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+          {/* Search Input */}
+          <div className="relative md:col-span-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              placeholder="Search by Booking ID, package, or passenger name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-full"
+              disabled={loading || !!error}
+            />
+          </div>
+
+          {/* Package Filter */}
+          <div className="w-full">
+            <Select
+              value={selectedPackage}
+              onValueChange={setSelectedPackage}
+              disabled={loading || !!error}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Tour Packages" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Tour Packages</SelectItem>
+                {uniquePackages.map((pkg) => (
+                  <SelectItem key={pkg} value={pkg}>
+                    {formatPackageName(pkg)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Date Filter & Clear Controls */}
+          <div className="w-full flex items-center gap-2">
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full cursor-pointer"
+              disabled={loading || !!error}
+            />
+            {hasActiveFilters && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedPackage("all");
+                  setSelectedDate("");
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground shrink-0"
+                disabled={loading || !!error}
+              >
+                Reset
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
