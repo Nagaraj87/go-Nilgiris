@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 
 export function BookingsManagement() {
@@ -25,6 +27,7 @@ export function BookingsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPackage, setSelectedPackage] = useState("all");
   const [selectedDate, setSelectedDate] = useState("");
+  const [hideRevenue, setHideRevenue] = useState(true);
   const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   const { toast } = useToast();
 
@@ -159,9 +162,14 @@ export function BookingsManagement() {
     doc.setFontSize(9);
     doc.setTextColor(51, 65, 85);
 
-    doc.text(`Total Bookings: ${filteredBookings.length}`, 22, 53);
-    doc.text(`Total Seats/Members: ${totalPassengers}`, 80, 53);
-    doc.text(`Total Revenue: INR ${totalRevenue.toLocaleString("en-IN")}`, 140, 53);
+    if (hideRevenue) {
+      doc.text(`Total Bookings: ${filteredBookings.length}`, 30, 53);
+      doc.text(`Total Seats/Members: ${totalPassengers}`, 110, 53);
+    } else {
+      doc.text(`Total Bookings: ${filteredBookings.length}`, 22, 53);
+      doc.text(`Total Seats/Members: ${totalPassengers}`, 80, 53);
+      doc.text(`Total Revenue: INR ${totalRevenue.toLocaleString("en-IN")}`, 140, 53);
+    }
 
     // 4. Group Bookings by Tour Package
     const bookingsByPackage: Record<string, Booking[]> = {};
@@ -190,7 +198,10 @@ export function BookingsManagement() {
       doc.text(pkgName.toUpperCase(), 15, currentY);
       currentY += 4; // Spacing below heading
 
-      const tableHeaders = [["Booking ID", "Travel Date", "Seats", "Amount", "Primary Passenger"]];
+      // Table Headers (Exclude Amount if hideRevenue is enabled)
+      const tableHeaders = hideRevenue 
+        ? [["Booking ID", "Travel Date", "Seats", "Primary Passenger"]]
+        : [["Booking ID", "Travel Date", "Seats", "Amount", "Primary Passenger"]];
       
       const tableRows = packageBookings.map((b) => {
         const primaryPassenger = b.passengers[0];
@@ -203,13 +214,22 @@ export function BookingsManagement() {
           displayDate = format(new Date(b.bookingDate), "dd MMM yyyy");
         } catch (e) {}
 
-        return [
-          b.bookingId,
-          displayDate,
-          b.selectedSeats.map((s) => s.number).join(", "),
-          `INR ${b.totalAmount.toLocaleString("en-IN")}`,
-          passengerInfo,
-        ];
+        if (hideRevenue) {
+          return [
+            b.bookingId,
+            displayDate,
+            b.selectedSeats.map((s) => s.number).join(", "),
+            passengerInfo,
+          ];
+        } else {
+          return [
+            b.bookingId,
+            displayDate,
+            b.selectedSeats.map((s) => s.number).join(", "),
+            `INR ${b.totalAmount.toLocaleString("en-IN")}`,
+            passengerInfo,
+          ];
+        }
       });
 
       // Package-specific sub-totals
@@ -217,13 +237,38 @@ export function BookingsManagement() {
       const pkgPassengers = packageBookings.reduce((sum, b) => sum + b.memberCount, 0);
 
       // Append sub-total row to the end of rows
-      tableRows.push([
-        "Package Subtotal",
-        "",
-        `${pkgPassengers} seat(s)`,
-        `INR ${pkgRevenue.toLocaleString("en-IN")}`,
-        ""
-      ]);
+      if (hideRevenue) {
+        tableRows.push([
+          "Package Subtotal",
+          "",
+          `${pkgPassengers} seat(s)`,
+          ""
+        ]);
+      } else {
+        tableRows.push([
+          "Package Subtotal",
+          "",
+          `${pkgPassengers} seat(s)`,
+          `INR ${pkgRevenue.toLocaleString("en-IN")}`,
+          ""
+        ]);
+      }
+
+      // Column widths config
+      const colStyles = hideRevenue 
+        ? {
+            0: { cellWidth: 42 }, // Booking ID
+            1: { cellWidth: 38 }, // Travel Date
+            2: { cellWidth: 30 }, // Seats
+            3: { cellWidth: 70 }, // Primary Passenger
+          }
+        : {
+            0: { cellWidth: 38 }, // Booking ID
+            1: { cellWidth: 32 }, // Travel Date
+            2: { cellWidth: 22 }, // Seats
+            3: { cellWidth: 30 }, // Amount
+            4: { cellWidth: 58 }, // Primary Passenger
+          };
 
       autoTable(doc, {
         startY: currentY,
@@ -251,13 +296,7 @@ export function BookingsManagement() {
             data.cell.styles.fillColor = [241, 245, 249]; // Slate 100
           }
         },
-        columnStyles: {
-          0: { cellWidth: 38 }, // Booking ID
-          1: { cellWidth: 32 }, // Travel Date
-          2: { cellWidth: 22 }, // Seats
-          3: { cellWidth: 30 }, // Amount
-          4: { cellWidth: 58 }, // Primary Passenger
-        },
+        columnStyles: colStyles,
         margin: { left: 15, right: 15 },
         didDrawPage: (data) => {
           // Footer section
@@ -294,18 +333,29 @@ export function BookingsManagement() {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(71, 85, 105);
-    doc.text(
-      `Overall Bookings: ${filteredBookings.length}    |    Overall Seats Booked: ${totalPassengers}    |    Overall Revenue: INR ${totalRevenue.toLocaleString("en-IN")}`,
-      22,
-      currentY + 13
-    );
+
+    if (hideRevenue) {
+      doc.text(
+        `Overall Bookings: ${filteredBookings.length}    |    Overall Seats Booked: ${totalPassengers}`,
+        22,
+        currentY + 13
+      );
+    } else {
+      doc.text(
+        `Overall Bookings: ${filteredBookings.length}    |    Overall Seats Booked: ${totalPassengers}    |    Overall Revenue: INR ${totalRevenue.toLocaleString("en-IN")}`,
+        22,
+        currentY + 13
+      );
+    }
 
     // Save and download the PDF
     doc.save(`go_nilgiris_bookings_${new Date().toISOString().slice(0, 10)}.pdf`);
 
     toast({
       title: "PDF Exported Successfully",
-      description: `Downloaded package-grouped report containing ${filteredBookings.length} bookings.`,
+      description: hideRevenue 
+        ? `Downloaded driver report containing ${filteredBookings.length} bookings.`
+        : `Downloaded financial report containing ${filteredBookings.length} bookings.`,
     });
   };
 
@@ -351,9 +401,21 @@ export function BookingsManagement() {
                     View all tour bookings. Use the search and filter options below to narrow results.
                 </CardDescription>
             </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <Badge variant="secondary" className="h-9 px-3 text-sm">{filteredBookings.length} booking(s)</Badge>
              
+             {/* Toggle to Hide/Show Revenue in PDF (Default: Checked / Hiding) */}
+             <div className="flex items-center space-x-2 bg-muted/60 border rounded-md px-3 h-9 select-none">
+              <Checkbox 
+                id="hide-revenue" 
+                checked={hideRevenue} 
+                onCheckedChange={(checked) => setHideRevenue(!!checked)} 
+              />
+              <Label htmlFor="hide-revenue" className="text-xs font-semibold cursor-pointer">
+                Hide Revenue (Driver Mode)
+              </Label>
+             </div>
+
              {/* PDF Export Button */}
              <Button variant="outline" onClick={handleExportPDF} disabled={filteredBookings.length === 0} className="h-9">
                 <Download className="mr-2 h-4 w-4" />
