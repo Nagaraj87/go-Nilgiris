@@ -290,7 +290,7 @@ export default function EditTourPage() {
                 <FormItem>
                   <FormLabel>Seasonal Gift / Special Offer (Optional)</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="e.g., Free local tea packet, Complimentary chocolates" />
+                    <Input {...field} placeholder="e.g., Local tea packet, Complimentary chocolates" />
                   </FormControl>
                   <FormDescription>Convey a gift or special reward package offered to passengers during this season.</FormDescription>
                   <FormMessage />

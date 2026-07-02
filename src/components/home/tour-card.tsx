@@ -51,7 +51,7 @@ export function TourCard({ pkg, price, loading }: TourCardProps) {
                         {pkg.gift && (
                             <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-accent/15 border border-accent/30 rounded-md text-accent-foreground text-xs font-semibold w-fit animate-pulse">
                               <Gift className="w-3.5 h-3.5 text-accent shrink-0" />
-                              <span>Free Seasonal Gift: {pkg.gift}</span>
+                              <span>Seasonal Gift: {pkg.gift}</span>
                             </div>
                         )}
                     </div>
