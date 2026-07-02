@@ -14,8 +14,13 @@ export async function GET(request: Request) {
     const order_id = searchParams.get('order_id');
     const booking_id = searchParams.get('booking_id');
 
+    // Dynamically resolve the base URL using headers to keep users on their custom domain
+    const proto = request.headers.get('x-forwarded-proto') || 'https';
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const baseUrl = host ? `${proto}://${host}` : request.url;
+
     if (!order_id || !booking_id) {
-        return NextResponse.redirect(new URL('/booking/status?error=missing_params', request.url));
+        return NextResponse.redirect(new URL('/booking/status?error=missing_params', baseUrl));
     }
 
     try {
@@ -45,11 +50,11 @@ export async function GET(request: Request) {
 
         // Redirect user back to the status page with success or failure
         return NextResponse.redirect(
-            new URL(`/booking/status?id=${booking_id}&tid=${order_id}&status=${paymentStatus}`, request.url)
+            new URL(`/booking/status?id=${booking_id}&tid=${order_id}&status=${paymentStatus}`, baseUrl)
         );
 
     } catch (error) {
         console.error("Error verifying Cashfree payment:", error);
-        return NextResponse.redirect(new URL(`/booking/status?id=${booking_id}&error=verification_failed`, request.url));
+        return NextResponse.redirect(new URL(`/booking/status?id=${booking_id}&error=verification_failed`, baseUrl));
     }
 }

@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { getTourPackageBySlug, createOrUpdateTourPackage, deleteTourPackage } from '@/lib/firebase';
+import { getTourPackageBySlug, getTourPackages, createOrUpdateTourPackage, deleteTourPackage } from '@/lib/firebase';
 import { revalidateTours } from '@/app/actions';
 import type { TourPackage } from '@/types';
 
@@ -37,6 +37,7 @@ const tourPackageSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters."),
   slug: z.string().min(3, "Slug must be at least 3 characters.").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens."),
   price: z.coerce.number().min(0, "Price must be a positive number."),
+  discount: z.coerce.number().min(0, "Discount cannot be negative.").max(100, "Discount cannot exceed 100%").optional(),
   duration: z.string().min(1, "Duration is required."),
   overview: z.string().min(10, "Overview must be at least 10 characters."),
   inclusions: z.array(z.string()).min(1, "At least one inclusion is required."),
@@ -57,7 +58,7 @@ export default function EditTourPage() {
   const isNewTour = slug === 'new';
 
   const [tour, setTour] = useState<TourPackage | null>(null);
-  const [loading, setLoading] = useState(!isNewTour);
+  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<TourFormValues>({
@@ -66,6 +67,7 @@ export default function EditTourPage() {
       name: '',
       slug: '',
       price: 0,
+      discount: 0,
       duration: '',
       overview: '',
       inclusions: [''],
@@ -86,25 +88,53 @@ export default function EditTourPage() {
 
 
   useEffect(() => {
-    if (isNewTour) return;
-
     const fetchTour = async () => {
       setLoading(true);
       try {
-        const tourData = await getTourPackageBySlug(slug);
-        if (tourData) {
-          setTour(tourData as TourPackage);
-          form.reset({
-            ...tourData,
-            // Ensure array fields are not empty for the form
-            inclusions: tourData.inclusions?.length > 0 ? tourData.inclusions : [''],
-            exclusions: tourData.exclusions?.length > 0 ? tourData.exclusions : [''],
-            notes: tourData.notes?.length > 0 ? tourData.notes : [''],
-            disclaimers: tourData.disclaimers?.length > 0 ? tourData.disclaimers : [''],
-          });
+        if (isNewTour) {
+          // Fetch "Mudhumalai-Pykara Tour" template first
+          let defaultTour = await getTourPackageBySlug('mudhumalai-pykara-tour');
+          if (!defaultTour) {
+            // Fallback: use first tour package available
+            const allTours = await getTourPackages();
+            if (allTours.length > 0) {
+              defaultTour = allTours[0];
+            }
+          }
+
+          if (defaultTour) {
+            form.reset({
+              name: '',
+              slug: '',
+              price: defaultTour.price || 0,
+              discount: defaultTour.discount || 0,
+              duration: defaultTour.duration || '',
+              overview: defaultTour.overview || '',
+              inclusions: defaultTour.inclusions?.length > 0 ? defaultTour.inclusions : [''],
+              exclusions: defaultTour.exclusions?.length > 0 ? defaultTour.exclusions : [''],
+              notes: defaultTour.notes?.length > 0 ? defaultTour.notes : [''],
+              disclaimers: defaultTour.disclaimers?.length > 0 ? defaultTour.disclaimers : [''],
+              itinerary: defaultTour.itinerary?.length > 0 ? defaultTour.itinerary : [{ time: '', activity: '', description: '', iconName: 'Bus' }],
+              faqs: defaultTour.faqs?.length > 0 ? defaultTour.faqs : [{ question: '', answer: '' }],
+            });
+          }
         } else {
-          toast({ variant: 'destructive', title: 'Error', description: 'Tour not found.' });
-          setTour(null);
+          const tourData = await getTourPackageBySlug(slug);
+          if (tourData) {
+            setTour(tourData as TourPackage);
+            form.reset({
+              ...tourData,
+              discount: tourData.discount || 0,
+              // Ensure array fields are not empty for the form
+              inclusions: tourData.inclusions?.length > 0 ? tourData.inclusions : [''],
+              exclusions: tourData.exclusions?.length > 0 ? tourData.exclusions : [''],
+              notes: tourData.notes?.length > 0 ? tourData.notes : [''],
+              disclaimers: tourData.disclaimers?.length > 0 ? tourData.disclaimers : [''],
+            });
+          } else {
+            toast({ variant: 'destructive', title: 'Error', description: 'Tour not found.' });
+            setTour(null);
+          }
         }
       } catch (error) {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch tour details.' });
@@ -244,9 +274,17 @@ export default function EditTourPage() {
                 <FormItem><FormLabel>Slug (URL Identifier)</FormLabel><FormControl><Input {...field} disabled={!isNewTour} /></FormControl><FormDescription>URL-friendly, no spaces, e.g., "my-new-tour"</FormDescription><FormMessage /></FormItem>
               )} />
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField control={form.control} name="price" render={({ field }) => (
                     <FormItem><FormLabel>Base Price (INR)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="discount" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Discount (%)</FormLabel>
+                      <FormControl><Input type="number" {...field} placeholder="e.g., 20" /></FormControl>
+                      <FormDescription className="text-xs">Optional discount percentage</FormDescription>
+                      <FormMessage />
+                    </FormItem>
                 )} />
                 <FormField control={form.control} name="duration" render={({ field }) => (
                     <FormItem><FormLabel>Duration</FormLabel><FormControl><Input {...field} placeholder="e.g., 9 Hours" /></FormControl><FormMessage /></FormItem>

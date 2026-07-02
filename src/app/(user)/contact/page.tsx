@@ -1,5 +1,7 @@
 
 
+export const dynamic = 'force-dynamic';
+
 import { getContactInfo } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContactCard } from "@/components/contact/contact-card";

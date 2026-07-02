@@ -11,7 +11,7 @@ const cashfree = new Cashfree(
     process.env.CASHFREE_SECRET_KEY || ''
 );
 
-export async function initiateCashfreePayment(bookingData: Omit<Booking, 'id'>, totalAmount: number) {
+export async function initiateCashfreePayment(bookingData: Omit<Booking, 'id'>, totalAmount: number, originUrl?: string) {
     try {
         const transactionId = `CF_${Date.now()}`;
         const customerId = `CUST_${Date.now()}`;
@@ -20,7 +20,7 @@ export async function initiateCashfreePayment(bookingData: Omit<Booking, 'id'>, 
         const dbId = await saveBooking({ ...bookingData, bookingId: transactionId });
 
         // The Server-to-Server / Client-Redirect callback URL 
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+        const baseUrl = originUrl || process.env.NEXT_PUBLIC_BASE_URL || 
             (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:9002');
         const returnUrl = `${baseUrl}/api/cashfree/verify?order_id={order_id}&booking_id=${dbId}`;
 

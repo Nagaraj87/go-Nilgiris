@@ -28,7 +28,24 @@ export function TourBookingCard({ tourPackageData, price }: TourBookingCardProps
                         <span className="text-lg text-muted-foreground">Finding best price...</span>
                     </div>
                 ) : (
-                    <p className="text-3xl font-bold text-primary">₹{price?.toLocaleString('en-IN')} <span className="text-lg font-normal text-muted-foreground">onwards</span></p>
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                            <span className="text-3xl font-bold text-primary">
+                                ₹{(price !== null ? price : (tourPackageData.discount ? Math.round(tourPackageData.price * (1 - tourPackageData.discount / 100)) : tourPackageData.price)).toLocaleString('en-IN')}
+                            </span>
+                            {tourPackageData.discount !== undefined && tourPackageData.discount > 0 && (
+                                <>
+                                    <span className="text-lg text-muted-foreground line-through">
+                                        ₹{tourPackageData.price.toLocaleString('en-IN')}
+                                    </span>
+                                    <span className="text-sm font-semibold text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded-full">
+                                        {tourPackageData.discount}% OFF
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                        <span className="text-sm font-normal text-muted-foreground">onwards</span>
+                    </div>
                 )}
             </CardHeader>
             <CardContent className="space-y-4">

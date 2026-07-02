@@ -18,6 +18,7 @@ export interface TourPackage {
   slug: string;
   name: string;
   price: number;
+  discount?: number;
   duration: string;
   overview: string;
   inclusions: string[];

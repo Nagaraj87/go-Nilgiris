@@ -40,7 +40,17 @@ export const getTourPackageBySlug = async (slug: string): Promise<TourPackage | 
 
     if (docSnap.exists()) {
         const data = docSnap.data();
-        return { ...data, id: docSnap.id } as TourPackage;
+        let price = data.price;
+        let discount = data.discount || 0;
+
+        if (price === undefined) {
+            // Backwards compatibility: fetch price from packages collection if not in tour_packages
+            const priceDocRef = doc(db, 'packages', decodedSlug);
+            const priceDocSnap = await getDoc(priceDocRef);
+            price = priceDocSnap.exists() ? priceDocSnap.data().price : 0;
+        }
+
+        return { ...data, price, discount, id: docSnap.id } as TourPackage;
     }
     return null;
 }
@@ -49,12 +59,13 @@ export const createOrUpdateTourPackage = async (tourData: Omit<TourPackage, 'id'
     const docRef = doc(db, 'tour_packages', tourData.slug);
     const priceDocRef = doc(db, 'packages', tourData.slug);
     
-    const { price, ...tourPackageData } = tourData;
+    const { price, discount = 0, ...tourPackageData } = tourData;
+    const finalPrice = Math.round(price * (1 - discount / 100));
 
     const batch = writeBatch(db);
     
-    batch.set(docRef, tourPackageData, { merge: true });
-    batch.set(priceDocRef, { slug: tourData.slug, price: price }, { merge: true });
+    batch.set(docRef, { ...tourPackageData, price, discount }, { merge: true });
+    batch.set(priceDocRef, { slug: tourData.slug, price: finalPrice }, { merge: true });
     
     await batch.commit();
 }

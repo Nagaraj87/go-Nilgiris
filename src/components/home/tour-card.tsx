@@ -31,10 +31,24 @@ export function TourCard({ pkg, price, loading }: TourCardProps) {
                         <span className="text-muted-foreground">Loading price...</span>
                     </div>
                 ) : (
-                    <p className="text-3xl font-bold">
-                        ₹{(price || pkg.price).toLocaleString('en-IN')} 
-                        <span className="text-sm font-normal"> onwards</span>
-                    </p>
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                            <span className="text-3xl font-bold">
+                                ₹{(price !== null ? price : (pkg.discount ? Math.round(pkg.price * (1 - pkg.discount / 100)) : pkg.price)).toLocaleString('en-IN')}
+                            </span>
+                            {pkg.discount !== undefined && pkg.discount > 0 && (
+                                <>
+                                    <span className="text-lg text-muted-foreground line-through">
+                                        ₹{pkg.price.toLocaleString('en-IN')}
+                                    </span>
+                                    <span className="text-xs font-semibold text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded-full">
+                                        {pkg.discount}% OFF
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">onwards</span>
+                    </div>
                 )}
                 </div>
                 <ul className="grid gap-2 text-sm">

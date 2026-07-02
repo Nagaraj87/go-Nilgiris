@@ -278,7 +278,7 @@ function BookingFlow() {
         paymentStatus: 'PENDING',
       };
 
-      const result = await initiateCashfreePayment(bookingData as any, totalAmount);
+      const result = await initiateCashfreePayment(bookingData as any, totalAmount, window.location.origin);
 
       if (result.success && result.payment_session_id) {
         // Initialize Cashfree SDK
@@ -413,7 +413,17 @@ function BookingFlow() {
                     <Skeleton className="h-10 w-[240px]" />
                   </div>
                 ) : (
-                  <p className="text-lg font-semibold">Price per seat: <span className="text-primary">₹{pricePerSeat.toLocaleString('en-IN')}</span> onwards</p>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-lg font-semibold">Price per seat:</span>
+                    <span className="text-primary font-bold text-lg">₹{pricePerSeat.toLocaleString('en-IN')}</span>
+                    {tourPackage.discount !== undefined && tourPackage.discount > 0 && (
+                      <>
+                        <span className="text-sm text-muted-foreground line-through">₹{tourPackage.price.toLocaleString('en-IN')}</span>
+                        <span className="text-xs font-semibold text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded-full">{tourPackage.discount}% OFF</span>
+                      </>
+                    )}
+                    <span className="text-sm font-normal text-muted-foreground">onwards</span>
+                  </div>
                 )}
                 <FormField
                   control={form.control}
