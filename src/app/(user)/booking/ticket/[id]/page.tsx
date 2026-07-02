@@ -53,7 +53,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                     </CardHeader>
                     <CardContent className="p-0 sm:p-6">
                         <Separator className="my-6" />
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
+                        <div className={`grid grid-cols-1 ${tourPackage.gift ? 'sm:grid-cols-4' : 'sm:grid-cols-3'} gap-6 text-sm`}>
                             <div>
                                 <p className="text-muted-foreground">Tour Package</p>
                                 <p className="font-bold">{tourPackage.name}</p>
@@ -66,6 +66,12 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                                 <p className="text-muted-foreground">Total Paid</p>
                                 <p className="font-bold">₹{booking.totalAmount.toLocaleString('en-IN')}</p>
                             </div>
+                            {tourPackage.gift && (
+                                <div>
+                                    <p className="text-muted-foreground">Seasonal Gift</p>
+                                    <p className="font-bold text-green-600">{tourPackage.gift}</p>
+                                </div>
+                            )}
                         </div>
                         <Separator className="my-6" />
                         <div>
