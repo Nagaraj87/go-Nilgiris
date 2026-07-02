@@ -162,7 +162,7 @@ export default function EditTourPage() {
       await createOrUpdateTourPackage(cleanedData);
       await revalidateTours();
       toast({ title: 'Success', description: `Tour package '${data.name}' has been ${isNewTour ? 'created' : 'updated'}.` });
-      router.push('/admin/tours');
+      router.push('/admin');
       router.refresh(); // To reflect changes in the admin table
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to save tour package.' });
@@ -179,7 +179,7 @@ export default function EditTourPage() {
         await deleteTourPackage(slug);
         await revalidateTours();
         toast({ title: 'Success', description: 'Tour package deleted.' });
-        router.push('/admin/tours');
+        router.push('/admin');
         router.refresh();
     } catch(e) {
         toast({ variant: "destructive", title: "Error", description: "Could not delete tour."});
