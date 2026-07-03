@@ -4,7 +4,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
-import type { TourPackage, Booking, ContactInfo, GalleryImage, AdminCredentials } from '@/types';
+import type { TourPackage, Booking, ContactInfo, GalleryImage, AdminCredentials, EmergencyConfig } from '@/types';
 import { hash, compare } from 'bcryptjs';
 
 const firebaseConfig = {
@@ -312,4 +312,19 @@ export const updateAdminCredentials = async (credentials: Partial<AdminCredentia
     }
     
     await setDoc(docRef, updates, { merge: true });
+};
+
+// Emergency Config
+export const getEmergencyConfig = async (): Promise<EmergencyConfig> => {
+    const docRef = doc(db, 'site_config', 'emergency');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) return docSnap.data() as EmergencyConfig;
+
+    const defaultData: EmergencyConfig = { isActive: false, message: 'Notice: Due to heavy rains, some routes might be affected.' };
+    await setDoc(docRef, defaultData);
+    return defaultData;
+};
+
+export const updateEmergencyConfig = async (data: EmergencyConfig) => {
+    await setDoc(doc(db, 'site_config', 'emergency'), data, { merge: true });
 };

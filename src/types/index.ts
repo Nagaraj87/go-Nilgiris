@@ -76,3 +76,7 @@ export type AdminCredentials = {
   password?: string; // Password is a hash, and optional when updating only username
 };
 
+export type EmergencyConfig = {
+  isActive: boolean;
+  message: string;
+};

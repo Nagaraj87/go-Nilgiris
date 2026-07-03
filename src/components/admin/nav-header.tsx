@@ -5,15 +5,34 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Home, Menu, Bell, ShieldOff, Tag, Phone, GalleryHorizontal, Plane, PlusCircle, ExternalLink, BookOpenCheck } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { NotificationBell } from '../notification-bell';
 import React, { useState } from 'react';
 import { ScrollArea } from '../ui/scroll-area';
-import { logoutAction } from '@/app/(admin)/login/actions';
-import { LogOut } from 'lucide-react';
-
+import { logoutAction, changePasswordAction } from '@/app/(admin)/login/actions';
+import { LogOut, Key } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 export function NavHeader() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+    const res = await changePasswordAction(currentPassword, newPassword);
+    if (res.success) {
+        setPasswordSuccess('Password changed successfully.');
+        setCurrentPassword('');
+        setNewPassword('');
+        setTimeout(() => setIsPasswordModalOpen(false), 1500);
+    } else {
+        setPasswordError(res.error || 'Failed to change password');
+    }
+  };
 
   const handleLogout = async () => {
       setIsLoggingOut(true);
@@ -26,7 +45,6 @@ export function NavHeader() {
     { href: "/admin", label: "Dashboard", icon: Plane, target: "" },
     { href: "/admin/edit-tour/new", label: "New Tour", icon: PlusCircle, target: "" },
     { href: "/admin/availability", label: "Availability", icon: ShieldOff, target: "" },
-    { href: "/admin/notifications", label: "Notifications", icon: Bell, target: "" },
     { href: "/admin#tour-management-section", label: "Tours", icon: Plane, target: "" },
     { href: "/admin#pricing-section", label: "Pricing", icon: Tag, target: "" },
     { href: "/admin#contact-section", label: "Contact", icon: Phone, target: "" },
@@ -55,7 +73,31 @@ export function NavHeader() {
               <ShieldOff className="mr-2 h-4 w-4" /> Availability
             </Link>
           </Button>
-          <NotificationBell />
+          <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Key className="mr-2 h-4 w-4" /> Change Password
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Change Admin Password</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handlePasswordChange} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Current Password</label>
+                  <input type="password" required value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">New Password</label>
+                  <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                </div>
+                {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
+                {passwordSuccess && <p className="text-sm text-green-600">{passwordSuccess}</p>}
+                <Button type="submit" className="w-full">Update Password</Button>
+              </form>
+            </DialogContent>
+          </Dialog>
           <Button variant="destructive" onClick={handleLogout} disabled={isLoggingOut}>
             <LogOut className="mr-2 h-4 w-4" />
             Logout
@@ -64,7 +106,6 @@ export function NavHeader() {
 
         {/* Mobile Navigation */}
         <div className="md:hidden flex items-center gap-2">
-          <NotificationBell />
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon"><Menu /></Button>
@@ -89,9 +130,16 @@ export function NavHeader() {
                     </Link>
                   ))}
                   <button
+                    onClick={() => { setIsSheetOpen(false); setIsPasswordModalOpen(true); }}
+                    className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium hover:bg-muted mt-4 border-t pt-4"
+                  >
+                    <Key className="h-5 w-5" />
+                    Change Password
+                  </button>
+                  <button
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium text-destructive hover:bg-muted mt-4 border-t pt-4"
+                    className="flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium text-destructive hover:bg-muted"
                   >
                     <LogOut className="h-5 w-5" />
                     Logout

@@ -4,6 +4,7 @@ import '../globals.css';
 import { cn } from '@/lib/utils';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { EmergencyBanner } from '@/components/emergency-banner';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider';
 import { LoadingProvider } from '@/components/loading-provider';
@@ -33,6 +34,7 @@ export default function RootLayout({
         >
           <LoadingProvider>
             <div suppressHydrationWarning className="relative flex min-h-screen flex-col">
+              <EmergencyBanner />
               <Header />
               <main className="flex-1">{children}</main>
               <Footer />

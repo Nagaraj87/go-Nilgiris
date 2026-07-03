@@ -2,7 +2,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { verifyAdminCredentials } from '@/lib/firebase';
+import { verifyAdminCredentials, updateAdminCredentials, getAdminCredentials } from '@/lib/firebase';
 import { AUTH_COOKIE_NAME } from '@/lib/constants';
 import * as z from 'zod';
 
@@ -45,4 +45,22 @@ export async function loginAction(values: z.infer<typeof loginSchema>) {
 export async function logoutAction() {
     const cookieStore = await cookies();
     cookieStore.delete(AUTH_COOKIE_NAME);
+}
+
+export async function changePasswordAction(currentPassword: string, newPassword: string) {
+    try {
+        const credentials = await getAdminCredentials();
+        const username = credentials.username;
+        
+        const isValid = await verifyAdminCredentials(username, currentPassword);
+        if (!isValid) {
+            return { success: false, error: 'Incorrect current password' };
+        }
+        
+        await updateAdminCredentials({ username, password: newPassword });
+        return { success: true };
+    } catch (error) {
+        console.error('Change password error:', error);
+        return { success: false, error: 'An unexpected error occurred' };
+    }
 }
