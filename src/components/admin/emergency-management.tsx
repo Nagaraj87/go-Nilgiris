@@ -84,7 +84,7 @@ export function EmergencyManagement() {
           />
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-start gap-3">
           <Button type="submit" disabled={isSaving} variant="destructive">
             <Save className="mr-2 h-4 w-4" />
             {isSaving ? "Saving..." : "Save Emergency Config"}
